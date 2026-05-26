@@ -235,13 +235,13 @@ function openFullscreen() {
 
 function renderFullscreenTrack() {
   var track = document.getElementById('fullscreenTrack');
+  var h = window.innerHeight;
   var html = '';
   for (var i = 0; i < currentModalImages.length; i++) {
-    html += '<div class="fullscreen-slide"><img src="' + currentModalImages[i] + '" alt=""></div>';
+    html += '<div class="fullscreen-slide" style="height:' + h + 'px"><img src="' + currentModalImages[i] + '" alt=""></div>';
   }
   track.innerHTML = html;
   updateCounter();
-  var h = window.innerHeight;
   track.style.transition = 'none';
   track.style.transform = 'translate3d(0,' + (-currentImageIndex * h) + 'px,0)';
 }
