@@ -377,10 +377,10 @@ function doSearch(e) {
   setTimeout(function() {
     input.readOnly = false;
     requestAnimationFrame(function() {
-      var img = document.querySelector('.product-card .product-image');
-      if (img) {
-        var y = img.getBoundingClientRect().top + window.pageYOffset - 90;
-        window.scrollTo({ top: y, behavior: 'smooth' });
+      var el = document.querySelector('.product-card .product-image') || document.getElementById('productGrid');
+      if (el) {
+        var y = el.getBoundingClientRect().top + window.pageYOffset - 180;
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
       }
     });
   }, 600);
