@@ -297,9 +297,12 @@ modalImg.addEventListener('touchend', function(e) {
     const dy = t.clientY - startY;
     const dx = t.clientX - startX;
     if (Math.abs(dy) > Math.abs(dx)) {
-      if ((currentImageIndex === 0 && dy > 0) || (currentImageIndex === currentModalImages.length - 1 && dy < 0)) return;
+      var base = -currentImageIndex * 100;
+      var offset = dy * 0.4;
+      if (currentImageIndex === 0) offset = Math.min(offset, 0);
+      if (currentImageIndex === currentModalImages.length - 1) offset = Math.max(offset, 0);
       dragOffset = dy;
-      track.style.transform = `translateY(${-currentImageIndex * 100 + dy * 0.4}vh)`;
+      track.style.transform = `translateY(${base + offset}vh)`;
     }
   }, { passive: true });
 
