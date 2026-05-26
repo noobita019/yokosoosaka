@@ -235,29 +235,15 @@ function openFullscreen() {
 
 function renderFullscreenTrack() {
   var track = document.getElementById('fullscreenTrack');
-  track.innerHTML = '';
+  var html = '';
   for (var i = 0; i < currentModalImages.length; i++) {
-    var slide = document.createElement('div');
-    slide.className = 'fullscreen-slide';
-    var img = document.createElement('img');
-    img.src = '';
-    img.dataset.src = currentModalImages[i];
-    slide.appendChild(img);
-    track.appendChild(slide);
+    html += '<div class="fullscreen-slide"><img src="' + currentModalImages[i] + '" alt=""></div>';
   }
-  loadAdjacentImages();
+  track.innerHTML = html;
   updateCounter();
   var h = window.innerHeight;
   track.style.transition = 'none';
   track.style.transform = 'translate3d(0,' + (-currentImageIndex * h) + 'px,0)';
-}
-
-function loadAdjacentImages() {
-  var imgs = document.querySelectorAll('#fullscreenTrack .fullscreen-slide img');
-  var idx = currentImageIndex;
-  imgs[idx].src = imgs[idx].dataset.src;
-  if (idx > 0) imgs[idx - 1].src = imgs[idx - 1].dataset.src;
-  if (idx < imgs.length - 1) imgs[idx + 1].src = imgs[idx + 1].dataset.src;
 }
 
 function updateCounter() {
@@ -290,7 +276,6 @@ modalImg.addEventListener('touchend', function(e) {
     var next = currentImageIndex + dir;
     if (next < 0 || next >= currentModalImages.length) return;
     currentImageIndex = next;
-    loadAdjacentImages();
     updateCounter();
     var h = window.innerHeight;
     track.style.transition = 'transform 0.3s ease';

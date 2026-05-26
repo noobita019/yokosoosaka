@@ -869,6 +869,7 @@ body {
   object-fit: contain;
   user-select: none;
   -webkit-user-drag: none;
+  border-radius: 4px;
 }
 
 .fullscreen-close {
