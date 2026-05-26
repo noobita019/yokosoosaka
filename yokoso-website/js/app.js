@@ -371,12 +371,10 @@ document.getElementById('searchInput').addEventListener('input', e => {
 
 document.getElementById('searchForm').addEventListener('submit', function(e) {
   e.preventDefault();
-  document.getElementById('searchInput').readOnly = true;
-  document.getElementById('searchInput').blur();
-  var that = document.getElementById('searchInput');
-  that.readOnly = true;
-  that.blur();
-  setTimeout(function() { that.readOnly = false; }, 300);
+  var input = document.getElementById('searchInput');
+  input.readOnly = true;
+  input.blur();
+  setTimeout(function() { input.readOnly = false; }, 300);
 });
 
 document.getElementById('searchInput').addEventListener('search', function() {
