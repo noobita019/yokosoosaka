@@ -210,8 +210,87 @@ document.getElementById('productModal').addEventListener('click', e => {
   if (e.target === e.currentTarget) closeModal();
 });
 document.querySelector('#productModal .modal-close').addEventListener('click', closeModal);
+// Fullscreen image viewer
+function openFullscreen() {
+  if (currentModalImages.length === 0) return;
+  const viewer = document.getElementById('fullscreenViewer');
+  const img = document.getElementById('fullscreenImage');
+  viewer.classList.add('active');
+  updateFullscreen();
+}
+
+function updateFullscreen() {
+  const img = document.getElementById('fullscreenImage');
+  img.src = currentModalImages[currentImageIndex] || 'images/products/placeholder.svg';
+  const dots = document.getElementById('fullscreenDots');
+  const counter = document.getElementById('fullscreenCounter');
+  counter.textContent = `${currentImageIndex + 1} / ${currentModalImages.length}`;
+  if (currentModalImages.length > 1) {
+    dots.innerHTML = currentModalImages.map((_, i) =>
+      `<span class="${i === currentImageIndex ? 'active' : ''}" data-index="${i}"></span>`
+    ).join('');
+    dots.style.display = '';
+  } else {
+    dots.innerHTML = '';
+    dots.style.display = 'none';
+  }
+}
+
+function closeFullscreen() {
+  document.getElementById('fullscreenViewer').classList.remove('active');
+}
+
+document.getElementById('modalImage').addEventListener('click', openFullscreen);
+
+document.getElementById('fullscreenViewer').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeFullscreen();
+});
+
+document.querySelector('#fullscreenViewer .fullscreen-close').addEventListener('click', closeFullscreen);
+
+document.querySelector('#fullscreenViewer .fullscreen-prev').addEventListener('click', e => {
+  e.stopPropagation();
+  if (currentModalImages.length < 2) return;
+  currentImageIndex = (currentImageIndex - 1 + currentModalImages.length) % currentModalImages.length;
+  updateFullscreen();
+});
+
+document.querySelector('#fullscreenViewer .fullscreen-next').addEventListener('click', e => {
+  e.stopPropagation();
+  if (currentModalImages.length < 2) return;
+  currentImageIndex = (currentImageIndex + 1) % currentModalImages.length;
+  updateFullscreen();
+});
+
+document.getElementById('fullscreenDots').addEventListener('click', e => {
+  const dot = e.target.closest('span');
+  if (!dot || !dot.dataset.index) return;
+  currentImageIndex = parseInt(dot.dataset.index);
+  updateFullscreen();
+});
+
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Escape') {
+    if (document.getElementById('fullscreenViewer').classList.contains('active')) {
+      closeFullscreen();
+      return;
+    }
+    closeModal();
+    return;
+  }
+  if (document.getElementById('fullscreenViewer').classList.contains('active')) {
+    if (e.key === 'ArrowLeft' && currentModalImages.length > 1) {
+      currentImageIndex = (currentImageIndex - 1 + currentModalImages.length) % currentModalImages.length;
+      updateFullscreen();
+      e.preventDefault();
+    }
+    if (e.key === 'ArrowRight' && currentModalImages.length > 1) {
+      currentImageIndex = (currentImageIndex + 1) % currentModalImages.length;
+      updateFullscreen();
+      e.preventDefault();
+    }
+    return;
+  }
   if (!document.getElementById('productModal').classList.contains('active')) return;
   if (e.key === 'ArrowLeft' && currentModalImages.length > 1) {
     currentImageIndex = (currentImageIndex - 1 + currentModalImages.length) % currentModalImages.length;

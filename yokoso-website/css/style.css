@@ -816,6 +816,121 @@ body {
   flex-shrink: 0;
 }
 
+/* Fullscreen Image Viewer */
+.fullscreen-viewer {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.95);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+}
+
+.fullscreen-viewer.active {
+  display: flex;
+}
+
+.fullscreen-image {
+  max-width: 92vw;
+  max-height: 92vh;
+  object-fit: contain;
+  cursor: default;
+  border-radius: 4px;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.fullscreen-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: #fff;
+  font-size: 2rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.fullscreen-close:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.fullscreen-prev,
+.fullscreen-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: #fff;
+  font-size: 2.5rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.fullscreen-prev:hover,
+.fullscreen-next:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.fullscreen-prev { left: 20px; }
+.fullscreen-next { right: 20px; }
+
+.fullscreen-dots {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+}
+
+.fullscreen-dots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.fullscreen-dots span.active {
+  background: #fff;
+}
+
+.fullscreen-dots span:hover {
+  background: rgba(255,255,255,0.6);
+}
+
+.fullscreen-counter {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255,255,255,0.6);
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  z-index: 10;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .menu-toggle {
