@@ -325,26 +325,7 @@ document.getElementById('fullscreenViewer').addEventListener('click', e => {
 
 document.querySelector('#fullscreenViewer .fullscreen-close').addEventListener('click', closeFullscreen);
 
-document.querySelector('#fullscreenViewer .fullscreen-prev').addEventListener('click', e => {
-  e.stopPropagation();
-  if (currentModalImages.length < 2) return;
-  currentImageIndex = (currentImageIndex - 1 + currentModalImages.length) % currentModalImages.length;
-  updateFullscreen();
-});
 
-document.querySelector('#fullscreenViewer .fullscreen-next').addEventListener('click', e => {
-  e.stopPropagation();
-  if (currentModalImages.length < 2) return;
-  currentImageIndex = (currentImageIndex + 1) % currentModalImages.length;
-  updateFullscreen();
-});
-
-document.getElementById('fullscreenDots').addEventListener('click', e => {
-  const dot = e.target.closest('span');
-  if (!dot || !dot.dataset.index) return;
-  currentImageIndex = parseInt(dot.dataset.index);
-  updateFullscreen();
-});
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
