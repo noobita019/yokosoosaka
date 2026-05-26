@@ -378,7 +378,8 @@ function doSearch(e) {
     input.readOnly = false;
     var card = document.querySelector('.product-card');
     if (card) {
-      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      var y = card.getBoundingClientRect().top + window.pageYOffset - 140;
+      window.scrollTo({ top: y, behavior: 'smooth' });
     }
   }, 500);
 }
