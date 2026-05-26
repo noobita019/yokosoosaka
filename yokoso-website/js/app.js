@@ -267,7 +267,7 @@ modalImg.addEventListener('touchend', function(e) {
 (function() {
   var viewer = document.getElementById('fullscreenViewer');
   var track = document.getElementById('fullscreenTrack');
-  var startY = 0;
+  var startY = 0, startX = 0;
   var dragging = false;
   var dragOffset = 0;
 
@@ -286,6 +286,7 @@ modalImg.addEventListener('touchend', function(e) {
     if (!viewer.classList.contains('active')) return;
     var t = e.touches[0];
     startY = t.clientY;
+    startX = t.clientX;
     dragOffset = 0;
     dragging = true;
     track.style.transition = 'none';
