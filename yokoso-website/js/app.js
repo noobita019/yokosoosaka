@@ -242,7 +242,7 @@ function renderFullscreenTrack() {
   const track = document.getElementById('fullscreenTrack');
   track.innerHTML = currentModalImages.map((src, i) =>
     `<div class="fullscreen-slide">
-      <img src="${src}" onerror="this.src='images/products/placeholder.svg'" alt="">
+      <img src="${src}" loading="lazy" decoding="async" onerror="this.src='images/products/placeholder.svg'" alt="">
     </div>`
   ).join('');
   goToSlide(currentImageIndex, false);
