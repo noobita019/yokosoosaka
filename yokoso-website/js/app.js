@@ -374,14 +374,12 @@ function doSearch(e) {
   var input = document.getElementById('searchInput');
   input.readOnly = true;
   input.blur();
-  setTimeout(function() {
-    input.readOnly = false;
-    var grid = document.getElementById('productGrid');
-    if (grid) {
-      var y = grid.getBoundingClientRect().top + window.pageYOffset - 80;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-    }
-  }, 600);
+  var grid = document.getElementById('productGrid');
+  if (grid) {
+    var y = grid.getBoundingClientRect().top + window.pageYOffset - 80;
+    window.scrollTo({ top: y, behavior: 'auto' });
+  }
+  setTimeout(function() { input.readOnly = false; }, 300);
 }
 
 document.getElementById('searchForm').addEventListener('submit', doSearch);
