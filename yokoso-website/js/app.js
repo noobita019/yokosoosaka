@@ -373,14 +373,9 @@ document.getElementById('searchInput').addEventListener('keydown', function(e) {
   if (e.key === 'Enter' || e.keyCode === 13) {
     e.preventDefault();
     var input = e.target;
+    input.readOnly = true;
     input.blur();
-    var h = document.createElement('div');
-    h.tabIndex = -1;
-    h.style.position = 'fixed';
-    h.style.top = '-9999px';
-    document.body.appendChild(h);
-    h.focus();
-    setTimeout(function() { document.body.removeChild(h); }, 10);
+    setTimeout(function() { input.readOnly = false; }, 300);
   }
 });
 
