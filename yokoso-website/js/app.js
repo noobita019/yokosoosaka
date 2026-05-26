@@ -240,7 +240,12 @@ function closeFullscreen() {
   document.getElementById('fullscreenViewer').classList.remove('active');
 }
 
-document.getElementById('modalImage').addEventListener('click', openFullscreen);
+var modalImg = document.getElementById('modalImage');
+modalImg.addEventListener('click', openFullscreen);
+modalImg.addEventListener('touchend', function(e) {
+  e.preventDefault();
+  openFullscreen();
+});
 
 // Fullscreen swipe support
 (function() {

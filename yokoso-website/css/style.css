@@ -472,6 +472,7 @@ body {
   height: 500px;
   object-fit: cover;
   background: #f0f0f0;
+  cursor: pointer;
 }
 
 .carousel-btn {
