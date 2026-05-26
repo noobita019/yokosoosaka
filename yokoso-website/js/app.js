@@ -277,7 +277,8 @@ modalImg.addEventListener('touchend', function(e) {
 
   function nav(dir) {
     if (currentModalImages.length < 2) return;
-    var next = (currentImageIndex + dir + currentModalImages.length) % currentModalImages.length;
+    var next = currentImageIndex + dir;
+    if (next < 0 || next >= currentModalImages.length) return;
     goToSlide(next, true);
   }
 
@@ -338,28 +339,26 @@ document.addEventListener('keydown', e => {
   }
   if (document.getElementById('fullscreenViewer').classList.contains('active')) {
     if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-      if (currentModalImages.length > 1) {
-        var next = (currentImageIndex - 1 + currentModalImages.length) % currentModalImages.length;
-        goToSlide(next, true);
+      if (currentImageIndex > 0) {
+        goToSlide(currentImageIndex - 1, true);
       }
       e.preventDefault();
     }
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-      if (currentModalImages.length > 1) {
-        var next = (currentImageIndex + 1) % currentModalImages.length;
-        goToSlide(next, true);
+      if (currentImageIndex < currentModalImages.length - 1) {
+        goToSlide(currentImageIndex + 1, true);
       }
       e.preventDefault();
     }
     return;
   }
   if (!document.getElementById('productModal').classList.contains('active')) return;
-  if (e.key === 'ArrowLeft' && currentModalImages.length > 1) {
-    currentImageIndex = (currentImageIndex - 1 + currentModalImages.length) % currentModalImages.length;
+  if (e.key === 'ArrowLeft' && currentImageIndex > 0) {
+    currentImageIndex--;
     showModalImage();
   }
-  if (e.key === 'ArrowRight' && currentModalImages.length > 1) {
-    currentImageIndex = (currentImageIndex + 1) % currentModalImages.length;
+  if (e.key === 'ArrowRight' && currentImageIndex < currentModalImages.length - 1) {
+    currentImageIndex++;
     showModalImage();
   }
 });
