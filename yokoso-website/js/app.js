@@ -410,15 +410,27 @@ document.getElementById('importFileInput').addEventListener('change', e => {
 });
 
 // Navigation between public and admin view
-document.getElementById('enterAdminBtn').addEventListener('click', () => {
+function showAdminPanel() {
+  document.getElementById('maintenanceOverlay').classList.add('active');
   document.getElementById('maintenancePublic').style.display = 'none';
   document.getElementById('adminPanel').style.display = 'block';
   renderAdminList();
+}
+
+document.getElementById('enterAdminBtn').addEventListener('click', showAdminPanel);
+
+document.getElementById('footerAdminLink').addEventListener('click', e => {
+  e.preventDefault();
+  showAdminPanel();
 });
 
 document.getElementById('backToPublicBtn').addEventListener('click', () => {
   document.getElementById('adminPanel').style.display = 'none';
-  document.getElementById('maintenancePublic').style.display = 'block';
+  if (typeof MAINTENANCE_MODE !== 'undefined' && MAINTENANCE_MODE) {
+    document.getElementById('maintenancePublic').style.display = 'block';
+  } else {
+    document.getElementById('maintenanceOverlay').classList.remove('active');
+  }
 });
 
 // ---- INIT ----
