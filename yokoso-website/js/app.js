@@ -242,6 +242,60 @@ function closeFullscreen() {
 
 document.getElementById('modalImage').addEventListener('click', openFullscreen);
 
+// Fullscreen swipe support
+(function() {
+  const viewer = document.getElementById('fullscreenViewer');
+  let startY = 0, startX = 0, swiping = false;
+
+  viewer.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    startY = t.clientY;
+    startX = t.clientX;
+    swiping = true;
+  }, { passive: true });
+
+  viewer.addEventListener('touchmove', e => {
+    if (!swiping || currentModalImages.length < 2) return;
+    const t = e.touches[0];
+    const dy = t.clientY - startY;
+    const dx = t.clientX - startX;
+    const img = document.getElementById('fullscreenImage');
+    if (Math.abs(dy) > Math.abs(dx)) {
+      img.style.transform = `translateY(${dy * 0.4}px) scale(${1 - Math.abs(dy) / 1500})`;
+      img.style.opacity = 1 - Math.abs(dy) / 600;
+    }
+  }, { passive: true });
+
+  viewer.addEventListener('touchend', e => {
+    if (!swiping || currentModalImages.length < 2) { swiping = false; return; }
+    const t = e.changedTouches[0];
+    const dy = t.clientY - startY;
+    const img = document.getElementById('fullscreenImage');
+    img.style.transform = '';
+    img.style.opacity = '';
+    swiping = false;
+    if (Math.abs(dy) > 80) {
+      if (dy < 0) {
+        currentImageIndex = (currentImageIndex + 1) % currentModalImages.length;
+      } else {
+        currentImageIndex = (currentImageIndex - 1 + currentModalImages.length) % currentModalImages.length;
+      }
+      updateFullscreen();
+    }
+  }, { passive: true });
+
+  viewer.addEventListener('wheel', e => {
+    if (currentModalImages.length < 2) return;
+    if (Math.abs(e.deltaY) < 30) return;
+    if (e.deltaY > 0) {
+      currentImageIndex = (currentImageIndex + 1) % currentModalImages.length;
+    } else {
+      currentImageIndex = (currentImageIndex - 1 + currentModalImages.length) % currentModalImages.length;
+    }
+    updateFullscreen();
+  }, { passive: true });
+})();
+
 document.getElementById('fullscreenViewer').addEventListener('click', e => {
   if (e.target === e.currentTarget) closeFullscreen();
 });
