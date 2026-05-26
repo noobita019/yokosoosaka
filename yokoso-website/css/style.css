@@ -38,7 +38,7 @@ body {
 }
 
 .logo-img {
-  height: 32px;
+  height: 40px;
   width: auto;
   display: block;
 }
@@ -47,6 +47,9 @@ body {
   display: flex;
   gap: 2rem;
   align-items: center;
+  margin-left: 3rem;
+  flex: 1;
+  justify-content: flex-end;
 }
 
 .nav-link {
