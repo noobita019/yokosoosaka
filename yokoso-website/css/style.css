@@ -219,6 +219,7 @@ body {
   outline: none;
   background: #f5f5f7;
   transition: all 0.2s;
+  -webkit-appearance: none;
 }
 
 .search-bar input:focus {

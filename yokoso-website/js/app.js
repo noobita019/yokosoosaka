@@ -369,8 +369,12 @@ document.getElementById('searchInput').addEventListener('input', e => {
   renderProducts();
 });
 
+document.getElementById('searchInput').addEventListener('search', e => {
+  e.target.blur();
+});
+
 document.getElementById('searchInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') e.target.blur();
+  if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
 });
 
 document.getElementById('menuToggle').addEventListener('click', () => {
