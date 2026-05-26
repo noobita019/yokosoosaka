@@ -370,12 +370,18 @@ document.getElementById('searchInput').addEventListener('input', e => {
 });
 
 function doSearch(e) {
-  e.preventDefault();
+  if (e) e.preventDefault();
   var input = document.getElementById('searchInput');
   input.readOnly = true;
   input.blur();
-  setTimeout(function() { input.readOnly = false; }, 300);
-  document.getElementById('products').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(function() {
+    input.readOnly = false;
+    var grid = document.getElementById('productGrid');
+    if (grid) {
+      var y = grid.getBoundingClientRect().top + window.pageYOffset - 80;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  }, 400);
 }
 
 document.getElementById('searchForm').addEventListener('submit', doSearch);
