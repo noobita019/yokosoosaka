@@ -297,7 +297,7 @@ modalImg.addEventListener('touchend', function(e) {
     const dy = t.clientY - startY;
     const dx = t.clientX - startX;
     if (Math.abs(dy) > Math.abs(dx)) {
-      if ((currentImageIndex === 0 && dy < 0) || (currentImageIndex === currentModalImages.length - 1 && dy > 0)) return;
+      if ((currentImageIndex === 0 && dy > 0) || (currentImageIndex === currentModalImages.length - 1 && dy < 0)) return;
       dragOffset = dy;
       track.style.transform = `translateY(${-currentImageIndex * 100 + dy * 0.4}vh)`;
     }
