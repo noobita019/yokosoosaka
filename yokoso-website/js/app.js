@@ -229,7 +229,13 @@ document.querySelector('#productModal .modal-close').addEventListener('click', c
 function openFullscreen() {
   if (currentModalImages.length === 0) return;
   document.getElementById('fullscreenViewer').classList.add('active');
+  document.body.style.overflow = 'hidden';
   renderFullscreenTrack();
+}
+
+function closeFullscreen() {
+  document.getElementById('fullscreenViewer').classList.remove('active');
+  document.body.style.overflow = '';
 }
 
 function renderFullscreenTrack() {
@@ -297,12 +303,12 @@ modalImg.addEventListener('touchend', function(e) {
     const dy = t.clientY - startY;
     const dx = t.clientX - startX;
     if (Math.abs(dy) > Math.abs(dx)) {
+      dragOffset = dy;
       var base = -currentImageIndex * 100;
       var offset = dy * 0.4;
       if (currentImageIndex === 0) offset = Math.min(offset, 0);
       if (currentImageIndex === currentModalImages.length - 1) offset = Math.max(offset, 0);
-      dragOffset = dy;
-      track.style.transform = `translateY(${base + offset}vh)`;
+      track.style.transform = 'translateY(' + (base + offset) + 'vh)';
     }
   }, { passive: true });
 
