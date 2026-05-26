@@ -374,7 +374,7 @@ document.getElementById('searchInput').addEventListener('search', e => {
 });
 
 document.getElementById('searchInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+  if (e.key === 'Enter') { e.preventDefault(); setTimeout(() => e.target.blur(), 0); }
 });
 
 document.getElementById('menuToggle').addEventListener('click', () => {

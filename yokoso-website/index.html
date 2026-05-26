@@ -45,7 +45,9 @@
   <section class="search-filter" id="products">
     <div class="container">
       <div class="search-bar">
-        <input type="search" id="searchInput" placeholder="Search products...">
+        <form action="#" onsubmit="document.getElementById('searchInput').blur();return false">
+          <input type="search" id="searchInput" placeholder="Search products...">
+        </form>
       </div>
       <div class="filters" id="filterContainer">
         <button class="filter-btn active" data-category="all">All</button>
