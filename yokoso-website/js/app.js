@@ -369,6 +369,10 @@ document.getElementById('searchInput').addEventListener('input', e => {
   renderProducts();
 });
 
+document.getElementById('searchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') e.target.blur();
+});
+
 document.getElementById('menuToggle').addEventListener('click', () => {
   document.querySelector('.nav').classList.toggle('open');
 });
