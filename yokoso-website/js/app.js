@@ -375,9 +375,8 @@ function doSearch(e) {
   input.readOnly = true;
   input.blur();
   var grid = document.getElementById('productGrid');
-  if (grid) {
-    var y = grid.getBoundingClientRect().top + window.pageYOffset - 80;
-    window.scrollTo({ top: y, behavior: 'auto' });
+  if (grid && grid.children.length > 0) {
+    grid.children[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   setTimeout(function() { input.readOnly = false; }, 300);
 }
