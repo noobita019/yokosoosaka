@@ -446,7 +446,10 @@ document.getElementById('importFileInput').addEventListener('change', e => {
 });
 
 // Navigation between public and admin view
+const ADMIN_PASSWORD = 'amped2016';
+
 function showAdminPanel() {
+  if (prompt('Enter admin password:') !== ADMIN_PASSWORD) return;
   document.getElementById('maintenanceOverlay').classList.add('active');
   document.getElementById('maintenancePublic').style.display = 'none';
   document.getElementById('adminPanel').style.display = 'block';
