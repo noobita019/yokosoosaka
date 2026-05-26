@@ -376,9 +376,9 @@ function doSearch(e) {
   input.blur();
   setTimeout(function() {
     input.readOnly = false;
-    var card = document.querySelector('.product-card');
-    if (card) {
-      var y = card.getBoundingClientRect().top + window.pageYOffset - 140;
+    var img = document.querySelector('.product-card .product-image');
+    if (img) {
+      var y = img.getBoundingClientRect().top + window.pageYOffset - 70;
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
   }, 500);
