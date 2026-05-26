@@ -66,6 +66,11 @@ function loadProducts(callback) {
     products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
   }
 
+  var rendered = false;
+  function done() {
+    if (!rendered) { rendered = true; if (callback) callback(); }
+  }
+
   if (fbDB) {
     fbDB.collection(FB_COLLECTION).doc(FB_DOC).get()
       .then(doc => {
@@ -76,13 +81,12 @@ function loadProducts(callback) {
         } else {
           fbDB.collection(FB_COLLECTION).doc(FB_DOC).set({ items: products }).catch(() => {});
         }
-        if (callback) callback();
+        done();
       })
-      .catch(() => {
-        if (callback) callback();
-      });
+      .catch(function() { done(); });
+    setTimeout(done, 3000);
   } else {
-    if (callback) callback();
+    done();
   }
 }
 
