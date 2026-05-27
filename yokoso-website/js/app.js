@@ -1,17 +1,17 @@
 const DEFAULT_PRODUCTS = [
-  { id: 1, name: "Nike Air Force 1 Low (Japan Exclusive)", category: "Shoes", price: "₱5,200", description: "Authentic Nike Air Force 1 Low from Japan. Limited Japan-exclusive colorway. Leather upper with Air-Sole cushioning. Sizes 7-12 US.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 2, name: "Nike Dunk Low Retro", category: "Shoes", price: "₱4,800", description: "Classic Nike Dunk Low in premium leather. Japan release. Available in multiple colors. Sizes 7-11 US.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 3, name: "Nike Air Max 90 (Japan Pack)", category: "Shoes", price: "₱5,500", description: "Nike Air Max 90 from the Japan-exclusive pack. Visible Air cushioning. Iconic silhouette. Sizes 7-12 US.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 4, name: "GU Fluffy Knit Sweater", category: "Clothing", price: "₱850", description: "Soft fluffy knit sweater from GU. Available in multiple colors. Perfect for cold season. Oversized relaxed fit.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 5, name: "Uniqlo Airism Oversized T-Shirt", category: "Clothing", price: "₱650", description: "Authentic Uniqlo Airism oversized t-shirt. Ultra-lightweight and breathable. Moisture-wicking fabric. Perfect for everyday use.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 6, name: "GU Wide Leg Pants", category: "Clothing", price: "₱950", description: "GU wide-leg pants. Comfortable and stylish. Premium cotton blend. Available in black, beige, and navy.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 7, name: "Uniqlo Light Down Jacket", category: "Clothing", price: "₱2,200", description: "Lightweight Uniqlo down jacket. Packable design. 750 fill power. Warm without being bulky. Water-repellent.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 8, name: "Japanese Biore UV Aqua Rich SPF50+", category: "Cosmetics", price: "₱550", description: "Biore UV Aqua Rich watery essence sunscreen. SPF50+ PA++++. Lightweight, non-sticky, refreshing finish. 80g.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 9, name: "Japanese Sheet Mask Variety Pack (10pcs)", category: "Cosmetics", price: "₱380", description: "Assorted Japanese facial sheet masks. Infused with collagen, hyaluronic acid, and vitamin C. 10-piece pack.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 10, name: "Heroine Make Waterproof Eyeliner", category: "Cosmetics", price: "₱480", description: "Japanese Heroine Make waterproof liquid eyeliner. Ultra-fine 0.1mm tip. Smudge-proof and long-lasting. Black.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 11, name: "Onitsuka Tiger Mexico 66", category: "Shoes", price: "₱3,800", description: "Classic Onitsuka Tiger Mexico 66 sneakers. Japan-exclusive colorway. Iconic design. Comfortable sole. Sizes 6-10 US.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 12, name: "GU Knit Cardigan", category: "Clothing", price: "₱1,100", description: "GU open-front knit cardigan. Soft acrylic blend. Oversized fit. Perfect layering piece for any outfit.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 13, name: "test", category: "test", price: "11", description: "test", available: true, images: ["images/products/placeholder.svg"] }
+  { id: 1, name: "Nike Air Force 1 Low (Japan Exclusive)", category1: "Shoes", category2: "Nike", price: "₱5,200", description: "Authentic Nike Air Force 1 Low from Japan. Limited Japan-exclusive colorway. Leather upper with Air-Sole cushioning. Sizes 7-12 US.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 2, name: "Nike Dunk Low Retro", category1: "Shoes", category2: "Nike", price: "₱4,800", description: "Classic Nike Dunk Low in premium leather. Japan release. Available in multiple colors. Sizes 7-11 US.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 3, name: "Nike Air Max 90 (Japan Pack)", category1: "Shoes", category2: "Nike", price: "₱5,500", description: "Nike Air Max 90 from the Japan-exclusive pack. Visible Air cushioning. Iconic silhouette. Sizes 7-12 US.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 4, name: "GU Fluffy Knit Sweater", category1: "Clothing", category2: "GU", price: "₱850", description: "Soft fluffy knit sweater from GU. Available in multiple colors. Perfect for cold season. Oversized relaxed fit.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 5, name: "Uniqlo Airism Oversized T-Shirt", category1: "Clothing", category2: "Uniqlo", price: "₱650", description: "Authentic Uniqlo Airism oversized t-shirt. Ultra-lightweight and breathable. Moisture-wicking fabric. Perfect for everyday use.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 6, name: "GU Wide Leg Pants", category1: "Clothing", category2: "GU", price: "₱950", description: "GU wide-leg pants. Comfortable and stylish. Premium cotton blend. Available in black, beige, and navy.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 7, name: "Uniqlo Light Down Jacket", category1: "Clothing", category2: "Uniqlo", price: "₱2,200", description: "Lightweight Uniqlo down jacket. Packable design. 750 fill power. Warm without being bulky. Water-repellent.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 8, name: "Japanese Biore UV Aqua Rich SPF50+", category1: "Cosmetics", category2: "Biore", price: "₱550", description: "Biore UV Aqua Rich watery essence sunscreen. SPF50+ PA++++. Lightweight, non-sticky, refreshing finish. 80g.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 9, name: "Japanese Sheet Mask Variety Pack (10pcs)", category1: "Cosmetics", category2: "Generic", price: "₱380", description: "Assorted Japanese facial sheet masks. Infused with collagen, hyaluronic acid, and vitamin C. 10-piece pack.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 10, name: "Heroine Make Waterproof Eyeliner", category1: "Cosmetics", category2: "Heroine Make", price: "₱480", description: "Japanese Heroine Make waterproof liquid eyeliner. Ultra-fine 0.1mm tip. Smudge-proof and long-lasting. Black.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 11, name: "Onitsuka Tiger Mexico 66", category1: "Shoes", category2: "Onitsuka Tiger", price: "₱3,800", description: "Classic Onitsuka Tiger Mexico 66 sneakers. Japan-exclusive colorway. Iconic design. Comfortable sole. Sizes 6-10 US.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 12, name: "GU Knit Cardigan", category1: "Clothing", category2: "GU", price: "₱1,100", description: "GU open-front knit cardigan. Soft acrylic blend. Oversized fit. Perfect layering piece for any outfit.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 13, name: "test", category1: "test", category2: "test", price: "11", description: "test", available: true, images: ["images/products/placeholder.svg"] }
 ];
 
 // Firebase
@@ -34,6 +34,9 @@ try {
 } catch (e) {}
 const FB_COLLECTION = 'yokoso';
 const FB_DOC = 'products';
+
+let categoriesConfig = { types: ["Clothing", "Shoes", "Cosmetics"], brands: ["Nike", "Uniqlo", "GU", "Biore", "Onitsuka Tiger", "Heroine Make", "Generic"] };
+let currentBrand = 'all';
 
 let products = [];
 let editingId = null;
@@ -104,6 +107,15 @@ function migrateProducts() {
       p.available = true;
       migrated = true;
     }
+    if (p.category && !p.category1) {
+      p.category1 = p.category;
+      delete p.category;
+      migrated = true;
+    }
+    if (!p.category2) {
+      p.category2 = "";
+      migrated = true;
+    }
   });
   return migrated;
 }
@@ -143,6 +155,37 @@ function loadProducts(callback) {
   } else {
     done();
   }
+
+  var savedConfig = localStorage.getItem('yokoso_categories');
+  if (savedConfig) {
+    try {
+      var parsed = JSON.parse(savedConfig);
+      if (parsed.types && parsed.brands) categoriesConfig = parsed;
+    } catch (e) {}
+  }
+
+  if (fbDB) {
+    fbDB.collection(FB_COLLECTION).doc('categories').get()
+      .then(function(doc) {
+        if (doc.exists && doc.data().types && doc.data().brands) {
+          categoriesConfig = doc.data();
+          localStorage.setItem('yokoso_categories', JSON.stringify(categoriesConfig));
+        }
+        renderCategoryDropdowns();
+        renderCategoryManagement();
+      })
+      .catch(function() { renderCategoryDropdowns(); renderCategoryManagement(); });
+  } else {
+    renderCategoryDropdowns();
+    renderCategoryManagement();
+  }
+}
+
+function saveCategoriesConfig() {
+  localStorage.setItem('yokoso_categories', JSON.stringify(categoriesConfig));
+  if (fbDB) {
+    fbDB.collection(FB_COLLECTION).doc('categories').set(categoriesConfig).catch(function() {});
+  }
 }
 
 function saveProducts() {
@@ -181,41 +224,76 @@ function uploadImage(dataUrl) {
   });
 }
 
-function getCategories() {
-  return [...new Set(products.map(p => p.category))].sort();
+function getTypes() {
+  var types = [...new Set(products.filter(p => p.category1).map(p => p.category1))].sort();
+  categoriesConfig.types.forEach(function(t) {
+    if (types.indexOf(t) === -1) types.push(t);
+  });
+  return types.sort();
+}
+
+function getBrands() {
+  var brands = [...new Set(products.filter(p => p.category2).map(p => p.category2))].sort();
+  categoriesConfig.brands.forEach(function(b) {
+    if (brands.indexOf(b) === -1) brands.push(b);
+  });
+  return brands.sort();
 }
 
 function renderFilters() {
-  const container = document.getElementById('filterContainer');
-  const categories = getCategories();
+  var container = document.getElementById('filterContainer');
+  var types = getTypes();
   container.innerHTML = '<button class="filter-btn active" data-category="all">All</button>';
-  categories.forEach(cat => {
-    container.innerHTML += `<button class="filter-btn" data-category="${cat}">${cat}</button>`;
+  types.forEach(function(t) {
+    container.innerHTML += '<button class="filter-btn" data-category="' + t + '">' + t + '</button>';
   });
+
+  var brandContainer = document.getElementById('brandFilterContainer');
+  if (brandContainer) {
+    var brands = getBrands();
+    var brandHtml = '<button class="filter-btn' + (currentBrand === 'all' ? ' active' : '') + '" data-brand="all">All Brands</button>';
+    brands.forEach(function(b) {
+      brandHtml += '<button class="filter-btn' + (currentBrand === b ? ' active' : '') + '" data-brand="' + b + '">' + b + '</button>';
+    });
+    brandContainer.innerHTML = brandHtml;
+  }
 }
 
-document.getElementById('filterContainer').addEventListener('click', e => {
-  const btn = e.target.closest('.filter-btn');
+document.getElementById('filterContainer').addEventListener('click', function(e) {
+  var btn = e.target.closest('.filter-btn');
   if (!btn) return;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#filterContainer .filter-btn').forEach(function(b) { b.classList.remove('active'); });
   btn.classList.add('active');
   currentCategory = btn.dataset.category;
   renderProducts();
 });
 
+document.addEventListener('click', function(e) {
+  var btn = e.target.closest('#brandFilterContainer .filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('#brandFilterContainer .filter-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  currentBrand = btn.dataset.brand;
+  renderProducts();
+});
+
 function renderProducts() {
-  const grid = document.getElementById('productGrid');
-  const empty = document.getElementById('emptyState');
-  let filtered = products.filter(p => p.available !== false);
+  var grid = document.getElementById('productGrid');
+  var empty = document.getElementById('emptyState');
+  var filtered = products.filter(function(p) { return p.available !== false; });
   if (currentCategory !== 'all') {
-    filtered = filtered.filter(p => p.category === currentCategory);
+    filtered = filtered.filter(function(p) { return p.category1 === currentCategory; });
+  }
+  if (currentBrand !== 'all') {
+    filtered = filtered.filter(function(p) { return p.category2 === currentBrand; });
   }
   if (currentSearch) {
-    const q = currentSearch.toLowerCase();
-    filtered = filtered.filter(p =>
-      p.name.toLowerCase().includes(q) ||
-      p.category.toLowerCase().includes(q)
-    );
+    var q = currentSearch.toLowerCase();
+    filtered = filtered.filter(function(p) {
+      return (p.name && p.name.toLowerCase().indexOf(q) !== -1) ||
+             (p.category1 && p.category1.toLowerCase().indexOf(q) !== -1) ||
+             (p.category2 && p.category2.toLowerCase().indexOf(q) !== -1);
+    });
   }
   if (filtered.length === 0) {
     grid.innerHTML = '';
@@ -223,17 +301,17 @@ function renderProducts() {
     return;
   }
   empty.style.display = 'none';
-  grid.innerHTML = filtered.map(p => `
-    <div class="product-card" data-id="${p.id}">
-      <img class="product-image" src="${p.images?.[0] || 'images/products/placeholder.svg'}" alt="${p.name}" loading="lazy"
-           onerror="this.src='images/products/placeholder.svg'">
-      <div class="product-info">
-        <div class="product-category">${p.category}</div>
-        <div class="product-name">${p.name}</div>
-        <div class="product-price">${p.price}</div>
-      </div>
-    </div>
-  `).join('');
+  grid.innerHTML = filtered.map(function(p) {
+    var brandHtml = p.category2 ? '<span class="product-brand">' + p.category2 + '</span>' : '';
+    return '<div class="product-card" data-id="' + p.id + '">' +
+      '<img class="product-image" src="' + (p.images?.[0] || 'images/products/placeholder.svg') + '" alt="' + p.name + '" loading="lazy" onerror="this.src=\'images/products/placeholder.svg\'">' +
+      '<div class="product-info">' +
+      '<div class="product-category">' + p.category1 + '</div>' +
+      brandHtml +
+      '<div class="product-name">' + p.name + '</div>' +
+      '<div class="product-price">' + p.price + '</div>' +
+      '</div></div>';
+  }).join('');
   grid.querySelectorAll('.product-card').forEach(card => {
     card.addEventListener('click', () => {
       const id = parseInt(card.dataset.id);
@@ -249,7 +327,7 @@ function openModal(product) {
   showModalImage();
   document.getElementById('modalTitle').textContent = product.name;
   document.getElementById('modalPrice').textContent = product.price;
-  document.getElementById('modalCategory').textContent = product.category;
+  document.getElementById('modalCategory').textContent = product.category1 + (product.category2 ? ' · ' + product.category2 : '');
   document.getElementById('modalDesc').textContent = product.description;
   document.getElementById('productModal').classList.add('active');
   lockBody();
@@ -528,21 +606,21 @@ function renderAdminList() {
     container.innerHTML = '<p style="color:#888;text-align:center;padding:2rem">No products yet. Add your first product!</p>';
     return;
   }
-  container.innerHTML = products.map(p => `
-    <div class="admin-product-item" data-id="${p.id}">
-      <img src="${p.images?.[0] || 'images/products/placeholder.svg'}" alt="${p.name}"
-           onerror="this.src='images/products/placeholder.svg'">
-      <div class="admin-product-item-info">
-        <div class="name">${p.name}</div>
-        <div class="meta">${p.category} · ${p.price}</div>
-      </div>
-      <div class="admin-product-item-actions">
-        <button class="btn btn-sm ${p.available !== false ? 'btn-success' : 'btn-secondary'} toggle-available-btn">${p.available !== false ? 'Available' : 'Hidden'}</button>
-        <button class="btn btn-secondary btn-sm edit-product-btn">Edit</button>
-        <button class="btn btn-danger btn-sm delete-product-btn">Delete</button>
-      </div>
-    </div>
-  `).join('');
+  container.innerHTML = products.map(function(p) {
+    var catStr = p.category1;
+    if (p.category2) catStr += ' · ' + p.category2;
+    return '<div class="admin-product-item" data-id="' + p.id + '">' +
+      '<img src="' + (p.images?.[0] || 'images/products/placeholder.svg') + '" alt="' + p.name + '" onerror="this.src=\'images/products/placeholder.svg\'">' +
+      '<div class="admin-product-item-info">' +
+      '<div class="name">' + p.name + '</div>' +
+      '<div class="meta">' + catStr + ' · ' + p.price + '</div>' +
+      '</div>' +
+      '<div class="admin-product-item-actions">' +
+      '<button class="btn btn-sm ' + (p.available !== false ? 'btn-success' : 'btn-secondary') + ' toggle-available-btn">' + (p.available !== false ? 'Available' : 'Hidden') + '</button>' +
+      '<button class="btn btn-secondary btn-sm edit-product-btn">Edit</button>' +
+      '<button class="btn btn-danger btn-sm delete-product-btn">Delete</button>' +
+      '</div></div>';
+  }).join('');
 
   container.querySelectorAll('.toggle-available-btn').forEach(btn => {
     btn.addEventListener('click', e => {
@@ -572,6 +650,18 @@ function renderAdminList() {
   });
 }
 
+function renderCategoryDropdowns() {
+  var typeSelect = document.getElementById('formCategory1');
+  var brandSelect = document.getElementById('formCategory2');
+  if (!typeSelect || !brandSelect) return;
+  var types = categoriesConfig.types.slice();
+  getTypes().forEach(function(t) { if (types.indexOf(t) === -1) types.push(t); });
+  var brands = categoriesConfig.brands.slice();
+  getBrands().forEach(function(b) { if (brands.indexOf(b) === -1) brands.push(b); });
+  typeSelect.innerHTML = '<option value="">Select type...</option>' + types.map(function(t) { return '<option value="' + t + '">' + t + '</option>'; }).join('');
+  brandSelect.innerHTML = '<option value="">Select brand...</option>' + brands.map(function(b) { return '<option value="' + b + '">' + b + '</option>'; }).join('');
+}
+
 function resetForm() {
   editingId = null;
   document.getElementById('formTitle').textContent = 'Add Product';
@@ -588,12 +678,13 @@ function populateForm(product) {
   document.getElementById('formSubmitBtn').textContent = 'Save Changes';
   document.getElementById('formCancelBtn').style.display = 'inline-block';
   document.getElementById('formName').value = product.name;
-  document.getElementById('formCategory').value = product.category;
+  document.getElementById('formCategory1').value = product.category1 || '';
+  document.getElementById('formCategory2').value = product.category2 || '';
   document.getElementById('formPrice').value = product.price;
   document.getElementById('formDesc').value = product.description;
   document.getElementById('formAvailable').checked = product.available !== false;
-  const imgs = product.images || (product.image ? [product.image] : []);
-  selectedImagesData = imgs.filter(img => img && !img.includes('placeholder'));
+  var imgs = product.images || (product.image ? [product.image] : []);
+  selectedImagesData = imgs.filter(function(img) { return img && img.indexOf('placeholder') === -1; });
   renderImagePreview();
   document.getElementById('formImage').value = '';
 }
@@ -613,11 +704,12 @@ function deleteProduct(id) {
 
 document.getElementById('productForm').addEventListener('submit', function(e) {
   e.preventDefault();
-  const name = document.getElementById('formName').value.trim();
-  const category = document.getElementById('formCategory').value.trim();
-  const price = document.getElementById('formPrice').value.trim();
-  const description = document.getElementById('formDesc').value.trim();
-  if (!name || !category || !price || !description) return;
+  var name = document.getElementById('formName').value.trim();
+  var category1 = document.getElementById('formCategory1').value;
+  var category2 = document.getElementById('formCategory2').value;
+  var price = document.getElementById('formPrice').value.trim();
+  var description = document.getElementById('formDesc').value.trim();
+  if (!name || !category1 || !category2 || !price || !description) return;
 
   var submitBtn = document.getElementById('formSubmitBtn');
   var origText = submitBtn.textContent;
@@ -629,13 +721,13 @@ document.getElementById('productForm').addEventListener('submit', function(e) {
 
   function finish(images) {
     if (editingId) {
-      const idx = products.findIndex(p => p.id === editingId);
+      var idx = products.findIndex(function(p) { return p.id === editingId; });
       if (idx !== -1) {
-        products[idx] = { ...products[idx], name, category, price, description, images, available: document.getElementById('formAvailable').checked };
+        products[idx] = Object.assign({}, products[idx], { name: name, category1: category1, category2: category2, price: price, description: description, images: images, available: document.getElementById('formAvailable').checked });
       }
     } else {
-      const maxId = products.length > 0 ? Math.max(...products.map(p => p.id)) : 0;
-      products.push({ id: maxId + 1, name, category, price, description, images, available: document.getElementById('formAvailable').checked });
+      var maxId = products.length > 0 ? Math.max.apply(null, products.map(function(p) { return p.id; })) : 0;
+      products.push({ id: maxId + 1, name: name, category1: category1, category2: category2, price: price, description: description, images: images, available: document.getElementById('formAvailable').checked });
     }
     saveProducts();
     resetForm();
@@ -747,11 +839,16 @@ document.getElementById('importFileInput').addEventListener('change', e => {
       const data = JSON.parse(ev.target.result);
       if (!Array.isArray(data)) throw new Error('Invalid format');
       if (data.length > 0 && !data[0].name) throw new Error('Invalid format');
-      data = data.map(p => {
+      data = data.map(function(p) {
         if (p.image && !p.images) {
           p.images = [p.image];
           delete p.image;
         }
+        if (p.category && !p.category1) {
+          p.category1 = p.category;
+          delete p.category;
+        }
+        if (!p.category2) p.category2 = '';
         return p;
       });
       if (confirm(`Replace all ${products.length} products with ${data.length} imported products?`)) {
@@ -789,13 +886,85 @@ document.getElementById('footerAdminLink').addEventListener('click', e => {
   showAdminPanel();
 });
 
-document.getElementById('backToPublicBtn').addEventListener('click', () => {
+document.getElementById('manageCategoriesBtn').addEventListener('click', function() {
+  var el = document.getElementById('adminCategories');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  renderCategoryManagement();
+});
+
+document.getElementById('backToPublicBtn').addEventListener('click', function() {
+  document.getElementById('adminCategories').style.display = 'none';
   document.getElementById('adminPanel').style.display = 'none';
   if (typeof MAINTENANCE_MODE !== 'undefined' && MAINTENANCE_MODE) {
     document.getElementById('maintenancePublic').style.display = 'block';
   } else {
     document.getElementById('maintenanceOverlay').classList.remove('active');
   }
+});
+
+// ---- CATEGORY MANAGEMENT ----
+
+function renderCategoryManagement() {
+  var typeList = document.getElementById('typeTagList');
+  var brandList = document.getElementById('brandTagList');
+  if (!typeList || !brandList) return;
+  typeList.innerHTML = categoriesConfig.types.map(function(t) {
+    return '<span class="admin-tag">' + t + '<span class="admin-tag-remove" data-type="' + t + '">×</span></span>';
+  }).join('');
+  brandList.innerHTML = categoriesConfig.brands.map(function(b) {
+    return '<span class="admin-tag">' + b + '<span class="admin-tag-remove" data-brand="' + b + '">×</span></span>';
+  }).join('');
+  document.querySelectorAll('#typeTagList .admin-tag-remove').forEach(function(el) {
+    el.addEventListener('click', function() {
+      var t = this.dataset.type;
+      categoriesConfig.types = categoriesConfig.types.filter(function(x) { return x !== t; });
+      saveCategoriesConfig();
+      renderCategoryManagement();
+      renderCategoryDropdowns();
+    });
+  });
+  document.querySelectorAll('#brandTagList .admin-tag-remove').forEach(function(el) {
+    el.addEventListener('click', function() {
+      var b = this.dataset.brand;
+      categoriesConfig.brands = categoriesConfig.brands.filter(function(x) { return x !== b; });
+      saveCategoriesConfig();
+      renderCategoryManagement();
+      renderCategoryDropdowns();
+    });
+  });
+}
+
+document.getElementById('addTypeBtn').addEventListener('click', function() {
+  var input = document.getElementById('newTypeInput');
+  var val = input.value.trim();
+  if (!val) return;
+  if (categoriesConfig.types.indexOf(val) === -1) {
+    categoriesConfig.types.push(val);
+    saveCategoriesConfig();
+    renderCategoryManagement();
+    renderCategoryDropdowns();
+  }
+  input.value = '';
+});
+
+document.getElementById('addBrandBtn').addEventListener('click', function() {
+  var input = document.getElementById('newBrandInput');
+  var val = input.value.trim();
+  if (!val) return;
+  if (categoriesConfig.brands.indexOf(val) === -1) {
+    categoriesConfig.brands.push(val);
+    saveCategoriesConfig();
+    renderCategoryManagement();
+    renderCategoryDropdowns();
+  }
+  input.value = '';
+});
+
+document.getElementById('newTypeInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addTypeBtn').click(); }
+});
+document.getElementById('newBrandInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addBrandBtn').click(); }
 });
 
 // ---- HERO CAROUSEL ----

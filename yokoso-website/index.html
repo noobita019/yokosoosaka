@@ -52,6 +52,9 @@
       <div class="filters" id="filterContainer">
         <button class="filter-btn active" data-category="all">All</button>
       </div>
+      <div class="filters" id="brandFilterContainer">
+        <button class="filter-btn active" data-brand="all">All Brands</button>
+      </div>
     </div>
   </section>
 
@@ -124,6 +127,7 @@
         <div class="admin-header-actions">
           <button class="btn btn-secondary" id="importBtn">Import JSON</button>
           <button class="btn btn-secondary" id="exportBtn">Export JSON</button>
+          <button class="btn btn-secondary" id="manageCategoriesBtn">Categories</button>
           <button class="btn btn-secondary" id="backToPublicBtn">Back</button>
         </div>
       </div>
@@ -139,9 +143,15 @@
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label>Category</label>
-                <input type="text" id="formCategory" required>
+                <label>Type (Category 1)</label>
+                <select id="formCategory1" required></select>
               </div>
+              <div class="form-group">
+                <label>Brand (Category 2)</label>
+                <select id="formCategory2" required></select>
+              </div>
+            </div>
+            <div class="form-row">
               <div class="form-group">
                 <label>Price</label>
                 <input type="text" id="formPrice" required placeholder="₱850">
@@ -174,6 +184,26 @@
         <div class="admin-list">
           <h3>All Products (<span id="productCount">0</span>)</h3>
           <div class="admin-product-list" id="adminProductList"></div>
+        <div class="admin-categories" id="adminCategories" style="display:none">
+          <h3>Manage Categories</h3>
+          <div class="admin-categories-grid">
+            <div class="admin-category-group">
+              <h4>Types</h4>
+              <div class="admin-tag-list" id="typeTagList"></div>
+              <div class="admin-add-category">
+                <input type="text" id="newTypeInput" placeholder="New type...">
+                <button class="btn btn-primary btn-sm" id="addTypeBtn">Add</button>
+              </div>
+            </div>
+            <div class="admin-category-group">
+              <h4>Brands</h4>
+              <div class="admin-tag-list" id="brandTagList"></div>
+              <div class="admin-add-category">
+                <input type="text" id="newBrandInput" placeholder="New brand...">
+                <button class="btn btn-primary btn-sm" id="addBrandBtn">Add</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

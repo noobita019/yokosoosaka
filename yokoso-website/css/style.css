@@ -333,7 +333,15 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.8px;
   font-weight: 700;
+  margin-bottom: 0.15rem;
+}
+
+.product-brand {
+  font-size: 0.7rem;
+  color: #888;
+  font-weight: 500;
   margin-bottom: 0.3rem;
+  display: block;
 }
 
 .product-price {
@@ -844,6 +852,76 @@ body {
   color: #aaa;
 }
 
+.admin-categories {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.admin-categories-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.admin-category-group h4 {
+  color: #e94560;
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+}
+
+.admin-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  min-height: 32px;
+}
+
+.admin-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(255,255,255,0.1);
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  color: #fff;
+}
+
+.admin-tag-remove {
+  cursor: pointer;
+  color: #dc3545;
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1;
+  margin-left: 0.15rem;
+}
+
+.admin-tag-remove:hover {
+  color: #ff6b7a;
+}
+
+.admin-add-category {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.admin-add-category input {
+  flex: 1;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.admin-add-category input:focus {
+  border-color: #e94560;
+}
+
 .admin-product-item-actions {
   display: flex;
   gap: 0.3rem;
@@ -1014,6 +1092,10 @@ body {
   }
 
   .admin-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-categories-grid {
     grid-template-columns: 1fr;
   }
 

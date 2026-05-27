@@ -1,3 +1,5 @@
 {
-  "enabled": false
+  "enabled": false,
+  "types": ["Clothing", "Shoes", "Cosmetics"],
+  "brands": ["Nike", "Uniqlo", "GU", "Biore", "Onitsuka Tiger", "Heroine Make"]
 }
