@@ -221,24 +221,9 @@ function dataURLToBlob(dataUrl) {
   return new Blob([ab], { type: mime });
 }
 
-function uploadImage(dataUrl) {
-  return new Promise(function(resolve, reject) {
-    try {
-      var blob = dataURLToBlob(dataUrl);
-      var filename = 'product_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '.jpg';
-      var ref = fbStorage.ref('product-images/' + filename);
-      ref.put(blob, { contentType: 'image/jpeg' }).then(function(snapshot) {
-        return snapshot.ref.getDownloadURL();
-      }).then(function(url) {
-        resolve(url);
-      }).catch(function(err) {
-        reject(err);
-      });
-    } catch (err) {
-      reject(err);
-    }
-  });
-}
+  function uploadImage(dataUrl) {
+    return Promise.resolve(dataUrl);
+  }
 
 function getTypes() {
   var types = [...new Set(products.filter(p => p.category1).map(p => p.category1))].sort();
