@@ -173,17 +173,22 @@ function loadProducts(callback) {
   }
 
   if (fbDB) {
+    var catDone = false;
     fbDB.collection(FB_COLLECTION).doc('categories').get()
       .then(function(doc) {
-        if (doc.exists && doc.data().types && doc.data().brands) {
-          categoriesConfig = doc.data();
-          if (!categoriesConfig.sizes) categoriesConfig.sizes = [];
-          localStorage.setItem('yokoso_categories', JSON.stringify(categoriesConfig));
+        if (!catDone) {
+          catDone = true;
+          if (doc.exists && doc.data().types && doc.data().brands) {
+            categoriesConfig = doc.data();
+            if (!categoriesConfig.sizes) categoriesConfig.sizes = [];
+            localStorage.setItem('yokoso_categories', JSON.stringify(categoriesConfig));
+          }
+          renderCategoryDropdowns();
+          renderCategoryManagement();
         }
-        renderCategoryDropdowns();
-        renderCategoryManagement();
       })
-      .catch(function() { renderCategoryDropdowns(); renderCategoryManagement(); });
+      .catch(function() { if (!catDone) { catDone = true; renderCategoryDropdowns(); renderCategoryManagement(); } });
+    setTimeout(function() { if (!catDone) { catDone = true; renderCategoryDropdowns(); renderCategoryManagement(); } }, 3000);
   } else {
     renderCategoryDropdowns();
     renderCategoryManagement();
@@ -279,38 +284,17 @@ document.getElementById('filterContainer').addEventListener('click', function(e)
 
 document.addEventListener('click', function(e) {
   var btn = e.target.closest('#brandFilterContainer .filter-btn');
-  if (btn) {
-    document.querySelectorAll('#brandFilterContainer .filter-btn').forEach(function(b) { b.classList.remove('active'); });
-    btn.classList.add('active');
-    currentBrand = btn.dataset.brand;
-    renderProducts();
-    return;
-  }
-  var card = e.target.closest('.product-card');
-  if (card) {
-    console.log('global click card, id:', card.dataset.id);
-    const id = parseInt(card.dataset.id);
-    const product = products.find(p => p.id === id);
-    if (product) openModal(product);
-    return;
-  }
-});
-
-document.addEventListener('click', function(e) {
-  var card = e.target.closest('.product-card');
-  if (card) {
-    const id = parseInt(card.dataset.id);
-    const product = products.find(p => p.id === id);
-    if (product) openModal(product);
-    return;
-  }
-  var btn = e.target.closest('#brandFilterContainer .filter-btn');
   if (!btn) return;
   document.querySelectorAll('#brandFilterContainer .filter-btn').forEach(function(b) { b.classList.remove('active'); });
   btn.classList.add('active');
   currentBrand = btn.dataset.brand;
   renderProducts();
 });
+
+function openProduct(id) {
+  const product = products.find(p => p.id === id);
+  if (product) openModal(product);
+}
 
 function renderProducts() {
   var grid = document.getElementById('productGrid');
@@ -339,7 +323,7 @@ function renderProducts() {
   grid.innerHTML = filtered.map(function(p) {
     var brandHtml = p.category2 ? '<span class="product-brand">' + p.category2 + '</span>' : '';
     var sizesHtml = Array.isArray(p.sizes) && p.sizes.length > 0 ? '<div class="product-sizes">' + p.sizes.map(function(s) { return '<span class="product-size-tag">' + s + '</span>'; }).join('') + '</div>' : '';
-    return '<div class="product-card" data-id="' + p.id + '">' +
+    return '<div class="product-card" data-id="' + p.id + '" onclick="openProduct(' + p.id + ')">' +
       '<img class="product-image" src="' + (p.images?.[0] || 'images/products/placeholder.svg') + '" alt="' + p.name + '" loading="lazy" onerror="if(this.dataset.retry)this.style.display=\'none\';else{this.dataset.retry=\'1\';this.src=\'images/products/placeholder.svg\'}">' +
       '<div class="product-info">' +
       '<div class="product-category">' + p.category1 + '</div>' +
