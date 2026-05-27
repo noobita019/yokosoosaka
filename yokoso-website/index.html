@@ -183,6 +183,11 @@
         </div>
         <div class="admin-list">
           <h3>All Products (<span id="productCount">0</span>)</h3>
+          <div class="admin-list-toolbar">
+            <input type="search" id="adminSearch" placeholder="Search products..." class="admin-search-input">
+            <select id="adminFilterType" class="admin-filter-select"><option value="all">All Types</option></select>
+            <select id="adminFilterBrand" class="admin-filter-select"><option value="all">All Brands</option></select>
+          </div>
           <div class="admin-product-list" id="adminProductList"></div>
         <div class="admin-categories" id="adminCategories" style="display:none">
           <h3>Manage Categories</h3>

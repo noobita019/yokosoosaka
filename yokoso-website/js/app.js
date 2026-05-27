@@ -37,6 +37,9 @@ const FB_DOC = 'products';
 
 let categoriesConfig = { types: ["Clothing", "Shoes", "Cosmetics"], brands: ["Nike", "Uniqlo", "GU", "Biore", "Onitsuka Tiger", "Heroine Make", "Generic"] };
 let currentBrand = 'all';
+var adminSearchVal = '';
+var adminFilterType = 'all';
+var adminFilterBrand = 'all';
 
 let products = [];
 let editingId = null;
@@ -600,13 +603,29 @@ document.getElementById('menuToggle').addEventListener('click', () => {
 // ---- ADMIN PANEL ----
 
 function renderAdminList() {
-  const container = document.getElementById('adminProductList');
-  document.getElementById('productCount').textContent = products.length;
-  if (products.length === 0) {
-    container.innerHTML = '<p style="color:#888;text-align:center;padding:2rem">No products yet. Add your first product!</p>';
+  renderAdminFilterDropdowns();
+  var container = document.getElementById('adminProductList');
+  var filtered = products;
+  if (adminSearchVal) {
+    var q = adminSearchVal.toLowerCase();
+    filtered = filtered.filter(function(p) {
+      return (p.name && p.name.toLowerCase().indexOf(q) !== -1) ||
+             (p.category1 && p.category1.toLowerCase().indexOf(q) !== -1) ||
+             (p.category2 && p.category2.toLowerCase().indexOf(q) !== -1);
+    });
+  }
+  if (adminFilterType !== 'all') {
+    filtered = filtered.filter(function(p) { return p.category1 === adminFilterType; });
+  }
+  if (adminFilterBrand !== 'all') {
+    filtered = filtered.filter(function(p) { return p.category2 === adminFilterBrand; });
+  }
+  document.getElementById('productCount').textContent = filtered.length;
+  if (filtered.length === 0) {
+    container.innerHTML = '<p style="color:#888;text-align:center;padding:2rem">' + (products.length === 0 ? 'No products yet. Add your first product!' : 'No products match your filters.') + '</p>';
     return;
   }
-  container.innerHTML = products.map(function(p) {
+  container.innerHTML = filtered.map(function(p) {
     var catStr = p.category1;
     if (p.category2) catStr += ' · ' + p.category2;
     return '<div class="admin-product-item" data-id="' + p.id + '">' +
@@ -876,6 +895,7 @@ function showAdminPanel() {
   document.getElementById('maintenanceOverlay').classList.add('active');
   document.getElementById('maintenancePublic').style.display = 'none';
   document.getElementById('adminPanel').style.display = 'block';
+  renderAdminFilterDropdowns();
   renderAdminList();
 }
 
@@ -884,6 +904,31 @@ document.getElementById('enterAdminBtn').addEventListener('click', showAdminPane
 document.getElementById('footerAdminLink').addEventListener('click', e => {
   e.preventDefault();
   showAdminPanel();
+});
+
+function renderAdminFilterDropdowns() {
+  var typeSelect = document.getElementById('adminFilterType');
+  var brandSelect = document.getElementById('adminFilterBrand');
+  if (!typeSelect || !brandSelect) return;
+  var types = getTypes();
+  var brands = getBrands();
+  typeSelect.innerHTML = '<option value="all">All Types</option>' + types.map(function(t) { return '<option value="' + t + '"' + (adminFilterType === t ? ' selected' : '') + '>' + t + '</option>'; }).join('');
+  brandSelect.innerHTML = '<option value="all">All Brands</option>' + brands.map(function(b) { return '<option value="' + b + '"' + (adminFilterBrand === b ? ' selected' : '') + '>' + b + '</option>'; }).join('');
+}
+
+document.getElementById('adminSearch').addEventListener('input', function() {
+  adminSearchVal = this.value;
+  renderAdminList();
+});
+
+document.getElementById('adminFilterType').addEventListener('change', function() {
+  adminFilterType = this.value;
+  renderAdminList();
+});
+
+document.getElementById('adminFilterBrand').addEventListener('change', function() {
+  adminFilterBrand = this.value;
+  renderAdminList();
 });
 
 document.getElementById('manageCategoriesBtn').addEventListener('click', function() {
@@ -895,6 +940,9 @@ document.getElementById('manageCategoriesBtn').addEventListener('click', functio
 document.getElementById('backToPublicBtn').addEventListener('click', function() {
   document.getElementById('adminCategories').style.display = 'none';
   document.getElementById('adminPanel').style.display = 'none';
+  adminSearchVal = '';
+  adminFilterType = 'all';
+  adminFilterBrand = 'all';
   if (typeof MAINTENANCE_MODE !== 'undefined' && MAINTENANCE_MODE) {
     document.getElementById('maintenancePublic').style.display = 'block';
   } else {
@@ -904,15 +952,47 @@ document.getElementById('backToPublicBtn').addEventListener('click', function() 
 
 // ---- CATEGORY MANAGEMENT ----
 
+function makeEditableTag(el, list, key) {
+  var span = el.querySelector('.admin-tag-label') || el;
+  var orig = span.textContent;
+  span.contentEditable = true;
+  span.focus();
+  var range = document.createRange();
+  range.selectNodeContents(span);
+  var sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  function save() {
+    span.contentEditable = false;
+    var val = span.textContent.trim();
+    if (val && val !== orig) {
+      var idx = categoriesConfig[key].indexOf(orig);
+      if (idx !== -1) {
+        categoriesConfig[key][idx] = val;
+        saveCategoriesConfig();
+        renderCategoryDropdowns();
+        renderAdminFilterDropdowns();
+      }
+    } else {
+      span.textContent = orig;
+    }
+  }
+  span.addEventListener('blur', save);
+  span.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); span.blur(); }
+    if (e.key === 'Escape') { span.textContent = orig; span.blur(); }
+  });
+}
+
 function renderCategoryManagement() {
   var typeList = document.getElementById('typeTagList');
   var brandList = document.getElementById('brandTagList');
   if (!typeList || !brandList) return;
   typeList.innerHTML = categoriesConfig.types.map(function(t) {
-    return '<span class="admin-tag">' + t + '<span class="admin-tag-remove" data-type="' + t + '">×</span></span>';
+    return '<span class="admin-tag"><span class="admin-tag-label" title="Double-click to rename">' + t + '</span><span class="admin-tag-remove" data-type="' + t + '">×</span></span>';
   }).join('');
   brandList.innerHTML = categoriesConfig.brands.map(function(b) {
-    return '<span class="admin-tag">' + b + '<span class="admin-tag-remove" data-brand="' + b + '">×</span></span>';
+    return '<span class="admin-tag"><span class="admin-tag-label" title="Double-click to rename">' + b + '</span><span class="admin-tag-remove" data-brand="' + b + '">×</span></span>';
   }).join('');
   document.querySelectorAll('#typeTagList .admin-tag-remove').forEach(function(el) {
     el.addEventListener('click', function() {
@@ -921,6 +1001,7 @@ function renderCategoryManagement() {
       saveCategoriesConfig();
       renderCategoryManagement();
       renderCategoryDropdowns();
+      renderAdminFilterDropdowns();
     });
   });
   document.querySelectorAll('#brandTagList .admin-tag-remove').forEach(function(el) {
@@ -930,7 +1011,14 @@ function renderCategoryManagement() {
       saveCategoriesConfig();
       renderCategoryManagement();
       renderCategoryDropdowns();
+      renderAdminFilterDropdowns();
     });
+  });
+  document.querySelectorAll('#typeTagList .admin-tag-label').forEach(function(el) {
+    el.addEventListener('dblclick', function() { makeEditableTag(el.parentNode, categoriesConfig.types, 'types'); });
+  });
+  document.querySelectorAll('#brandTagList .admin-tag-label').forEach(function(el) {
+    el.addEventListener('dblclick', function() { makeEditableTag(el.parentNode, categoriesConfig.brands, 'brands'); });
   });
 }
 
