@@ -1,5 +1,6 @@
 {
   "enabled": false,
   "types": ["Clothing", "Shoes", "Cosmetics"],
-  "brands": ["Nike", "Uniqlo", "GU", "Biore", "Onitsuka Tiger", "Heroine Make"]
+  "brands": ["Nike", "Uniqlo", "GU", "Biore", "Onitsuka Tiger", "Heroine Make", "Generic"],
+  "sizes": ["S", "M", "L", "XL", "6", "7", "8", "9", "10", "11", "12", "One Size", "Free Size"]
 }

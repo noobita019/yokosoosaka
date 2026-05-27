@@ -168,6 +168,15 @@
               </label>
             </div>
             <div class="form-group">
+              <label>Sizes</label>
+              <div class="form-sizes-area">
+                <input type="text" id="newSizeInput" placeholder="Custom size...">
+                <button type="button" class="btn btn-secondary btn-sm" id="addSizeBtn">Add</button>
+              </div>
+              <div class="form-size-tags" id="formSizeTags"></div>
+              <div class="form-size-presets" id="formSizePresets"></div>
+            </div>
+            <div class="form-group">
               <label>Product Images</label>
               <div class="form-image-upload-area">
                 <input type="file" id="formImage" accept="image/*">
@@ -208,6 +217,14 @@
                 <button class="btn btn-primary btn-sm" id="addBrandBtn">Add</button>
               </div>
             </div>
+            <div class="admin-category-group">
+              <h4>Sizes</h4>
+              <div class="admin-tag-list" id="sizeTagList"></div>
+              <div class="admin-add-category">
+                <input type="text" id="newSizeCatInput" placeholder="New size...">
+                <button class="btn btn-primary btn-sm" id="addSizeCatBtn">Add</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -228,6 +245,7 @@
           <h2 id="modalTitle"></h2>
           <p class="modal-price" id="modalPrice"></p>
           <p class="modal-category" id="modalCategory"></p>
+          <div class="modal-sizes" id="modalSizes"></div>
           <p class="modal-desc" id="modalDesc"></p>
           <a href="https://m.me/yokosoosaka" target="_blank" class="btn btn-primary" id="modalOrderBtn">Inquire / Order</a>
         </div>

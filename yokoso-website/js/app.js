@@ -1,17 +1,17 @@
 const DEFAULT_PRODUCTS = [
-  { id: 1, name: "Nike Air Force 1 Low (Japan Exclusive)", category1: "Shoes", category2: "Nike", price: "₱5,200", description: "Authentic Nike Air Force 1 Low from Japan. Limited Japan-exclusive colorway. Leather upper with Air-Sole cushioning. Sizes 7-12 US.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 2, name: "Nike Dunk Low Retro", category1: "Shoes", category2: "Nike", price: "₱4,800", description: "Classic Nike Dunk Low in premium leather. Japan release. Available in multiple colors. Sizes 7-11 US.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 3, name: "Nike Air Max 90 (Japan Pack)", category1: "Shoes", category2: "Nike", price: "₱5,500", description: "Nike Air Max 90 from the Japan-exclusive pack. Visible Air cushioning. Iconic silhouette. Sizes 7-12 US.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 4, name: "GU Fluffy Knit Sweater", category1: "Clothing", category2: "GU", price: "₱850", description: "Soft fluffy knit sweater from GU. Available in multiple colors. Perfect for cold season. Oversized relaxed fit.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 5, name: "Uniqlo Airism Oversized T-Shirt", category1: "Clothing", category2: "Uniqlo", price: "₱650", description: "Authentic Uniqlo Airism oversized t-shirt. Ultra-lightweight and breathable. Moisture-wicking fabric. Perfect for everyday use.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 6, name: "GU Wide Leg Pants", category1: "Clothing", category2: "GU", price: "₱950", description: "GU wide-leg pants. Comfortable and stylish. Premium cotton blend. Available in black, beige, and navy.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 7, name: "Uniqlo Light Down Jacket", category1: "Clothing", category2: "Uniqlo", price: "₱2,200", description: "Lightweight Uniqlo down jacket. Packable design. 750 fill power. Warm without being bulky. Water-repellent.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 8, name: "Japanese Biore UV Aqua Rich SPF50+", category1: "Cosmetics", category2: "Biore", price: "₱550", description: "Biore UV Aqua Rich watery essence sunscreen. SPF50+ PA++++. Lightweight, non-sticky, refreshing finish. 80g.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 9, name: "Japanese Sheet Mask Variety Pack (10pcs)", category1: "Cosmetics", category2: "Generic", price: "₱380", description: "Assorted Japanese facial sheet masks. Infused with collagen, hyaluronic acid, and vitamin C. 10-piece pack.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 10, name: "Heroine Make Waterproof Eyeliner", category1: "Cosmetics", category2: "Heroine Make", price: "₱480", description: "Japanese Heroine Make waterproof liquid eyeliner. Ultra-fine 0.1mm tip. Smudge-proof and long-lasting. Black.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 11, name: "Onitsuka Tiger Mexico 66", category1: "Shoes", category2: "Onitsuka Tiger", price: "₱3,800", description: "Classic Onitsuka Tiger Mexico 66 sneakers. Japan-exclusive colorway. Iconic design. Comfortable sole. Sizes 6-10 US.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 12, name: "GU Knit Cardigan", category1: "Clothing", category2: "GU", price: "₱1,100", description: "GU open-front knit cardigan. Soft acrylic blend. Oversized fit. Perfect layering piece for any outfit.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 13, name: "test", category1: "test", category2: "test", price: "11", description: "test", available: true, images: ["images/products/placeholder.svg"] }
+  { id: 1, name: "Nike Air Force 1 Low (Japan Exclusive)", category1: "Shoes", category2: "Nike", sizes: ["7", "8", "9", "10", "11", "12"], price: "₱5,200", description: "Authentic Nike Air Force 1 Low from Japan. Limited Japan-exclusive colorway. Leather upper with Air-Sole cushioning.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 2, name: "Nike Dunk Low Retro", category1: "Shoes", category2: "Nike", sizes: ["7", "8", "9", "10", "11"], price: "₱4,800", description: "Classic Nike Dunk Low in premium leather. Japan release. Available in multiple colors.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 3, name: "Nike Air Max 90 (Japan Pack)", category1: "Shoes", category2: "Nike", sizes: ["7", "8", "9", "10", "11", "12"], price: "₱5,500", description: "Nike Air Max 90 from the Japan-exclusive pack. Visible Air cushioning. Iconic silhouette.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 4, name: "GU Fluffy Knit Sweater", category1: "Clothing", category2: "GU", sizes: ["S", "M", "L", "XL"], price: "₱850", description: "Soft fluffy knit sweater from GU. Available in multiple colors. Perfect for cold season. Oversized relaxed fit.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 5, name: "Uniqlo Airism Oversized T-Shirt", category1: "Clothing", category2: "Uniqlo", sizes: ["S", "M", "L", "XL"], price: "₱650", description: "Authentic Uniqlo Airism oversized t-shirt. Ultra-lightweight and breathable. Moisture-wicking fabric.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 6, name: "GU Wide Leg Pants", category1: "Clothing", category2: "GU", sizes: ["S", "M", "L", "XL"], price: "₱950", description: "GU wide-leg pants. Comfortable and stylish. Premium cotton blend. Available in black, beige, and navy.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 7, name: "Uniqlo Light Down Jacket", category1: "Clothing", category2: "Uniqlo", sizes: ["S", "M", "L", "XL"], price: "₱2,200", description: "Lightweight Uniqlo down jacket. Packable design. 750 fill power. Warm without being bulky. Water-repellent.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 8, name: "Japanese Biore UV Aqua Rich SPF50+", category1: "Cosmetics", category2: "Biore", sizes: [], price: "₱550", description: "Biore UV Aqua Rich watery essence sunscreen. SPF50+ PA++++. Lightweight, non-sticky, refreshing finish. 80g.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 9, name: "Japanese Sheet Mask Variety Pack (10pcs)", category1: "Cosmetics", category2: "Generic", sizes: [], price: "₱380", description: "Assorted Japanese facial sheet masks. Infused with collagen, hyaluronic acid, and vitamin C. 10-piece pack.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 10, name: "Heroine Make Waterproof Eyeliner", category1: "Cosmetics", category2: "Heroine Make", sizes: [], price: "₱480", description: "Japanese Heroine Make waterproof liquid eyeliner. Ultra-fine 0.1mm tip. Smudge-proof and long-lasting. Black.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 11, name: "Onitsuka Tiger Mexico 66", category1: "Shoes", category2: "Onitsuka Tiger", sizes: ["6", "7", "8", "9", "10"], price: "₱3,800", description: "Classic Onitsuka Tiger Mexico 66 sneakers. Japan-exclusive colorway. Iconic design. Comfortable sole.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 12, name: "GU Knit Cardigan", category1: "Clothing", category2: "GU", sizes: ["S", "M", "L", "XL"], price: "₱1,100", description: "GU open-front knit cardigan. Soft acrylic blend. Oversized fit. Perfect layering piece for any outfit.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 13, name: "test", category1: "test", category2: "test", sizes: [], price: "11", description: "test", available: true, images: ["images/products/placeholder.svg"] }
 ];
 
 // Firebase
@@ -35,7 +35,7 @@ try {
 const FB_COLLECTION = 'yokoso';
 const FB_DOC = 'products';
 
-let categoriesConfig = { types: ["Clothing", "Shoes", "Cosmetics"], brands: ["Nike", "Uniqlo", "GU", "Biore", "Onitsuka Tiger", "Heroine Make", "Generic"] };
+let categoriesConfig = { types: ["Clothing", "Shoes", "Cosmetics"], brands: ["Nike", "Uniqlo", "GU", "Biore", "Onitsuka Tiger", "Heroine Make", "Generic"], sizes: ["S", "M", "L", "XL", "6", "7", "8", "9", "10", "11", "12", "One Size", "Free Size"] };
 let currentBrand = 'all';
 var adminSearchVal = '';
 var adminFilterType = 'all';
@@ -46,6 +46,7 @@ let editingId = null;
 let currentCategory = 'all';
 let currentSearch = '';
 let selectedImagesData = [];
+let selectedSizes = [];
 let currentModalImages = [];
 let currentImageIndex = 0;
 var scrollPos = 0, bodyLocked = false;
@@ -119,6 +120,10 @@ function migrateProducts() {
       p.category2 = "";
       migrated = true;
     }
+    if (!p.sizes) {
+      p.sizes = [];
+      migrated = true;
+    }
   });
   return migrated;
 }
@@ -163,7 +168,7 @@ function loadProducts(callback) {
   if (savedConfig) {
     try {
       var parsed = JSON.parse(savedConfig);
-      if (parsed.types && parsed.brands) categoriesConfig = parsed;
+      if (parsed.types && parsed.brands) { categoriesConfig = parsed; if (!categoriesConfig.sizes) categoriesConfig.sizes = []; }
     } catch (e) {}
   }
 
@@ -172,6 +177,7 @@ function loadProducts(callback) {
       .then(function(doc) {
         if (doc.exists && doc.data().types && doc.data().brands) {
           categoriesConfig = doc.data();
+          if (!categoriesConfig.sizes) categoriesConfig.sizes = [];
           localStorage.setItem('yokoso_categories', JSON.stringify(categoriesConfig));
         }
         renderCategoryDropdowns();
@@ -306,12 +312,14 @@ function renderProducts() {
   empty.style.display = 'none';
   grid.innerHTML = filtered.map(function(p) {
     var brandHtml = p.category2 ? '<span class="product-brand">' + p.category2 + '</span>' : '';
+    var sizesHtml = p.sizes && p.sizes.length > 0 ? '<div class="product-sizes">' + p.sizes.map(function(s) { return '<span class="product-size-tag">' + s + '</span>'; }).join('') + '</div>' : '';
     return '<div class="product-card" data-id="' + p.id + '">' +
       '<img class="product-image" src="' + (p.images?.[0] || 'images/products/placeholder.svg') + '" alt="' + p.name + '" loading="lazy" onerror="this.src=\'images/products/placeholder.svg\'">' +
       '<div class="product-info">' +
       '<div class="product-category">' + p.category1 + '</div>' +
       brandHtml +
       '<div class="product-name">' + p.name + '</div>' +
+      sizesHtml +
       '<div class="product-price">' + p.price + '</div>' +
       '</div></div>';
   }).join('');
@@ -331,6 +339,14 @@ function openModal(product) {
   document.getElementById('modalTitle').textContent = product.name;
   document.getElementById('modalPrice').textContent = product.price;
   document.getElementById('modalCategory').textContent = product.category1 + (product.category2 ? ' · ' + product.category2 : '');
+  var sizesEl = document.getElementById('modalSizes');
+  if (product.sizes && product.sizes.length > 0) {
+    sizesEl.innerHTML = product.sizes.map(function(s) { return '<span class="modal-size-tag">' + s + '</span>'; }).join('');
+    sizesEl.style.display = '';
+  } else {
+    sizesEl.innerHTML = '';
+    sizesEl.style.display = 'none';
+  }
   document.getElementById('modalDesc').textContent = product.description;
   document.getElementById('productModal').classList.add('active');
   lockBody();
@@ -628,11 +644,12 @@ function renderAdminList() {
   container.innerHTML = filtered.map(function(p) {
     var catStr = p.category1;
     if (p.category2) catStr += ' · ' + p.category2;
+    var sizesStr = p.sizes && p.sizes.length > 0 ? ' · Sizes: ' + p.sizes.join(', ') : '';
     return '<div class="admin-product-item" data-id="' + p.id + '">' +
       '<img src="' + (p.images?.[0] || 'images/products/placeholder.svg') + '" alt="' + p.name + '" onerror="this.src=\'images/products/placeholder.svg\'">' +
       '<div class="admin-product-item-info">' +
       '<div class="name">' + p.name + '</div>' +
-      '<div class="meta">' + catStr + ' · ' + p.price + '</div>' +
+      '<div class="meta">' + catStr + ' · ' + p.price + sizesStr + '</div>' +
       '</div>' +
       '<div class="admin-product-item-actions">' +
       '<button class="btn btn-sm ' + (p.available !== false ? 'btn-success' : 'btn-secondary') + ' toggle-available-btn">' + (p.available !== false ? 'Available' : 'Hidden') + '</button>' +
@@ -673,12 +690,61 @@ function renderCategoryDropdowns() {
   var typeSelect = document.getElementById('formCategory1');
   var brandSelect = document.getElementById('formCategory2');
   if (!typeSelect || !brandSelect) return;
+
   var types = categoriesConfig.types.slice();
   getTypes().forEach(function(t) { if (types.indexOf(t) === -1) types.push(t); });
+
   var brands = categoriesConfig.brands.slice();
   getBrands().forEach(function(b) { if (brands.indexOf(b) === -1) brands.push(b); });
+
   typeSelect.innerHTML = '<option value="">Select type...</option>' + types.map(function(t) { return '<option value="' + t + '">' + t + '</option>'; }).join('');
   brandSelect.innerHTML = '<option value="">Select brand...</option>' + brands.map(function(b) { return '<option value="' + b + '">' + b + '</option>'; }).join('');
+  renderSizePresets();
+}
+
+function renderSizePresets() {
+  var container = document.getElementById('formSizePresets');
+  if (!container) return;
+  var allSizes = categoriesConfig.sizes.slice();
+  getUsedSizes().forEach(function(s) { if (allSizes.indexOf(s) === -1) allSizes.push(s); });
+  container.innerHTML = allSizes.map(function(s) {
+    var active = selectedSizes.indexOf(s) !== -1;
+    return '<button type="button" class="form-size-preset' + (active ? ' active' : '') + '" data-size="' + s + '">' + s + '</button>';
+  }).join('');
+  container.querySelectorAll('.form-size-preset').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var s = this.dataset.size;
+      var idx = selectedSizes.indexOf(s);
+      if (idx === -1) { selectedSizes.push(s); } else { selectedSizes.splice(idx, 1); }
+      renderSizeTags();
+      renderSizePresets();
+    });
+  });
+}
+
+function renderSizeTags() {
+  var container = document.getElementById('formSizeTags');
+  if (!container) return;
+  if (selectedSizes.length === 0) { container.innerHTML = ''; return; }
+  container.innerHTML = selectedSizes.map(function(s, i) {
+    return '<span class="form-size-tag">' + s + '<span class="form-size-tag-remove" data-index="' + i + '">×</span></span>';
+  }).join('');
+  container.querySelectorAll('.form-size-tag-remove').forEach(function(el) {
+    el.addEventListener('click', function() {
+      var idx = parseInt(this.dataset.index);
+      selectedSizes.splice(idx, 1);
+      renderSizeTags();
+      renderSizePresets();
+    });
+  });
+}
+
+function getUsedSizes() {
+  var all = [];
+  products.forEach(function(p) {
+    if (p.sizes) { p.sizes.forEach(function(s) { if (all.indexOf(s) === -1) all.push(s); }); }
+  });
+  return all.sort();
 }
 
 function resetForm() {
@@ -688,7 +754,10 @@ function resetForm() {
   document.getElementById('formCancelBtn').style.display = 'none';
   document.getElementById('productForm').reset();
   selectedImagesData = [];
+  selectedSizes = [];
   renderImagePreview();
+  renderSizeTags();
+  renderSizePresets();
 }
 
 function populateForm(product) {
@@ -702,6 +771,9 @@ function populateForm(product) {
   document.getElementById('formPrice').value = product.price;
   document.getElementById('formDesc').value = product.description;
   document.getElementById('formAvailable').checked = product.available !== false;
+  selectedSizes = product.sizes ? product.sizes.slice() : [];
+  renderSizeTags();
+  renderSizePresets();
   var imgs = product.images || (product.image ? [product.image] : []);
   selectedImagesData = imgs.filter(function(img) { return img && img.indexOf('placeholder') === -1; });
   renderImagePreview();
@@ -742,11 +814,11 @@ document.getElementById('productForm').addEventListener('submit', function(e) {
     if (editingId) {
       var idx = products.findIndex(function(p) { return p.id === editingId; });
       if (idx !== -1) {
-        products[idx] = Object.assign({}, products[idx], { name: name, category1: category1, category2: category2, price: price, description: description, images: images, available: document.getElementById('formAvailable').checked });
+        products[idx] = Object.assign({}, products[idx], { name: name, category1: category1, category2: category2, price: price, description: description, images: images, sizes: selectedSizes.slice(), available: document.getElementById('formAvailable').checked });
       }
     } else {
       var maxId = products.length > 0 ? Math.max.apply(null, products.map(function(p) { return p.id; })) : 0;
-      products.push({ id: maxId + 1, name: name, category1: category1, category2: category2, price: price, description: description, images: images, available: document.getElementById('formAvailable').checked });
+      products.push({ id: maxId + 1, name: name, category1: category1, category2: category2, price: price, description: description, images: images, sizes: selectedSizes.slice(), available: document.getElementById('formAvailable').checked });
     }
     saveProducts();
     resetForm();
@@ -774,6 +846,20 @@ document.getElementById('productForm').addEventListener('submit', function(e) {
 });
 
 document.getElementById('formCancelBtn').addEventListener('click', resetForm);
+
+document.getElementById('newSizeInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    var val = this.value.trim();
+    if (val && selectedSizes.indexOf(val) === -1) { selectedSizes.push(val); this.value = ''; renderSizeTags(); renderSizePresets(); }
+  }
+});
+
+document.getElementById('addSizeBtn').addEventListener('click', function() {
+  var input = document.getElementById('newSizeInput');
+  var val = input.value.trim();
+  if (val && selectedSizes.indexOf(val) === -1) { selectedSizes.push(val); input.value = ''; renderSizeTags(); renderSizePresets(); }
+});
 
 function renderImagePreview() {
   const container = document.getElementById('formImagePreview');
@@ -868,6 +954,7 @@ document.getElementById('importFileInput').addEventListener('change', e => {
           delete p.category;
         }
         if (!p.category2) p.category2 = '';
+        if (!p.sizes) p.sizes = [];
         return p;
       });
       if (confirm(`Replace all ${products.length} products with ${data.length} imported products?`)) {
@@ -987,6 +1074,7 @@ function makeEditableTag(el, list, key) {
 function renderCategoryManagement() {
   var typeList = document.getElementById('typeTagList');
   var brandList = document.getElementById('brandTagList');
+  var sizeList = document.getElementById('sizeTagList');
   if (!typeList || !brandList) return;
   typeList.innerHTML = categoriesConfig.types.map(function(t) {
     return '<span class="admin-tag"><span class="admin-tag-label" title="Double-click to rename">' + t + '</span><span class="admin-tag-remove" data-type="' + t + '">×</span></span>';
@@ -994,6 +1082,11 @@ function renderCategoryManagement() {
   brandList.innerHTML = categoriesConfig.brands.map(function(b) {
     return '<span class="admin-tag"><span class="admin-tag-label" title="Double-click to rename">' + b + '</span><span class="admin-tag-remove" data-brand="' + b + '">×</span></span>';
   }).join('');
+  if (sizeList) {
+    sizeList.innerHTML = categoriesConfig.sizes.map(function(s) {
+      return '<span class="admin-tag"><span class="admin-tag-label" title="Double-click to rename">' + s + '</span><span class="admin-tag-remove" data-size-cat="' + s + '">×</span></span>';
+    }).join('');
+  }
   document.querySelectorAll('#typeTagList .admin-tag-remove').forEach(function(el) {
     el.addEventListener('click', function() {
       var t = this.dataset.type;
@@ -1014,6 +1107,20 @@ function renderCategoryManagement() {
       renderAdminFilterDropdowns();
     });
   });
+  if (sizeList) {
+    sizeList.querySelectorAll('.admin-tag-remove').forEach(function(el) {
+      el.addEventListener('click', function() {
+        var s = this.dataset.sizeCat;
+        categoriesConfig.sizes = categoriesConfig.sizes.filter(function(x) { return x !== s; });
+        saveCategoriesConfig();
+        renderCategoryManagement();
+        renderSizePresets();
+      });
+    });
+    sizeList.querySelectorAll('.admin-tag-label').forEach(function(el) {
+      el.addEventListener('dblclick', function() { makeEditableTag(el.parentNode, categoriesConfig.sizes, 'sizes'); });
+    });
+  }
   document.querySelectorAll('#typeTagList .admin-tag-label').forEach(function(el) {
     el.addEventListener('dblclick', function() { makeEditableTag(el.parentNode, categoriesConfig.types, 'types'); });
   });
@@ -1048,11 +1155,27 @@ document.getElementById('addBrandBtn').addEventListener('click', function() {
   input.value = '';
 });
 
+document.getElementById('addSizeCatBtn').addEventListener('click', function() {
+  var input = document.getElementById('newSizeCatInput');
+  var val = input.value.trim();
+  if (!val) return;
+  if (categoriesConfig.sizes.indexOf(val) === -1) {
+    categoriesConfig.sizes.push(val);
+    saveCategoriesConfig();
+    renderCategoryManagement();
+    renderSizePresets();
+  }
+  input.value = '';
+});
+
 document.getElementById('newTypeInput').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addTypeBtn').click(); }
 });
 document.getElementById('newBrandInput').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addBrandBtn').click(); }
+});
+document.getElementById('newSizeCatInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addSizeCatBtn').click(); }
 });
 
 // ---- HERO CAROUSEL ----
