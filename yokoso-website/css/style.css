@@ -1100,7 +1100,7 @@ body {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   background: #000;
-  z-index: 500;
+  z-index: 10000;
   align-items: center;
   justify-content: center;
   touch-action: none;
