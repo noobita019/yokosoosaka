@@ -336,7 +336,6 @@ function renderProducts() {
 }
 
 function openModal(product) {
-  console.log('openModal called for:', product.name);
   try {
     currentModalImages = Array.isArray(product.images) ? product.images : [product.image || 'images/products/placeholder.svg'];
     currentImageIndex = 0;
@@ -355,7 +354,9 @@ function openModal(product) {
     }
     document.getElementById('modalDesc').textContent = product.description || '';
     showModalImage();
-    document.getElementById('productModal').classList.add('active');
+    var pm = document.getElementById('productModal');
+    pm.classList.add('active');
+    console.log('modal visible:', getComputedStyle(pm).display, 'z-index:', getComputedStyle(pm).zIndex);
     lockBody();
     try { history.pushState({modal: true}, '', '#modal'); } catch (e) {}
   } catch (e) {
@@ -365,7 +366,6 @@ function openModal(product) {
 
 var _modalImgRetry = 0;
 function showModalImage() {
-  console.log('showModalImage called, src:', currentModalImages[currentImageIndex]);
   const img = document.getElementById('modalImage');
   if (!img) { console.error('modalImage element not found!'); return; }
   img.onerror = function() {
