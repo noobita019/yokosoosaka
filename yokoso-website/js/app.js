@@ -16,7 +16,6 @@ const DEFAULT_PRODUCTS = [
 
 // Firebase
 var fbDB = null;
-var fbStorage = null;
 try {
   if (typeof firebase !== 'undefined') {
     firebase.initializeApp({
@@ -28,8 +27,7 @@ try {
       appId: "1:768529751498:web:b0a48ecd1e709a8a5f0333",
       measurementId: "G-EJ6NKSDDHE"
     });
-    fbDB = firebase.firestore();
-    if (firebase.storage) fbStorage = firebase.storage();
+    if (fbDB) fbDB = firebase.firestore();
   }
 } catch (e) {}
 const FB_COLLECTION = 'yokoso';
@@ -211,17 +209,7 @@ function saveProducts() {
   }
 }
 
-function dataURLToBlob(dataUrl) {
-  var parts = dataUrl.split(',');
-  var mime = parts[0].match(/:(.*?);/)[1];
-  var bytes = atob(parts[1]);
-  var ab = new ArrayBuffer(bytes.length);
-  var ia = new Uint8Array(ab);
-  for (var i = 0; i < bytes.length; i++) ia[i] = bytes.charCodeAt(i);
-  return new Blob([ab], { type: mime });
-}
-
-  function uploadImage(dataUrl) {
+function uploadImage(dataUrl) {
     return Promise.resolve(dataUrl);
   }
 
@@ -840,11 +828,8 @@ document.getElementById('productForm').addEventListener('submit', function(e) {
     submitBtn.textContent = origText;
   }
 
-  if (toUpload.length === 0 || !fbStorage) {
-    var allImages = keep.length > 0 ? keep : (editingId
-      ? (products.find(p => p.id === editingId)?.images || ['images/products/placeholder.svg'])
-      : ['images/products/placeholder.svg']);
-    finish(allImages);
+  if (toUpload.length === 0) {
+    finish(keep.length > 0 ? keep : ['images/products/placeholder.svg']);
     return;
   }
 
