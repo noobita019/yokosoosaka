@@ -286,6 +286,14 @@ document.addEventListener('click', function(e) {
   renderProducts();
 });
 
+document.getElementById('productGrid').addEventListener('click', function(e) {
+  var card = e.target.closest('.product-card');
+  if (!card) return;
+  const id = parseInt(card.dataset.id);
+  const product = products.find(p => p.id === id);
+  if (product) openModal(product);
+});
+
 function renderProducts() {
   var grid = document.getElementById('productGrid');
   var empty = document.getElementById('emptyState');
@@ -323,16 +331,6 @@ function renderProducts() {
       '<div class="product-price">' + p.price + '</div>' +
       '</div></div>';
   }).join('');
-  grid.querySelectorAll('.product-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const id = parseInt(card.dataset.id);
-      console.log('clicked product id:', id, 'products length:', products.length);
-      const product = products.find(p => p.id === id);
-      console.log('found product:', product?.name, 'images:', product?.images);
-      if (product) openModal(product);
-      else console.error('product not found for id:', id);
-    });
-  });
 }
 
 function openModal(product) {
