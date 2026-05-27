@@ -279,19 +279,37 @@ document.getElementById('filterContainer').addEventListener('click', function(e)
 
 document.addEventListener('click', function(e) {
   var btn = e.target.closest('#brandFilterContainer .filter-btn');
+  if (btn) {
+    document.querySelectorAll('#brandFilterContainer .filter-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentBrand = btn.dataset.brand;
+    renderProducts();
+    return;
+  }
+  var card = e.target.closest('.product-card');
+  if (card) {
+    console.log('global click card, id:', card.dataset.id);
+    const id = parseInt(card.dataset.id);
+    const product = products.find(p => p.id === id);
+    if (product) openModal(product);
+    return;
+  }
+});
+
+document.addEventListener('click', function(e) {
+  var card = e.target.closest('.product-card');
+  if (card) {
+    const id = parseInt(card.dataset.id);
+    const product = products.find(p => p.id === id);
+    if (product) openModal(product);
+    return;
+  }
+  var btn = e.target.closest('#brandFilterContainer .filter-btn');
   if (!btn) return;
   document.querySelectorAll('#brandFilterContainer .filter-btn').forEach(function(b) { b.classList.remove('active'); });
   btn.classList.add('active');
   currentBrand = btn.dataset.brand;
   renderProducts();
-});
-
-document.getElementById('productGrid').addEventListener('click', function(e) {
-  var card = e.target.closest('.product-card');
-  if (!card) return;
-  const id = parseInt(card.dataset.id);
-  const product = products.find(p => p.id === id);
-  if (product) openModal(product);
 });
 
 function renderProducts() {
