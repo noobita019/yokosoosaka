@@ -86,6 +86,8 @@ document.addEventListener('touchmove', function(e) {
 
 // Back button closes overlay via hashchange
 window.addEventListener('hashchange', function() {
+  var live = document.getElementById('liveModal');
+  if (live && location.hash !== '#modal') { live.remove(); unlockBody(); return; }
   var fs = document.getElementById('fullscreenViewer');
   var modal = document.getElementById('productModal');
   if ((!fs || !fs.classList.contains('active')) && (!modal || !modal.classList.contains('active'))) return;
@@ -336,31 +338,34 @@ function renderProducts() {
 }
 
 function openModal(product) {
-  alert('Product: ' + product.name + '\nPrice: ' + product.price + '\n' + (product.category1 || '') + (product.category2 ? ' · ' + product.category2 : '') + '\n\n' + product.description);
-  return;
   try {
-    currentModalImages = Array.isArray(product.images) ? product.images : [product.image || 'images/products/placeholder.svg'];
-    currentImageIndex = 0;
-    document.getElementById('modalTitle').textContent = product.name || '';
-    document.getElementById('modalPrice').textContent = product.price || '';
-    document.getElementById('modalCategory').textContent = (product.category1 || '') + (product.category2 ? ' · ' + product.category2 : '');
-    var sizesEl = document.getElementById('modalSizes');
-    if (sizesEl) {
-      if (Array.isArray(product.sizes) && product.sizes.length > 0) {
-        sizesEl.innerHTML = product.sizes.map(function(s) { return '<span class="modal-size-tag">' + s + '</span>'; }).join('');
-        sizesEl.style.display = '';
-      } else {
-        sizesEl.innerHTML = '';
-        sizesEl.style.display = 'none';
-      }
-    }
-    document.getElementById('modalDesc').textContent = product.description || '';
-    showModalImage();
-    var pm = document.getElementById('productModal');
-    if (!pm) { console.error('modal element missing!'); return; }
-    pm.classList.add('active');
-    pm.style.setProperty('display', 'flex', 'important');
-    console.log('modal shown');
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'liveModal';
+    overlay.style.cssText = 'display:flex !important;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;padding:20px;';
+    
+    var images = Array.isArray(product.images) && product.images.length > 0 ? product.images : [product.image || 'images/products/placeholder.svg'];
+    var sizesHtml = Array.isArray(product.sizes) && product.sizes.length > 0 ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">' + product.sizes.map(function(s) { return '<span style="font-size:12px;padding:3px 8px;border:1px solid #ddd;border-radius:4px;color:#666;background:#f5f5f7">' + s + '</span>'; }).join('') + '</div>' : '';
+    
+    overlay.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.15)">' +
+      '<button onclick="this.closest(\'.modal-overlay\').remove()" style="position:absolute;top:12px;right:16px;background:rgba(0,0,0,0.06);border:none;font-size:24px;cursor:pointer;color:#666;z-index:10;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center">×</button>' +
+      '<div style="display:flex;flex-direction:column">' +
+        '<div style="position:relative">' +
+          '<img src="' + (images[0] || 'images/products/placeholder.svg') + '" style="width:100%;height:500px;object-fit:cover;background:#f0f0f0" onerror="this.src=\'images/products/placeholder.svg\'">' +
+        '</div>' +
+        '<div style="padding:24px 32px 32px">' +
+          '<h2 style="font-size:20px;margin:0 0 4px;line-height:1.3">' + (product.name || '') + '</h2>' +
+          '<p style="font-size:18px;font-weight:700;color:#e94560;margin:0 0 4px">' + (product.price || '') + '</p>' +
+          '<p style="font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:#888;font-weight:600;margin:0 0 8px">' + (product.category1 || '') + (product.category2 ? ' · ' + product.category2 : '') + '</p>' +
+          sizesHtml +
+          '<p style="color:#666;margin:0 0 16px;line-height:1.6;font-size:14px">' + (product.description || '') + '</p>' +
+          '<a href="https://m.me/yokosoosaka" target="_blank" style="display:inline-block;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;background:#e94560;color:#fff">Inquire / Order</a>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+    
+    overlay.addEventListener('click', function(e) { if (e.target === this) this.remove(); });
+    document.body.appendChild(overlay);
     lockBody();
     try { history.pushState({modal: true}, '', '#modal'); } catch (e) {}
   } catch (e) {
@@ -567,6 +572,8 @@ document.querySelector('#fullscreenViewer .fullscreen-close').addEventListener('
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
+    var live = document.getElementById('liveModal');
+    if (live) { live.remove(); unlockBody(); if (location.hash === '#modal') history.back(); return; }
     if (document.getElementById('fullscreenViewer').classList.contains('active')) {
       closeFullscreen();
       return;
