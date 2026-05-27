@@ -40,6 +40,37 @@ let currentSearch = '';
 let selectedImagesData = [];
 let currentModalImages = [];
 let currentImageIndex = 0;
+var scrollPos = 0, bodyLocked = false;
+
+function lockBody() {
+  if (bodyLocked) return;
+  bodyLocked = true;
+  scrollPos = window.scrollY || window.pageYOffset;
+  document.body.style.position = 'fixed';
+  document.body.style.top = -scrollPos + 'px';
+  document.body.style.left = '0';
+  document.body.style.right = '0';
+  document.body.style.overflow = 'hidden';
+}
+
+function unlockBody() {
+  if (!bodyLocked) return;
+  bodyLocked = false;
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.left = '';
+  document.body.style.right = '';
+  document.body.style.overflow = '';
+  window.scrollTo(0, scrollPos);
+}
+
+// Back button closes modal/fullscreen instead of navigating away
+window.addEventListener('popstate', function() {
+  var fs = document.getElementById('fullscreenViewer');
+  if (fs && fs.classList.contains('active')) { closeFullscreen(); return; }
+  var modal = document.getElementById('productModal');
+  if (modal && modal.classList.contains('active')) { closeModal(); }
+});
 
 function migrateProducts() {
   let migrated = false;
@@ -168,7 +199,8 @@ function openModal(product) {
   document.getElementById('modalCategory').textContent = product.category;
   document.getElementById('modalDesc').textContent = product.description;
   document.getElementById('productModal').classList.add('active');
-  document.body.style.overflow = 'hidden';
+  lockBody();
+  history.pushState(null, '', window.location.href);
 }
 
 function showModalImage() {
@@ -216,7 +248,7 @@ document.getElementById('carouselDots').addEventListener('click', e => {
 
 function closeModal() {
   document.getElementById('productModal').classList.remove('active');
-  document.body.style.overflow = '';
+  unlockBody();
   currentModalImages = [];
   currentImageIndex = 0;
 }
@@ -229,8 +261,9 @@ document.querySelector('#productModal .modal-close').addEventListener('click', c
 function openFullscreen() {
   if (currentModalImages.length === 0) return;
   document.getElementById('fullscreenViewer').classList.add('active');
-  document.body.style.overflow = 'hidden';
+  lockBody();
   renderFullscreenTrack();
+  history.pushState(null, '', window.location.href);
 }
 
 function renderFullscreenTrack() {
@@ -253,7 +286,8 @@ function updateCounter() {
 
 function closeFullscreen() {
   document.getElementById('fullscreenViewer').classList.remove('active');
-  document.body.style.overflow = '';
+  var modal = document.getElementById('productModal');
+  if (!modal || !modal.classList.contains('active')) unlockBody();
 }
 
 var modalImg = document.getElementById('modalImage');
