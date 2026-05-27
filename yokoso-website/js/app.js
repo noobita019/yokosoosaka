@@ -16,6 +16,7 @@ const DEFAULT_PRODUCTS = [
 
 // Firebase
 var fbDB = null;
+var fbStorage = null;
 try {
   if (typeof firebase !== 'undefined') {
     firebase.initializeApp({
@@ -28,6 +29,7 @@ try {
       measurementId: "G-EJ6NKSDDHE"
     });
     fbDB = firebase.firestore();
+    if (firebase.storage) fbStorage = firebase.storage();
   }
 } catch (e) {}
 const FB_COLLECTION = 'yokoso';
@@ -148,6 +150,35 @@ function saveProducts() {
   if (fbDB) {
     fbDB.collection(FB_COLLECTION).doc(FB_DOC).set({ items: products }).catch(() => {});
   }
+}
+
+function dataURLToBlob(dataUrl) {
+  var parts = dataUrl.split(',');
+  var mime = parts[0].match(/:(.*?);/)[1];
+  var bytes = atob(parts[1]);
+  var ab = new ArrayBuffer(bytes.length);
+  var ia = new Uint8Array(ab);
+  for (var i = 0; i < bytes.length; i++) ia[i] = bytes.charCodeAt(i);
+  return new Blob([ab], { type: mime });
+}
+
+function uploadImage(dataUrl) {
+  return new Promise(function(resolve, reject) {
+    try {
+      var blob = dataURLToBlob(dataUrl);
+      var filename = 'product_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '.jpg';
+      var ref = fbStorage.ref('product-images/' + filename);
+      ref.put(blob, { contentType: 'image/jpeg' }).then(function(snapshot) {
+        return snapshot.ref.getDownloadURL();
+      }).then(function(url) {
+        resolve(url);
+      }).catch(function(err) {
+        reject(err);
+      });
+    } catch (err) {
+      reject(err);
+    }
+  });
 }
 
 function getCategories() {
@@ -580,7 +611,7 @@ function deleteProduct(id) {
   renderFilters();
 }
 
-document.getElementById('productForm').addEventListener('submit', e => {
+document.getElementById('productForm').addEventListener('submit', function(e) {
   e.preventDefault();
   const name = document.getElementById('formName').value.trim();
   const category = document.getElementById('formCategory').value.trim();
@@ -588,24 +619,47 @@ document.getElementById('productForm').addEventListener('submit', e => {
   const description = document.getElementById('formDesc').value.trim();
   if (!name || !category || !price || !description) return;
 
-  const images = selectedImagesData.length > 0 ? selectedImagesData : (editingId
-    ? (products.find(p => p.id === editingId)?.images || ['images/products/placeholder.svg'])
-    : ['images/products/placeholder.svg']);
+  var submitBtn = document.getElementById('formSubmitBtn');
+  var origText = submitBtn.textContent;
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Uploading...';
 
-  if (editingId) {
-    const idx = products.findIndex(p => p.id === editingId);
-    if (idx !== -1) {
-      products[idx] = { ...products[idx], name, category, price, description, images, available: document.getElementById('formAvailable').checked };
+  var toUpload = selectedImagesData.filter(function(s) { return s.startsWith('data:'); });
+  var keep = selectedImagesData.filter(function(s) { return !s.startsWith('data:'); });
+
+  function finish(images) {
+    if (editingId) {
+      const idx = products.findIndex(p => p.id === editingId);
+      if (idx !== -1) {
+        products[idx] = { ...products[idx], name, category, price, description, images, available: document.getElementById('formAvailable').checked };
+      }
+    } else {
+      const maxId = products.length > 0 ? Math.max(...products.map(p => p.id)) : 0;
+      products.push({ id: maxId + 1, name, category, price, description, images, available: document.getElementById('formAvailable').checked });
     }
-  } else {
-    const maxId = products.length > 0 ? Math.max(...products.map(p => p.id)) : 0;
-    products.push({ id: maxId + 1, name, category, price, description, images, available: document.getElementById('formAvailable').checked });
+    saveProducts();
+    resetForm();
+    renderAdminList();
+    renderFilters();
+    submitBtn.disabled = false;
+    submitBtn.textContent = origText;
   }
 
-  saveProducts();
-  resetForm();
-  renderAdminList();
-  renderFilters();
+  if (toUpload.length === 0 || !fbStorage) {
+    var allImages = keep.length > 0 ? keep : (editingId
+      ? (products.find(p => p.id === editingId)?.images || ['images/products/placeholder.svg'])
+      : ['images/products/placeholder.svg']);
+    finish(allImages);
+    return;
+  }
+
+  Promise.all(toUpload.map(function(src) { return uploadImage(src); })).then(function(urls) {
+    finish(keep.concat(urls));
+  }).catch(function() {
+    alert('Failed to upload one or more images. Please try again.');
+    submitBtn.disabled = false;
+    submitBtn.textContent = origText;
+  });
 });
 
 document.getElementById('formCancelBtn').addEventListener('click', resetForm);
