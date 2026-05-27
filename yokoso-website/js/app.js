@@ -258,10 +258,27 @@ function closeFullscreen() {
 
 var modalImg = document.getElementById('modalImage');
 modalImg.addEventListener('click', openFullscreen);
-modalImg.addEventListener('touchend', function(e) {
-  e.preventDefault();
-  openFullscreen();
-});
+(function() {
+  var touchStartX = 0, touchStartY = 0;
+  modalImg.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  modalImg.addEventListener('touchend', function(e) {
+    if (currentModalImages.length < 2) { openFullscreen(); return; }
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    var dy = e.changedTouches[0].clientY - touchStartY;
+    var dist = Math.abs(dx) + Math.abs(dy);
+    if (dist > 15) {
+      if (Math.abs(dx) > Math.abs(dy)) {
+        if (dx < -30) { currentImageIndex = (currentImageIndex + 1) % currentModalImages.length; showModalImage(); }
+        else if (dx > 30) { currentImageIndex = (currentImageIndex - 1 + currentModalImages.length) % currentModalImages.length; showModalImage(); }
+      }
+    } else {
+      openFullscreen();
+    }
+  }, { passive: true });
+})();
 
 // Fullscreen swipe / drag
 (function() {
