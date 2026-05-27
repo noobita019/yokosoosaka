@@ -364,10 +364,9 @@ function showModalImage() {
   const img = document.getElementById('modalImage');
   img.src = currentModalImages[currentImageIndex] || 'images/products/placeholder.svg';
   img.onerror = function() {
-    if (_modalImgRetry > 0) { this.src = ''; return; }
+    if (_modalImgRetry > 0) { this.onerror = null; this.style.display = 'none'; return; }
     _modalImgRetry++;
     this.src = 'images/products/placeholder.svg';
-    setTimeout(function() { _modalImgRetry = 0; }, 500);
   };
   const dotsContainer = document.getElementById('carouselDots');
   const prevBtn = document.getElementById('carouselPrev');
