@@ -312,7 +312,7 @@ function renderProducts() {
   empty.style.display = 'none';
   grid.innerHTML = filtered.map(function(p) {
     var brandHtml = p.category2 ? '<span class="product-brand">' + p.category2 + '</span>' : '';
-    var sizesHtml = p.sizes && p.sizes.length > 0 ? '<div class="product-sizes">' + p.sizes.map(function(s) { return '<span class="product-size-tag">' + s + '</span>'; }).join('') + '</div>' : '';
+    var sizesHtml = Array.isArray(p.sizes) && p.sizes.length > 0 ? '<div class="product-sizes">' + p.sizes.map(function(s) { return '<span class="product-size-tag">' + s + '</span>'; }).join('') + '</div>' : '';
     return '<div class="product-card" data-id="' + p.id + '">' +
       '<img class="product-image" src="' + (p.images?.[0] || 'images/products/placeholder.svg') + '" alt="' + p.name + '" loading="lazy" onerror="if(this.dataset.retry)this.style.display=\'none\';else{this.dataset.retry=\'1\';this.src=\'images/products/placeholder.svg\'}">' +
       '<div class="product-info">' +
@@ -333,24 +333,30 @@ function renderProducts() {
 }
 
 function openModal(product) {
-  currentModalImages = product.images || [product.image || 'images/products/placeholder.svg'];
-  currentImageIndex = 0;
-  showModalImage();
-  document.getElementById('modalTitle').textContent = product.name;
-  document.getElementById('modalPrice').textContent = product.price;
-  document.getElementById('modalCategory').textContent = product.category1 + (product.category2 ? ' · ' + product.category2 : '');
-  var sizesEl = document.getElementById('modalSizes');
-  if (product.sizes && product.sizes.length > 0) {
-    sizesEl.innerHTML = product.sizes.map(function(s) { return '<span class="modal-size-tag">' + s + '</span>'; }).join('');
-    sizesEl.style.display = '';
-  } else {
-    sizesEl.innerHTML = '';
-    sizesEl.style.display = 'none';
+  try {
+    currentModalImages = Array.isArray(product.images) ? product.images : [product.image || 'images/products/placeholder.svg'];
+    currentImageIndex = 0;
+    document.getElementById('modalTitle').textContent = product.name || '';
+    document.getElementById('modalPrice').textContent = product.price || '';
+    document.getElementById('modalCategory').textContent = (product.category1 || '') + (product.category2 ? ' · ' + product.category2 : '');
+    var sizesEl = document.getElementById('modalSizes');
+    if (sizesEl) {
+      if (Array.isArray(product.sizes) && product.sizes.length > 0) {
+        sizesEl.innerHTML = product.sizes.map(function(s) { return '<span class="modal-size-tag">' + s + '</span>'; }).join('');
+        sizesEl.style.display = '';
+      } else {
+        sizesEl.innerHTML = '';
+        sizesEl.style.display = 'none';
+      }
+    }
+    document.getElementById('modalDesc').textContent = product.description || '';
+    showModalImage();
+    document.getElementById('productModal').classList.add('active');
+    lockBody();
+    try { history.pushState({modal: true}, '', '#modal'); } catch (e) {}
+  } catch (e) {
+    console.error('openModal error:', e);
   }
-  document.getElementById('modalDesc').textContent = product.description;
-  document.getElementById('productModal').classList.add('active');
-  lockBody();
-  history.pushState({modal: true}, '', '#modal');
 }
 
 var _modalImgRetry = 0;
