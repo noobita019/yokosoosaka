@@ -486,8 +486,8 @@ body {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(255,255,255,0.9);
-  color: #333;
+  background: rgba(0,0,0,0.06);
+  color: #666;
   border: none;
   font-size: 1.8rem;
   width: 40px;
@@ -499,12 +499,11 @@ body {
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .carousel-btn:hover {
-  background: #fff;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  background: rgba(0,0,0,0.1);
+  color: #333;
 }
 
 .carousel-prev {
