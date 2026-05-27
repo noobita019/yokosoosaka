@@ -314,7 +314,7 @@ function renderProducts() {
     var brandHtml = p.category2 ? '<span class="product-brand">' + p.category2 + '</span>' : '';
     var sizesHtml = p.sizes && p.sizes.length > 0 ? '<div class="product-sizes">' + p.sizes.map(function(s) { return '<span class="product-size-tag">' + s + '</span>'; }).join('') + '</div>' : '';
     return '<div class="product-card" data-id="' + p.id + '">' +
-      '<img class="product-image" src="' + (p.images?.[0] || 'images/products/placeholder.svg') + '" alt="' + p.name + '" loading="lazy" onerror="this.src=\'images/products/placeholder.svg\'">' +
+      '<img class="product-image" src="' + (p.images?.[0] || 'images/products/placeholder.svg') + '" alt="' + p.name + '" loading="lazy" onerror="if(this.dataset.retry)this.style.display=\'none\';else{this.dataset.retry=\'1\';this.src=\'images/products/placeholder.svg\'}">' +
       '<div class="product-info">' +
       '<div class="product-category">' + p.category1 + '</div>' +
       brandHtml +
@@ -353,11 +353,15 @@ function openModal(product) {
   history.pushState({modal: true}, '', '#modal');
 }
 
+var _modalImgRetry = 0;
 function showModalImage() {
   const img = document.getElementById('modalImage');
   img.src = currentModalImages[currentImageIndex] || 'images/products/placeholder.svg';
   img.onerror = function() {
+    if (_modalImgRetry > 0) { this.src = ''; return; }
+    _modalImgRetry++;
     this.src = 'images/products/placeholder.svg';
+    setTimeout(function() { _modalImgRetry = 0; }, 500);
   };
   const dotsContainer = document.getElementById('carouselDots');
   const prevBtn = document.getElementById('carouselPrev');
@@ -646,7 +650,7 @@ function renderAdminList() {
     if (p.category2) catStr += ' · ' + p.category2;
     var sizesStr = p.sizes && p.sizes.length > 0 ? ' · Sizes: ' + p.sizes.join(', ') : '';
     return '<div class="admin-product-item" data-id="' + p.id + '">' +
-      '<img src="' + (p.images?.[0] || 'images/products/placeholder.svg') + '" alt="' + p.name + '" onerror="this.src=\'images/products/placeholder.svg\'">' +
+      '<img src="' + (p.images?.[0] || 'images/products/placeholder.svg') + '" alt="' + p.name + '" onerror="if(this.dataset.retry)this.style.display=\'none\';else{this.dataset.retry=\'1\';this.src=\'images/products/placeholder.svg\'}">' +
       '<div class="admin-product-item-info">' +
       '<div class="name">' + p.name + '</div>' +
       '<div class="meta">' + catStr + ' · ' + p.price + sizesStr + '</div>' +
