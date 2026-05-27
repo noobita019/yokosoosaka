@@ -61,6 +61,7 @@ function lockBody() {
 }
 
 function unlockBody() {
+  console.log('unlockBody called, bodyLocked:', bodyLocked);
   if (!bodyLocked) return;
   bodyLocked = false;
   document.body.style.position = '';
@@ -311,8 +312,9 @@ function renderProducts() {
 }
 
 function closeLiveModal() {
+  console.log('closeLiveModal called');
   var el = document.getElementById('liveModal');
-  if (el) { el.remove(); unlockBody(); if (location.hash === '#modal') history.back(); }
+  if (el) { el.remove(); unlockBody(); console.log('liveModal removed, body unlocked'); if (location.hash === '#modal') history.back(); }
 }
 
 function openModal(product) {
