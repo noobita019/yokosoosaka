@@ -245,11 +245,18 @@ function loadProducts(callback) {
 function loadCategories() {
   var savedConfig = localStorage.getItem('yokoso_categories');
 
-  // Stage 1: Load committed categories from GitHub raw (bypasses CDN), fallback to local file
-  var fileFetch = fetch('https://raw.githubusercontent.com/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/' + GITHUB_BRANCH + '/yokoso-website/data/categories.json?_=' + Date.now())
+  // Stage 1: Load committed categories from GitHub API (bypasses CDN), fallback to local file
+  var fileFetch = fetch('https://api.github.com/repos/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/contents/' + GITHUB_CATEGORIES_PATH)
     .then(function(r) {
-      if (!r.ok) throw new Error('raw fetch failed');
+      if (!r.ok) throw new Error('API fetch failed');
       return r.json();
+    })
+    .then(function(data) {
+      if (data && data.content) {
+        var decoded = atob(data.content.replace(/\n/g, ''));
+        return JSON.parse(decoded);
+      }
+      throw new Error('no content');
     })
     .catch(function() {
       return fetch('data/categories.json?_=' + Date.now())
@@ -1366,6 +1373,8 @@ function syncToGitHub() {
 function syncCategoriesToGitHub() {
   var token = localStorage.getItem('github_token');
   if (!token) return;
+  var statusEl = document.getElementById('syncStatus');
+  if (statusEl) { statusEl.textContent = 'Syncing categories...'; statusEl.style.color = '#666'; }
   var content = JSON.stringify(categoriesConfig, null, 2);
   var encoded = btoa(unescape(encodeURIComponent(content)));
   fetch('https://api.github.com/repos/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/contents/' + GITHUB_CATEGORIES_PATH, {
@@ -1386,9 +1395,11 @@ function syncCategoriesToGitHub() {
   })
   .then(function(r) {
     if (!r.ok) throw new Error('HTTP ' + r.status);
+    if (statusEl) { statusEl.textContent = 'Categories synced to GitHub ✓'; statusEl.style.color = '#28a745'; }
   })
   .catch(function(err) {
     console.error('Categories sync failed:', err.message);
+    if (statusEl) { statusEl.textContent = 'Sync failed: ' + err.message; statusEl.style.color = '#dc3545'; }
   });
 }
 
