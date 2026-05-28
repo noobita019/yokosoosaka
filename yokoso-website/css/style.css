@@ -1226,6 +1226,19 @@ body {
 
   .search-filter {
     top: 55px;
+    padding: 0.8rem 0;
+  }
+  .search-bar input {
+    padding: 0.55rem 1rem;
+    font-size: 0.85rem;
+  }
+  .filters {
+    gap: 0.3rem;
+    margin-top: 0.5rem;
+  }
+  .filter-btn {
+    padding: 0.3rem 0.75rem;
+    font-size: 0.75rem;
   }
 
   .modal {
