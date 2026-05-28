@@ -526,7 +526,7 @@ document.addEventListener('click', function(e) {
     var brand = brandCard.dataset.brand;
     currentCategory = sub;
     currentBrand = brand;
-    openSubcats[sub] = true;
+    openSubcats = {};
     renderSubcategoryFilter();
     renderProducts();
     return;
