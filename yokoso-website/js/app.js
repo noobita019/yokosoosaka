@@ -396,7 +396,8 @@ function saveProducts() {
   localStorage.setItem('yokoso_products', JSON.stringify(products));
   localStorage.setItem('yokoso_pending_sync', 'true');
   if (fbDB) {
-    fbDB.collection(FB_COLLECTION).doc(FB_DOC).set({ items: products }).catch(() => {});
+    fbDB.collection(FB_COLLECTION).doc(FB_DOC).set({ items: products }).catch(function() {});
+    syncAllStockToFirestore();
   }
   if (localStorage.getItem('autoSyncEnabled') === 'true' && localStorage.getItem('github_token')) {
     syncToGitHub();
@@ -632,6 +633,84 @@ function renderProducts() {
   });
 }
 
+// ---- FIRESTORE REAL-TIME STOCK ----
+const STOCKS_COLLECTION = 'stocks';
+var stockUnsubscribe = null;
+var stockInitialized = false;
+
+function syncStockToFirestore(productId, quantity) {
+  if (!fbDB) return;
+  fbDB.collection(STOCKS_COLLECTION).doc(String(productId)).set({ quantity: quantity }).catch(function() {});
+}
+
+function syncAllStockToFirestore() {
+  if (!fbDB) return;
+  products.forEach(function(p) {
+    fbDB.collection(STOCKS_COLLECTION).doc(String(p.id)).set({ quantity: p.stock !== undefined ? p.stock : 5 }).catch(function() {});
+  });
+}
+
+function loadStockFromFirestore(callback) {
+  if (!fbDB) { if (callback) callback(); return; }
+  fbDB.collection(STOCKS_COLLECTION).get()
+    .then(function(snapshot) {
+      snapshot.forEach(function(doc) {
+        var data = doc.data();
+        if (data && data.quantity !== undefined) {
+          var id = parseInt(doc.id);
+          var p = products.find(function(x) { return x.id === id; });
+          if (p) p.stock = data.quantity;
+        }
+      });
+      stockInitialized = true;
+      if (callback) callback();
+    })
+    .catch(function() { stockInitialized = true; if (callback) callback(); });
+}
+
+function subscribeStockUpdates() {
+  if (!fbDB) return;
+  if (stockUnsubscribe) stockUnsubscribe();
+  stockUnsubscribe = fbDB.collection(STOCKS_COLLECTION).onSnapshot(function(snapshot) {
+    snapshot.docChanges().forEach(function(change) {
+      if (change.type === 'modified' || change.type === 'added') {
+        var data = change.doc.data();
+        if (data && data.quantity !== undefined) {
+          var id = parseInt(change.doc.id);
+          var p = products.find(function(x) { return x.id === id; });
+          if (p && stockInitialized) {
+            var oldStock = p.stock;
+            p.stock = data.quantity;
+            if (oldStock !== p.stock) renderProducts();
+          }
+        }
+      }
+    });
+  }, function() {});
+}
+
+function firestoreAddToCart(productId) {
+  if (!fbDB) return;
+  fbDB.collection(STOCKS_COLLECTION).doc(String(productId)).get()
+    .then(function(doc) {
+      var qty = doc.exists && doc.data().quantity !== undefined ? doc.data().quantity : 5;
+      qty = Math.max(0, qty - 1);
+      fbDB.collection(STOCKS_COLLECTION).doc(String(productId)).set({ quantity: qty }).catch(function() {});
+    })
+    .catch(function() {});
+}
+
+function firestoreRestoreStock(productId, amount) {
+  if (!fbDB || amount <= 0) return;
+  fbDB.collection(STOCKS_COLLECTION).doc(String(productId)).get()
+    .then(function(doc) {
+      var qty = doc.exists && doc.data().quantity !== undefined ? doc.data().quantity : 0;
+      qty = qty + amount;
+      fbDB.collection(STOCKS_COLLECTION).doc(String(productId)).set({ quantity: qty }).catch(function() {});
+    })
+    .catch(function() {});
+}
+
 // ---- CART SYSTEM ----
 var cart = JSON.parse(localStorage.getItem('yokoso_cart') || '[]');
 
@@ -653,6 +732,7 @@ function addToCart(productId) {
   if (!p) return;
   var stock = p.stock !== undefined ? p.stock : 5;
   if (stock <= 0) { alert('Not enough stock available.'); return; }
+  var existing = cart.find(function(item) { return item.id === productId; });
   p.stock = stock - 1;
   if (existing) {
     existing.qty++;
@@ -661,6 +741,7 @@ function addToCart(productId) {
   }
   saveCart();
   saveProducts();
+  firestoreAddToCart(productId);
   renderProducts();
   showCartNotification(p.name);
 }
@@ -675,7 +756,10 @@ function removeFromCart(productId) {
   }
   cart = cart.filter(function(item) { return item.id !== productId; });
   saveCart();
-  if (item) { saveProducts(); renderProducts(); }
+  if (item) {
+    firestoreRestoreStock(productId, item.qty);
+    saveProducts(); renderProducts();
+  }
   renderCart();
 }
 
@@ -690,7 +774,11 @@ function updateCartQty(productId, delta) {
   if (p) { p.stock = stock - delta; }
   item.qty = newQty;
   saveCart();
-  if (p) { saveProducts(); renderProducts(); }
+  if (p) {
+    if (delta > 0) { firestoreAddToCart(productId); }
+    else { firestoreRestoreStock(productId, Math.abs(delta)); }
+    saveProducts(); renderProducts();
+  }
   renderCart();
 }
 
@@ -2353,7 +2441,10 @@ loadProducts(function() {
     return;
   }
   parseURLParams();
-  renderFilters();
-  renderProducts();
-  updateCartBadge();
+  loadStockFromFirestore(function() {
+    renderFilters();
+    renderProducts();
+    subscribeStockUpdates();
+    updateCartBadge();
+  });
 });
