@@ -398,8 +398,8 @@ function saveProducts() {
   localStorage.setItem('yokoso_pending_sync', 'true');
   if (fbDB) {
     fbDB.collection(FB_COLLECTION).doc(FB_DOC).set({ items: products }).catch(function() {});
-    syncAllStockToFirestore();
   }
+  syncAllStockToFirestore();
   if (localStorage.getItem('autoSyncEnabled') === 'true' && localStorage.getItem('github_token')) {
     syncToGitHub();
   }
