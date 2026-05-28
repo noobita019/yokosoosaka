@@ -1885,6 +1885,68 @@ document.getElementById('groupImageUrl').addEventListener('input', function() {
   }
 });
 
+// ---- CATEGORY MANAGEMENT ADD HANDLERS ----
+document.getElementById('addGroupBtn').addEventListener('click', function() {
+  var input = document.getElementById('newGroupInput');
+  var val = input.value.trim();
+  if (!val) return;
+  if ((categoriesConfig.groups || []).some(function(g) { return g.name === val; })) return;
+  categoriesConfig.groups.push({ name: val, image: '' });
+  categoriesConfig.subcategoryMap[val] = [];
+  input.value = '';
+  saveCategoriesConfig();
+  renderCategoryManagement();
+  renderCategoryDropdowns();
+  renderAdminFilterDropdowns();
+  renderFilters();
+});
+document.getElementById('newGroupInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addGroupBtn').click(); } });
+
+document.getElementById('addSubcategoryBtn').addEventListener('click', function() {
+  var input = document.getElementById('newSubcategoryInput');
+  var val = input.value.trim();
+  if (!val) return;
+  var picker = document.getElementById('subcategoryGroupPicker');
+  var group = picker ? picker.value : '';
+  if (!group) return;
+  if ((categoriesConfig.subcategoryMap[group] || []).indexOf(val) !== -1) return;
+  if (!categoriesConfig.subcategoryMap[group]) categoriesConfig.subcategoryMap[group] = [];
+  categoriesConfig.subcategoryMap[group].push(val);
+  input.value = '';
+  saveCategoriesConfig();
+  renderCategoryManagement();
+  renderCategoryDropdowns();
+  renderAdminFilterDropdowns();
+  renderFilters();
+});
+document.getElementById('newSubcategoryInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addSubcategoryBtn').click(); } });
+
+document.getElementById('addBrandBtn').addEventListener('click', function() {
+  var input = document.getElementById('newBrandInput');
+  var val = input.value.trim();
+  if (!val) return;
+  if ((categoriesConfig.brands || []).indexOf(val) !== -1) return;
+  categoriesConfig.brands.push(val);
+  input.value = '';
+  saveCategoriesConfig();
+  renderCategoryManagement();
+  renderCategoryDropdowns();
+  renderAdminFilterDropdowns();
+});
+document.getElementById('newBrandInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addBrandBtn').click(); } });
+
+document.getElementById('addSizeCatBtn').addEventListener('click', function() {
+  var input = document.getElementById('newSizeCatInput');
+  var val = input.value.trim();
+  if (!val) return;
+  if ((categoriesConfig.sizes || []).indexOf(val) !== -1) return;
+  categoriesConfig.sizes.push(val);
+  input.value = '';
+  saveCategoriesConfig();
+  renderCategoryManagement();
+});
+document.getElementById('newSizeCatInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addSizeCatBtn').click(); } });
+
 // ---- BRAND MAP UI ----
 document.getElementById('brandMapSubcategoryPicker').addEventListener('change', function() {
   renderBrandMapCheckboxes(this.value);
