@@ -49,6 +49,7 @@ function migrateCategoriesConfig(cfg) {
   if (!cfg.brands) cfg.brands = [];
   if (!cfg.sizes) cfg.sizes = [];
   if (!cfg.subcategoryBrands) cfg.subcategoryBrands = {};
+  if (!cfg.brandLogos) cfg.brandLogos = {};
   return cfg;
 }
 
@@ -456,7 +457,10 @@ function renderSubcategoryFilter() {
   var html = '<button class="filter-btn' + (currentCategory === 'all' ? ' active' : '') + '" data-subcategory="all">All ' + currentGroup + ' Products</button>';
   subs.forEach(function(s) {
     var brands = getBrandsForSubcategory(s);
-    var brandHtml = brands.length ? brands.map(function(b) { return '<button class="brand-option" data-subcategory="' + s + '" data-brand="' + b + '">' + b + '</button>'; }).join('') : '';
+    var brandHtml = brands.length ? brands.map(function(b) {
+      var logo = categoriesConfig.brandLogos && categoriesConfig.brandLogos[b] ? categoriesConfig.brandLogos[b] : '';
+      var imgHtml = logo ? '<img src="' + logo + '" style="width:20px;height:20px;object-fit:contain;vertical-align:middle;margin-right:6px">' : '';
+      return '<button class="brand-option" data-subcategory="' + s + '" data-brand="' + b + '">' + imgHtml + b + '</button>'; }).join('') : '';
     html += '<div class="subcategory-wrapper"><button class="filter-btn' + (currentCategory === s ? ' active' : '') + '" data-subcategory="' + s + '">' + s + '</button>' + (brandHtml ? '<div class="subcategory-brands">' + brandHtml + '</div>' : '') + '</div>';
   });
   container.innerHTML = html;
@@ -1714,6 +1718,7 @@ function renderCategoryManagement() {
   // Group image preview
   renderGroupImagePreview();
   renderBrandMapUI();
+  renderBrandLogoUI();
 }
 
 function renderBrandMapUI() {
@@ -1882,6 +1887,70 @@ document.getElementById('groupImageUrl').addEventListener('input', function() {
     saveCategoriesConfig();
     renderGroupImagePreview();
     renderCarousel();
+  }
+});
+
+// ---- BRAND LOGO UI ----
+function renderBrandLogoUI() {
+  var picker = document.getElementById('brandLogoPicker');
+  if (!picker) return;
+  var brands = categoriesConfig.brands || [];
+  var current = picker.value && brands.indexOf(picker.value) !== -1 ? picker.value : (brands[0] || '');
+  picker.innerHTML = '<option value="">Select brand...</option>' + brands.map(function(b) {
+    return '<option value="' + b + '"' + (b === current ? ' selected' : '') + '>' + b + '</option>';
+  }).join('');
+  renderBrandLogoPreview();
+}
+function renderBrandLogoPreview() {
+  var container = document.getElementById('brandLogoPreview');
+  if (!container) return;
+  var brands = categoriesConfig.brands || [];
+  container.innerHTML = brands.filter(function(b) { return categoriesConfig.brandLogos && categoriesConfig.brandLogos[b]; }).map(function(b) {
+    var logo = categoriesConfig.brandLogos[b];
+    return '<div style="text-align:center"><img src="' + logo + '" style="width:40px;height:40px;object-fit:contain;border-radius:4px;cursor:pointer" title="Click to remove ' + b + ' logo" data-brand-logo="' + b + '"><div style="font-size:0.65rem;color:#aaa;margin-top:2px">' + b + '</div></div>';
+  }).join('');
+  container.querySelectorAll('[data-brand-logo]').forEach(function(img) {
+    img.addEventListener('click', function() {
+      var bn = this.dataset.brandLogo;
+      if (confirm('Remove logo for ' + bn + '?')) {
+        if (categoriesConfig.brandLogos) delete categoriesConfig.brandLogos[bn];
+        saveCategoriesConfig();
+        renderBrandLogoPreview();
+      }
+    });
+  });
+}
+
+document.getElementById('uploadBrandLogoBtn').addEventListener('click', function() {
+  var picker = document.getElementById('brandLogoPicker');
+  if (!picker || !picker.value) { alert('Select a brand first.'); return; }
+  document.getElementById('brandLogoInput').click();
+});
+
+document.getElementById('brandLogoInput').addEventListener('change', function(e) {
+  var file = e.target.files[0];
+  var picker = document.getElementById('brandLogoPicker');
+  if (!file || !picker || !picker.value) return;
+  var targetBrand = picker.value;
+  resizeImage(file, 200, 0.7, function(dataUrl) {
+    if (!categoriesConfig.brandLogos) categoriesConfig.brandLogos = {};
+    categoriesConfig.brandLogos[targetBrand] = dataUrl;
+    saveCategoriesConfig();
+    renderBrandLogoPreview();
+  });
+  e.target.value = '';
+});
+
+document.getElementById('brandLogoUrl').addEventListener('input', function() {
+  var picker = document.getElementById('brandLogoPicker');
+  if (!picker || !picker.value) return;
+  var url = this.value.trim();
+  if (url) {
+    var targetBrand = picker.value;
+    if (!categoriesConfig.brandLogos) categoriesConfig.brandLogos = {};
+    categoriesConfig.brandLogos[targetBrand] = url;
+    saveCategoriesConfig();
+    renderBrandLogoPreview();
   }
 });
 

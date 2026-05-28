@@ -270,6 +270,16 @@
                 <input type="text" id="newBrandInput" placeholder="New brand...">
                 <button class="btn btn-primary btn-sm" id="addBrandBtn">Add</button>
               </div>
+              <div style="margin-top:10px;padding:8px;background:rgba(255,255,255,0.05);border-radius:6px">
+                <label style="font-size:0.8rem;color:#aaa;display:block;margin-bottom:4px">Brand Logo</label>
+                <div class="admin-add-category">
+                  <select id="brandLogoPicker" style="flex:1;padding:0.4rem 0.6rem;border:1px solid rgba(255,255,255,0.15);border-radius:4px;background:rgba(255,255,255,0.06);color:#fff;font-size:0.85rem;outline:none"><option value="">Select brand...</option></select>
+                  <input type="file" id="brandLogoInput" accept="image/*" style="display:none">
+                  <input type="text" id="brandLogoUrl" placeholder="Paste URL..." style="flex:1;padding:0.4rem 0.6rem;border:1px solid rgba(255,255,255,0.15);border-radius:4px;background:rgba(255,255,255,0.06);color:#fff;font-size:0.85rem;outline:none">
+                  <button class="btn btn-secondary btn-sm" id="uploadBrandLogoBtn">Upload</button>
+                </div>
+                <div id="brandLogoPreview" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:8px"></div>
+              </div>
             </div>
             <div class="admin-category-group">
               <h4>Sizes</h4>
