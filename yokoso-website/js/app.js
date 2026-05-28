@@ -457,6 +457,7 @@ function getBrandsForSubcategory(sub) {
 function renderFilters() {
   renderCarousel();
   renderSubcategoryFilter();
+  renderBrandFilter();
 }
 
 function renderSubcategoryFilter() {
@@ -468,17 +469,7 @@ function renderSubcategoryFilter() {
   subs.forEach(function(s) {
     var brands = getBrandsForSubcategory(s);
     if (!brands.length) return;
-    var openClass = openSubcats[s] ? ' open' : '';
-    html += '<div class="subcategory-wrapper' + openClass + '"><button class="filter-btn' + (currentCategory === s && currentBrand === 'all' ? ' active' : '') + '" data-subcategory="' + s + '">' + s + '</button>';
-    html += '<div class="subcategory-brands"><div class="brand-grid">';
-    brands.forEach(function(b) {
-      var logo = categoriesConfig.brandLogos && categoriesConfig.brandLogos[b] ? categoriesConfig.brandLogos[b] : '';
-      var active = currentCategory === s && currentBrand === b ? ' active' : '';
-      html += '<button class="brand-card' + active + '" data-subcategory="' + s + '" data-brand="' + b + '">';
-      if (logo) html += '<img src="' + logo + '" class="brand-card-logo">';
-      html += '<span class="brand-card-name">' + b + '</span></button>';
-    });
-    html += '</div></div></div>';
+    html += '<button class="filter-btn' + (currentCategory === s && currentBrand === 'all' ? ' active' : '') + '" data-subcategory="' + s + '">' + s + '</button>';
   });
   container.innerHTML = html;
 }
@@ -496,15 +487,24 @@ function renderCarousel() {
 }
 
 function renderBrandFilter() {
-  var brandContainer = document.getElementById('brandFilterContainer');
-  if (!brandContainer) return;
-  if (currentGroup === 'all') { brandContainer.innerHTML = ''; return; }
-  var brands = getBrands();
-  var brandHtml = '<button class="filter-btn' + (currentBrand === 'all' ? ' active' : '') + '" data-brand="all">All Brands</button>';
+  var container = document.getElementById('brandFilterContainer');
+  if (!container) return;
+  if (currentGroup === 'all' || currentCategory === 'all') {
+    container.innerHTML = '';
+    return;
+  }
+  var brands = getBrandsForSubcategory(currentCategory);
+  if (!brands.length) { container.innerHTML = ''; return; }
+  var html = '<div class="brand-grid">';
   brands.forEach(function(b) {
-    brandHtml += '<button class="filter-btn' + (currentBrand === b ? ' active' : '') + '" data-brand="' + b + '">' + b + '</button>';
+    var logo = categoriesConfig.brandLogos && categoriesConfig.brandLogos[b] ? categoriesConfig.brandLogos[b] : '';
+    var active = currentBrand === b ? ' active' : '';
+    html += '<button class="brand-card' + active + '" data-subcategory="' + currentCategory + '" data-brand="' + b + '">';
+    if (logo) html += '<img src="' + logo + '" class="brand-card-logo">';
+    html += '<span class="brand-card-name">' + b + '</span></button>';
   });
-  brandContainer.innerHTML = brandHtml;
+  html += '</div>';
+  container.innerHTML = html;
 }
 
 var cc = document.getElementById('categoryCarousel');
@@ -528,6 +528,7 @@ document.addEventListener('click', function(e) {
     currentBrand = brand;
     openSubcats = {};
     renderSubcategoryFilter();
+    renderBrandFilter();
     renderProducts();
     return;
   }
@@ -541,22 +542,12 @@ document.addEventListener('click', function(e) {
     } else {
       currentCategory = sub;
       currentBrand = 'all';
-      openSubcats[sub] = !openSubcats[sub];
+      openSubcats = {};
     }
     renderSubcategoryFilter();
+    renderBrandFilter();
     renderProducts();
     return;
-  }
-});
-
-document.addEventListener('mouseover', function(e) {
-  var wrapper = e.target.closest('.subcategory-wrapper');
-  if (!wrapper) return;
-  var sub = wrapper.querySelector('.filter-btn').dataset.subcategory;
-  if (sub && !openSubcats[sub]) {
-    openSubcats = {};
-    openSubcats[sub] = true;
-    renderSubcategoryFilter();
   }
 });
 

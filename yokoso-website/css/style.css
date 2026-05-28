@@ -380,24 +380,31 @@ body {
   color: #fff;
 }
 
-.subcategory-wrapper {
-  position: relative;
-  display: inline-block;
+.brand-filter-section {
+  margin-top: 0.75rem;
 }
 
-.subcategory-brands {
-  display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 20;
-  padding: 0.6rem;
-  min-width: 200px;
+.brand-filter-section .brand-grid {
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.5rem;
 }
 
-.subcategory-wrapper:hover .subcategory-brands,
-.subcategory-wrapper.open .subcategory-brands {
-  display: block;
+.brand-filter-section .brand-card {
+  padding: 0.5rem;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background: #fff;
+  transition: all 0.15s;
+}
+
+.brand-filter-section .brand-card:hover {
+  border-color: #e94560;
+  box-shadow: 0 2px 8px rgba(233,69,96,0.1);
+}
+
+.brand-filter-section .brand-card.active {
+  border-color: #e94560;
+  background: #fff5f6;
 }
 
 .brand-grid {
@@ -1461,6 +1468,17 @@ body {
     grid-template-columns: 1fr;
   }
 
+  .brand-filter-section .brand-grid {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 0.3rem;
+  }
+  .brand-filter-section .brand-card-logo {
+    width: 56px;
+    height: 56px;
+  }
+  .brand-filter-section .brand-card-name {
+    font-size: 0.6rem;
+  }
   .brand-grid {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 0.3rem;
