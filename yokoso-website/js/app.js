@@ -953,7 +953,7 @@ function addToCart(productId, size) {
   var p = products.find(function(x) { return x.id === productId; });
   if (!p) return;
   var field = stockField(size);
-  var avail = getSizeStock(productId, field);
+  var avail = getSizeStock(productId, size);
   if (avail <= 0) { alert('Size ' + size + ' is out of stock.'); return; }
   var key = cartKey(productId, size);
   var existing = cart.find(function(item) { return cartKey(item.id, item.size) === key; });
@@ -1007,7 +1007,7 @@ function updateCartQty(productId, delta, size) {
   var item = cart[idx];
   var p = products.find(function(x) { return x.id === productId; });
   var field = stockField(item.size);
-  var avail = p ? getSizeStock(productId, field) : 0;
+  var avail = p ? getSizeStock(productId, item.size) : 0;
   var newQty = item.qty + delta;
   if (newQty <= 0) { removeFromCart(productId, item.size); return; }
   if (delta > 0 && delta > avail) { alert('Not enough stock for size ' + (item.size || 'this item') + '.'); return; }
