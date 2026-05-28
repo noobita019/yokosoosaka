@@ -32,7 +32,9 @@
       "Shoes",
       "Clothing"
     ],
-    "FOODS": []
+    "FOODS": [
+      "Chocolates"
+    ]
   },
   "brands": [
     "Nike",
