@@ -652,9 +652,7 @@ function addToCart(productId) {
   var p = products.find(function(x) { return x.id === productId; });
   if (!p) return;
   var stock = p.stock !== undefined ? p.stock : 5;
-  var existing = cart.find(function(item) { return item.id === productId; });
-  var inCart = existing ? existing.qty : 0;
-  if (inCart >= stock) { alert('Not enough stock available.'); return; }
+  if (stock <= 0) { alert('Not enough stock available.'); return; }
   p.stock = stock - 1;
   if (existing) {
     existing.qty++;
@@ -688,7 +686,7 @@ function updateCartQty(productId, delta) {
   var stock = p ? (p.stock !== undefined ? p.stock : 5) : 99;
   var newQty = item.qty + delta;
   if (newQty <= 0) { removeFromCart(productId); return; }
-  if (newQty > stock) { alert('Not enough stock.'); return; }
+  if (delta > 0 && delta > stock) { alert('Not enough stock.'); return; }
   if (p) { p.stock = stock - delta; }
   item.qty = newQty;
   saveCart();
