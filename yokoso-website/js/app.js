@@ -245,16 +245,25 @@ function loadProducts(callback) {
 function loadCategories() {
   var savedConfig = localStorage.getItem('yokoso_categories');
 
-  // Stage 1: Load committed categories from file as structure base
-  fetch('data/categories.json?_=' + Date.now())
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data) {
-        categoriesConfig = migrateCategoriesConfig(data);
-      }
+  // Stage 1: Load committed categories from GitHub raw (bypasses CDN), fallback to local file
+  var fileFetch = fetch('https://raw.githubusercontent.com/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/' + GITHUB_BRANCH + '/yokoso-website/data/categories.json?_=' + Date.now())
+    .then(function(r) {
+      if (!r.ok) throw new Error('raw fetch failed');
+      return r.json();
     })
     .catch(function() {
-      // Fallback: keep whatever we had before
+      return fetch('data/categories.json?_=' + Date.now())
+        .then(function(r) { return r.json(); })
+        .catch(function() { return null; });
+    });
+
+  fileFetch.then(function(data) {
+    if (data) {
+      categoriesConfig = migrateCategoriesConfig(data);
+    }
+  })
+  .catch(function() {
+    // Fallback: keep whatever we had before
       if (savedConfig) {
         try {
           var parsed = JSON.parse(savedConfig);
