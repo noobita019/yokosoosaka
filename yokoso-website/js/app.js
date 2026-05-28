@@ -395,7 +395,6 @@ function getBrands() {
 
 function renderFilters() {
   renderCarousel();
-  renderBrandFilter();
 }
 
 function renderCarousel() {
