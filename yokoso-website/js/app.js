@@ -743,8 +743,17 @@ function loadStockFromFirestore(callback) {
           if (doc && doc.id) {
             var id = parseInt(doc.id);
             var p = products.find(function(x) { return x.id === id; });
-            if (p) {
-              stockMap[id] = doc.fields || { default: 5 };
+            if (p && doc.fields) {
+              // If product has sizes but doc has only 'default', migrate to per-size fields
+              if (hasSizes(p) && Object.keys(doc.fields).length === 1 && doc.fields.default !== undefined) {
+                var total = doc.fields.default;
+                stockMap[id] = {};
+                var perSize = Math.max(1, Math.floor(total / p.sizes.length));
+                p.sizes.forEach(function(s) { stockMap[id][s] = perSize; });
+                stockMap[id].default = 0;
+              } else {
+                stockMap[id] = doc.fields;
+              }
               p.stock = getTotalStock(id);
               console.log('[Stock] Product', id, 'stockMap:', JSON.stringify(stockMap[id]), 'total:', p.stock);
             }
@@ -758,6 +767,7 @@ function loadStockFromFirestore(callback) {
             stockMap[p.id] = {};
             var perSize = Math.max(1, Math.floor((p.stock !== undefined ? p.stock : 5) / p.sizes.length));
             p.sizes.forEach(function(s) { stockMap[p.id][s] = perSize; });
+            stockMap[p.id].default = 0;
           } else {
             stockMap[p.id] = { default: p.stock !== undefined ? p.stock : 5 };
           }
