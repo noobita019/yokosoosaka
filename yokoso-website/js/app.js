@@ -48,6 +48,7 @@ function migrateCategoriesConfig(cfg) {
   });
   if (!cfg.brands) cfg.brands = [];
   if (!cfg.sizes) cfg.sizes = [];
+  if (!cfg.subcategoryBrands) cfg.subcategoryBrands = {};
   return cfg;
 }
 
@@ -426,6 +427,9 @@ function getBrands() {
 
 function getBrandsForSubcategory(sub) {
   if (!sub || sub === 'all') return [];
+  if (categoriesConfig.subcategoryBrands && categoriesConfig.subcategoryBrands[sub] && categoriesConfig.subcategoryBrands[sub].length) {
+    return categoriesConfig.subcategoryBrands[sub].slice().sort();
+  }
   var filtered = products.filter(function(p) { return p.available !== false && p.category0 === currentGroup && p.category1 === sub; });
   var brands = [...new Set(filtered.map(function(p) { return p.category2; }).filter(Boolean))].sort();
   return brands;
@@ -1701,6 +1705,34 @@ function renderCategoryManagement() {
 
   // Group image preview
   renderGroupImagePreview();
+  renderBrandMapUI();
+}
+
+function renderBrandMapUI() {
+  var picker = document.getElementById('brandMapSubcategoryPicker');
+  if (!picker) return;
+  var allSubs = [];
+  (categoriesConfig.groups || []).forEach(function(g) {
+    (categoriesConfig.subcategoryMap[g.name] || []).forEach(function(s) {
+      if (allSubs.indexOf(s) === -1) allSubs.push(s);
+    });
+  });
+  var currentSub = picker.value && allSubs.indexOf(picker.value) !== -1 ? picker.value : (allSubs[0] || '');
+  picker.innerHTML = allSubs.map(function(s) {
+    return '<option value="' + s + '"' + (s === currentSub ? ' selected' : '') + '>' + s + '</option>';
+  }).join('');
+  renderBrandMapCheckboxes(currentSub);
+}
+
+function renderBrandMapCheckboxes(sub) {
+  var container = document.getElementById('brandMapCheckboxes');
+  if (!container) return;
+  var assigned = categoriesConfig.subcategoryBrands[sub] || [];
+  var allBrands = categoriesConfig.brands || [];
+  container.innerHTML = allBrands.map(function(b) {
+    var checked = assigned.indexOf(b) !== -1 ? ' checked' : '';
+    return '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:0.8rem;color:#ccc;padding:4px 8px;background:rgba(255,255,255,0.05);border-radius:4px"><input type="checkbox" class="brand-map-cb" data-subcategory="' + sub + '" data-brand="' + b + '"' + checked + '>' + b + '</label>';
+  }).join('');
 }
 
 function makeEditableGroupTag(el) {
@@ -1843,6 +1875,26 @@ document.getElementById('groupImageUrl').addEventListener('input', function() {
     renderGroupImagePreview();
     renderCarousel();
   }
+});
+
+// ---- BRAND MAP UI ----
+document.getElementById('brandMapSubcategoryPicker').addEventListener('change', function() {
+  renderBrandMapCheckboxes(this.value);
+});
+
+document.getElementById('brandMapCheckboxes').addEventListener('change', function(e) {
+  var cb = e.target.closest('.brand-map-cb');
+  if (!cb) return;
+  var sub = cb.dataset.subcategory;
+  var brand = cb.dataset.brand;
+  if (!categoriesConfig.subcategoryBrands[sub]) categoriesConfig.subcategoryBrands[sub] = [];
+  var arr = categoriesConfig.subcategoryBrands[sub];
+  if (cb.checked) {
+    if (arr.indexOf(brand) === -1) arr.push(brand);
+  } else {
+    categoriesConfig.subcategoryBrands[sub] = arr.filter(function(b) { return b !== brand; });
+  }
+  saveCategoriesConfig();
 });
 
 // ---- HERO CAROUSEL ----
