@@ -433,9 +433,9 @@ function renderFilters() {
 function renderSubcategoryFilter() {
   var container = document.getElementById('subcategoryFilterContainer');
   if (!container) return;
-  var subs = getSubcategories(currentGroup === 'all' ? null : currentGroup);
-  if (subs.length === 0) { container.innerHTML = ''; return; }
-  var html = '<button class="filter-btn' + (currentCategory === 'all' ? ' active' : '') + '" data-subcategory="all">All ' + (currentGroup === 'all' ? '' : currentGroup + ' ') + 'Subcategories</button>';
+  if (currentGroup === 'all') { container.innerHTML = ''; return; }
+  var subs = getSubcategories(currentGroup);
+  var html = '<button class="filter-btn' + (currentCategory === 'all' ? ' active' : '') + '" data-subcategory="all">All ' + currentGroup + ' Subcategories</button>';
   subs.forEach(function(s) {
     html += '<button class="filter-btn' + (currentCategory === s ? ' active' : '') + '" data-subcategory="' + s + '">' + s + '</button>';
   });
@@ -456,6 +456,7 @@ function renderCarousel() {
 function renderBrandFilter() {
   var brandContainer = document.getElementById('brandFilterContainer');
   if (!brandContainer) return;
+  if (currentGroup === 'all') { brandContainer.innerHTML = ''; return; }
   var brands = getBrands();
   var brandHtml = '<button class="filter-btn' + (currentBrand === 'all' ? ' active' : '') + '" data-brand="all">All Brands</button>';
   brands.forEach(function(b) {

@@ -51,7 +51,9 @@ Now also syncs `data/categories.json` automatically
 
 ## Recent Architecture Changes
 - **Category hierarchy restructured**: Added `category0` (Group) field to products, new `categoriesConfig` format with `groups` + `subcategoryMap`
-- **Category carousel**: Groups displayed as horizontally scrollable image buttons in place of old type filter
+- **Category carousel**: Groups displayed as horizontally scrollable image buttons — clicking shows subcategory and brand filter pills below
+- **Subcategory filter**: Pill buttons below carousel, filtered by selected group; click to filter products by subcategory
+- **Brand filter**: Pill buttons below subcategory, filtered by selected group+subcategory; click to filter products by brand
 - **Search in header**: Search bar moved from `.search-filter` section to header (always visible next to logo)
 - **Linked dropdowns**: Admin form Group→Subcategory→Brand selects cascade (selecting group filters subcategories, selecting subcategory filters brands)
 - **Category management UI**: Groups section with image upload, Subcategories section with per-group picker, Brands, Sizes
@@ -60,6 +62,8 @@ Now also syncs `data/categories.json` automatically
 - **File-based data**: Products/categories in `data/*.json` (committed to repo), replaces Firebase as source of truth
 - **GitHub API auto-sync**: Commits `data/products.json` and `data/categories.json` directly on save (if token configured)
 - **Cache busting**: Meta tags prevent HTML caching, `?_=timestamp` on data fetches
+- **loadCategories**: Fetches from GitHub API `contents` endpoint (bypasses CDN), falls back to local file; preserves user's group images from localStorage but gives API images priority for cross-device sync
+- **Group image sync**: Shows visible status messages directly in category management section; `resizeImage` now has error handlers for silent failures
 
 ## Fullscreen Viewer (`#liveFullscreen`)
 - Dynamic element created in `openFullscreen()`
