@@ -801,10 +801,19 @@ function subscribeStockUpdates() {
             var id = parseInt(doc.id);
             var p = products.find(function(x) { return x.id === id; });
             if (p && doc.fields) {
+              var fields = doc.fields;
+              // Migrate old format to per-size
+              if (hasSizes(p) && Object.keys(fields).length === 1 && fields.default !== undefined) {
+                var total = fields.default;
+                fields = {};
+                var perSize = Math.max(1, Math.floor(total / p.sizes.length));
+                p.sizes.forEach(function(s) { fields[s] = perSize; });
+                fields.default = 0;
+              }
               var newTotal = 0;
-              for (var k in doc.fields) newTotal += doc.fields[k];
+              for (var k in fields) newTotal += fields[k];
               if (stockInitialized && p.stock !== newTotal) {
-                stockMap[id] = doc.fields;
+                stockMap[id] = fields;
                 p.stock = newTotal;
                 changed = true;
               }
