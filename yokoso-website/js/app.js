@@ -426,6 +426,20 @@ function getBrands() {
 
 function renderFilters() {
   renderCarousel();
+  renderSubcategoryFilter();
+  renderBrandFilter();
+}
+
+function renderSubcategoryFilter() {
+  var container = document.getElementById('subcategoryFilterContainer');
+  if (!container) return;
+  var subs = getSubcategories(currentGroup === 'all' ? null : currentGroup);
+  if (subs.length === 0) { container.innerHTML = ''; return; }
+  var html = '<button class="filter-btn' + (currentCategory === 'all' ? ' active' : '') + '" data-subcategory="all">All ' + (currentGroup === 'all' ? '' : currentGroup + ' ') + 'Subcategories</button>';
+  subs.forEach(function(s) {
+    html += '<button class="filter-btn' + (currentCategory === s ? ' active' : '') + '" data-subcategory="' + s + '">' + s + '</button>';
+  });
+  container.innerHTML = html;
 }
 
 function renderCarousel() {
@@ -466,11 +480,22 @@ if (cc) {
 }
 
 document.addEventListener('click', function(e) {
-  var btn = e.target.closest('#brandFilterContainer .filter-btn');
-  if (!btn) return;
+  var subBtn = e.target.closest('#subcategoryFilterContainer .filter-btn');
+  if (subBtn) {
+    document.querySelectorAll('#subcategoryFilterContainer .filter-btn').forEach(function(b) { b.classList.remove('active'); });
+    subBtn.classList.add('active');
+    currentCategory = subBtn.dataset.subcategory;
+    currentBrand = 'all';
+    renderSubcategoryFilter();
+    renderBrandFilter();
+    renderProducts();
+    return;
+  }
+  var brandBtn = e.target.closest('#brandFilterContainer .filter-btn');
+  if (!brandBtn) return;
   document.querySelectorAll('#brandFilterContainer .filter-btn').forEach(function(b) { b.classList.remove('active'); });
-  btn.classList.add('active');
-  currentBrand = btn.dataset.brand;
+  brandBtn.classList.add('active');
+  currentBrand = brandBtn.dataset.brand;
   renderProducts();
 });
 
