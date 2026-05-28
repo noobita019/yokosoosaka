@@ -464,11 +464,12 @@ function renderSubcategoryFilter() {
   if (!container) return;
   if (currentGroup === 'all') { container.innerHTML = ''; return; }
   var subs = getSubcategories(currentGroup);
-  var html = '<div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.5rem"><button class="filter-btn' + (currentCategory === 'all' ? ' active' : '') + '" data-subcategory="all">All ' + currentGroup + ' Products</button></div>';
+  var html = '<button class="filter-btn' + (currentCategory === 'all' ? ' active' : '') + '" data-subcategory="all">All ' + currentGroup + ' Products</button>';
   subs.forEach(function(s) {
     var brands = getBrandsForSubcategory(s);
     if (!brands.length) return;
-    html += '<div class="brand-grid-section"><div class="brand-grid-heading">' + s + '</div><div class="brand-grid">';
+    html += '<div class="subcategory-wrapper"><button class="filter-btn' + (currentCategory === s && currentBrand === 'all' ? ' active' : '') + '" data-subcategory="' + s + '">' + s + '</button>';
+    html += '<div class="subcategory-brands"><div class="brand-grid">';
     brands.forEach(function(b) {
       var logo = categoriesConfig.brandLogos && categoriesConfig.brandLogos[b] ? categoriesConfig.brandLogos[b] : '';
       var active = currentCategory === s && currentBrand === b ? ' active' : '';
@@ -476,7 +477,7 @@ function renderSubcategoryFilter() {
       if (logo) html += '<img src="' + logo + '" class="brand-card-logo">';
       html += '<span class="brand-card-name">' + b + '</span></button>';
     });
-    html += '</div></div>';
+    html += '</div></div></div>';
   });
   container.innerHTML = html;
 }
@@ -528,10 +529,14 @@ document.addEventListener('click', function(e) {
   }
   var subBtn = e.target.closest('#subcategoryFilterContainer .filter-btn');
   if (subBtn) {
-    document.querySelectorAll('#subcategoryFilterContainer .filter-btn').forEach(function(b) { b.classList.remove('active'); });
-    subBtn.classList.add('active');
-    currentCategory = 'all';
-    currentBrand = 'all';
+    var sub = subBtn.dataset.subcategory;
+    if (sub === 'all') {
+      currentCategory = 'all';
+      currentBrand = 'all';
+    } else {
+      currentCategory = sub;
+      currentBrand = 'all';
+    }
     renderSubcategoryFilter();
     renderProducts();
     return;
