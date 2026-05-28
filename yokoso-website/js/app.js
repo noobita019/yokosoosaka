@@ -561,6 +561,7 @@ function openFullscreen() {
   document.documentElement.style.touchAction = 'none';
   document.body.style.overscrollBehavior = 'none';
   lockBody();
+  try { history.pushState({fullscreen: true}, '', '#fullscreen'); } catch (e) {}
 }
 
 function closeFullscreen() {
@@ -571,7 +572,9 @@ function closeFullscreen() {
   var modal = document.getElementById('productModal');
   var live = document.getElementById('liveModal');
   if ((!modal || !modal.classList.contains('active')) && !live) unlockBody();
-  if (location.hash === '#fullscreen') history.back();
+  if (location.hash === '#fullscreen') {
+    try { history.back(); } catch (e) {}
+  }
 }
 
 var modalImg = document.getElementById('modalImage');
