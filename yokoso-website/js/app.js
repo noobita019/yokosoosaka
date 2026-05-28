@@ -382,7 +382,7 @@ function openModal(product) {
     
     document.body.appendChild(overlay);
     var mImg = overlay.querySelector('#modalMainImg');
-    if (mImg) { mImg.addEventListener('click', function(e) { currentModalImages = _modalImages.slice(); currentImageIndex = _modalImageIdx; openFullscreen(); }); }
+    if (mImg) { mImg.addEventListener('click', function(e) { document.title = 'H:'+Date.now(); currentModalImages = _modalImages.slice(); currentImageIndex = _modalImageIdx; openFullscreen(); }); }
     overlay.addEventListener('click', function(e) { if (e.target === this) closeLiveModal(); });
     lockBody();
     try { history.pushState({modal: true}, '', '#modal'); } catch (e) {}
@@ -453,12 +453,15 @@ document.getElementById('productModal').addEventListener('click', e => {
 document.querySelector('#productModal .modal-close').addEventListener('click', closeModal);
 // Fullscreen image viewer
 function openFullscreen() {
+  document.title = 'O:'+Date.now();
   if (currentModalImages.length === 0) return;
   var old = document.getElementById('liveFullscreen');
   if (old) old.remove();
   var ov = document.createElement('div');
   ov.id = 'liveFullscreen';
-  ov.style.cssText = 'display:flex!important;position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;background:#000!important;z-index:99999!important;align-items:center!important;justify-content:center!important;';
+  ov.style.cssText = 'display:flex!important;position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;background:red!important;z-index:99999!important;align-items:center!important;justify-content:center!important;';
+  document.body.appendChild(ov);
+  document.title = 'A:'+Date.now();
   var track = document.createElement('div');
   track.style.cssText = 'position:relative;width:100%;height:100%;display:flex;flex-direction:column;';
   var h = window.innerHeight;
@@ -484,7 +487,6 @@ function openFullscreen() {
   counter.textContent = (currentImageIndex + 1) + ' / ' + currentModalImages.length;
   ov.appendChild(counter);
   ov.addEventListener('click', function(e) { if (e.target === this) closeFullscreen(); });
-  document.body.appendChild(ov);
   lockBody();
 }
 
