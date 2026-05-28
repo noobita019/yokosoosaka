@@ -829,12 +829,6 @@ function addToCart(productId) {
   renderProducts();
   showCartNotification(p.name);
 }
-  saveCart();
-  saveProducts();
-  firestoreAddToCart(productId);
-  renderProducts();
-  showCartNotification(p.name);
-}
 
 function removeFromCart(productId) {
   var item = cart.find(function(x) { return x.id === productId; });
