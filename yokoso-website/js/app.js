@@ -84,6 +84,28 @@ let currentModalImages = [];
 let currentImageIndex = 0;
 var scrollPos = 0, bodyLocked = false;
 
+// Per-size stock tracking
+var stockMap = {};
+
+function getSizeStock(productId, size) {
+  var m = stockMap[productId];
+  if (!m) return 5;
+  var qty = m[size || 'default'];
+  return qty !== undefined ? qty : 0;
+}
+
+function getTotalStock(productId) {
+  var m = stockMap[productId];
+  if (!m) return 5;
+  var t = 0;
+  for (var k in m) t += m[k];
+  return t;
+}
+
+function hasSizes(product) {
+  return Array.isArray(product.sizes) && product.sizes.length > 0;
+}
+
 function lockBody() {
   if (bodyLocked) return;
   bodyLocked = true;
@@ -607,10 +629,18 @@ function renderProducts() {
   empty.style.display = 'none';
   grid.innerHTML = filtered.map(function(p) {
     var brandHtml = p.category2 ? '<span class="product-brand">' + p.category2 + '</span>' : '';
-    var sizesHtml = Array.isArray(p.sizes) && p.sizes.length > 0 ? '<div class="product-sizes">' + p.sizes.map(function(s) { return '<span class="product-size-tag">' + s + '</span>'; }).join('') + '</div>' : '';
+    var sizesHtml = '';
+    if (hasSizes(p)) {
+      sizesHtml = '<div class="product-sizes">' + p.sizes.map(function(s) {
+        var sStock = getSizeStock(p.id, s);
+        var sClass = sStock > 0 ? '' : ' size-oos';
+        return '<span class="product-size-tag' + sClass + '" onclick="event.stopPropagation();addToCart(' + p.id + ',\'' + s + '\')">' + s + (sStock > 0 && sStock <= 3 ? ' (' + sStock + ')' : '') + '</span>';
+      }).join('') + '</div>';
+    }
     var stock = p.stock !== undefined ? p.stock : 5;
-    var stockLabel = stock > 3 ? 'In Stock' : stock > 0 ? 'Only ' + stock + ' left' : 'Out of Stock';
-    var stockClass = stock > 0 ? 'in-stock' : 'out-of-stock';
+    var totalAvail = getTotalStock(p.id);
+    var stockLabel = totalAvail > 3 ? 'In Stock' : totalAvail > 0 ? 'Only ' + totalAvail + ' left' : 'Out of Stock';
+    var stockClass = totalAvail > 0 ? 'in-stock' : 'out-of-stock';
     return '<div class="product-card" data-id="' + p.id + '">' +
       '<img class="product-image" src="' + (p.images?.[0] || 'images/products/placeholder.svg') + '" alt="' + p.name + '" loading="lazy" onerror="if(this.dataset.retry){this.src=\'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\';this.style.background=\'#eee\'}else{this.dataset.retry=\'1\';this.src=\'images/products/placeholder.svg\'}">' +
       '<div class="product-info">' +
@@ -621,7 +651,7 @@ function renderProducts() {
       sizesHtml +
       '<div class="product-price">' + p.price + '</div>' +
       '<div class="product-stock ' + stockClass + '">' + stockLabel + '</div>' +
-      (stock > 0 ? '<button class="btn-add-cart" data-id="' + p.id + '">Add to Cart</button>' : '') +
+      (!hasSizes(p) && totalAvail > 0 ? '<button class="btn-add-cart" data-id="' + p.id + '">Add to Cart</button>' : '') +
       '</div></div>';
   }).join('');
 
@@ -660,27 +690,38 @@ function setProxyStatus(msg, isError) {
   el.style.color = isError ? '#e94560' : '#2e7d32';
 }
 
-function syncStockToFirestore(productId, quantity) {
+function syncStockToFirestore(productId) {
   if (!isProxyReady()) return;
-  console.log('[Stock] Syncing product', productId, '->', quantity);
+  var p = products.find(function(x) { return x.id === productId; });
+  if (!p) return;
+  var body = {};
+  if (hasSizes(p)) {
+    var m = stockMap[productId];
+    if (m) {
+      body = m;
+    } else {
+      var perSize = Math.max(1, Math.floor((p.stock !== undefined ? p.stock : 5) / p.sizes.length));
+      p.sizes.forEach(function(s) { body[s] = perSize; });
+      body.default = 0;
+    }
+  } else {
+    body.default = p.stock !== undefined ? p.stock : 5;
+  }
+  console.log('[Stock] Syncing product', productId, '->', JSON.stringify(body));
   fetch(proxyUrl('stocks/' + productId), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ quantity: quantity })
+    body: JSON.stringify(body)
   }).then(function(r) {
     if (!r.ok) console.warn('[Stock] Sync PUT failed:', r.status);
-    return r.json().then(function(d) {
-      console.log('[Stock] Sync response for', productId, ':', d);
-    });
-  }).catch(function(err) {
-    console.warn('[Stock] Sync error for', productId, ':', err.message);
-  });
+    return r.json().then(function(d) { console.log('[Stock] Sync response for', productId, ':', d); });
+  }).catch(function(err) { console.warn('[Stock] Sync error for', productId, ':', err.message); });
 }
 
 function syncAllStockToFirestore() {
   if (!isProxyReady()) return;
   products.forEach(function(p) {
-    syncStockToFirestore(p.id, p.stock !== undefined ? p.stock : 5);
+    syncStockToFirestore(p.id);
   });
   setProxyStatus('Stock synced to proxy');
 }
@@ -699,16 +740,31 @@ function loadStockFromFirestore(callback) {
       console.log('[Stock] Got docs:', docs ? docs.length : 0);
       if (Array.isArray(docs)) {
         docs.forEach(function(doc) {
-          if (doc && doc.quantity !== undefined) {
+          if (doc && doc.id) {
             var id = parseInt(doc.id);
             var p = products.find(function(x) { return x.id === id; });
             if (p) {
-              console.log('[Stock] Product', id, 'stock:', p.stock, '->', doc.quantity);
-              p.stock = doc.quantity;
+              stockMap[id] = doc.fields || { default: 5 };
+              p.stock = getTotalStock(id);
+              console.log('[Stock] Product', id, 'stockMap:', JSON.stringify(stockMap[id]), 'total:', p.stock);
             }
           }
         });
       }
+      // Initialize stockMap for products not in Firestore yet
+      products.forEach(function(p) {
+        if (!stockMap[p.id]) {
+          if (hasSizes(p)) {
+            stockMap[p.id] = {};
+            var perSize = Math.max(1, Math.floor((p.stock !== undefined ? p.stock : 5) / p.sizes.length));
+            p.sizes.forEach(function(s) { stockMap[p.id][s] = perSize; });
+          } else {
+            stockMap[p.id] = { default: p.stock !== undefined ? p.stock : 5 };
+          }
+          p.stock = getTotalStock(p.id);
+          syncStockToFirestore(p.id);
+        }
+      });
       stockInitialized = true;
       setProxyStatus('Proxy connected (' + (docs ? docs.length : 0) + ' stock docs)');
       if (callback) callback();
@@ -731,12 +787,17 @@ function subscribeStockUpdates() {
         if (!Array.isArray(docs)) return;
         var changed = false;
         docs.forEach(function(doc) {
-          if (doc && doc.quantity !== undefined) {
+          if (doc && doc.id) {
             var id = parseInt(doc.id);
             var p = products.find(function(x) { return x.id === id; });
-            if (p && stockInitialized && p.stock !== doc.quantity) {
-              p.stock = doc.quantity;
-              changed = true;
+            if (p && doc.fields) {
+              var newTotal = 0;
+              for (var k in doc.fields) newTotal += doc.fields[k];
+              if (stockInitialized && p.stock !== newTotal) {
+                stockMap[id] = doc.fields;
+                p.stock = newTotal;
+                changed = true;
+              }
             }
           }
         });
@@ -746,14 +807,15 @@ function subscribeStockUpdates() {
   }, 5000);
 }
 
-function firestoreAddToCart(productId) {
+function firestoreAddToCart(productId, size) {
   if (!isProxyReady()) { console.warn('[Stock] Proxy not ready'); return; }
+  var field = size || 'default';
   var url = proxyUrl('stocks/' + productId + '/decrement');
-  console.log('[Stock] Decrement fetch to', url);
+  console.log('[Stock] Decrement fetch to', url, 'field:', field);
   fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount: 1 })
+    body: JSON.stringify({ amount: 1, field: field })
   }).then(function(r) {
     console.log('[Stock] Decrement response', r.status);
     if (r.ok) setProxyStatus('Stock updated via proxy');
@@ -764,14 +826,15 @@ function firestoreAddToCart(productId) {
   });
 }
 
-function firestoreRestoreStock(productId, amount) {
+function firestoreRestoreStock(productId, amount, size) {
   if (!isProxyReady() || amount <= 0) return;
+  var field = size || 'default';
   var url = proxyUrl('stocks/' + productId + '/increment');
-  console.log('[Stock] Increment fetch to', url);
+  console.log('[Stock] Increment fetch to', url, 'field:', field, 'amount:', amount);
   fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount: amount })
+    body: JSON.stringify({ amount: amount, field: field })
   }).then(function(r) {
     console.log('[Stock] Increment response', r.status);
     if (r.ok) setProxyStatus('Stock restored via proxy');
@@ -857,56 +920,82 @@ function updateCartBadge() {
   badge.style.display = count > 0 ? 'flex' : 'none';
 }
 
-function addToCart(productId) {
+function cartKey(id, size) {
+  return id + '_' + (size || '');
+}
+
+function addToCart(productId, size) {
   var p = products.find(function(x) { return x.id === productId; });
   if (!p) return;
-  var stock = p.stock !== undefined ? p.stock : 5;
-  if (stock <= 0) { alert('Not enough stock available.'); return; }
-  var existing = cart.find(function(item) { return item.id === productId; });
-  p.stock = stock - 1;
+  var field = size || 'default';
+  var avail = getSizeStock(productId, field);
+  if (avail <= 0) { alert('Size ' + size + ' is out of stock.'); return; }
+  var key = cartKey(productId, size);
+  var existing = cart.find(function(item) { return cartKey(item.id, item.size) === key; });
   if (existing) {
     existing.qty++;
   } else {
-    cart.push({ id: productId, qty: 1, name: p.name, price: p.price, image: p.images?.[0] || 'images/products/placeholder.svg' });
+    cart.push({
+      id: productId,
+      size: size || null,
+      qty: 1,
+      name: p.name,
+      price: p.price,
+      image: p.images?.[0] || 'images/products/placeholder.svg'
+    });
   }
+  if (!stockMap[productId]) stockMap[productId] = {};
+  stockMap[productId][field] = Math.max(0, (stockMap[productId][field] || 0) - 1);
+  p.stock = getTotalStock(productId);
   saveCart();
-  console.log('[Cart] Added ' + p.name + ', new stock=' + p.stock + ', proxy=' + STOCK_PROXY_URL);
-  firestoreAddToCart(productId);
+  console.log('[Cart] Added ' + p.name + (size ? ' (' + size + ')' : '') + ', remaining ' + field + ': ' + stockMap[productId][field]);
+  firestoreAddToCart(productId, size);
   renderProducts();
-  showCartNotification(p.name);
+  showCartNotification(p.name + (size ? ' (' + size + ')' : ''));
 }
 
-function removeFromCart(productId) {
-  var item = cart.find(function(x) { return x.id === productId; });
-  if (item) {
-    var p = products.find(function(x) { return x.id === productId; });
-    if (p) {
-      p.stock = (p.stock !== undefined ? p.stock : 0) + item.qty;
-    }
+function removeFromCart(productId, size) {
+  var key = cartKey(productId, size);
+  var idx = cart.findIndex(function(x) { return cartKey(x.id, x.size) === key; });
+  if (idx === -1) return;
+  var item = cart[idx];
+  var p = products.find(function(x) { return x.id === productId; });
+  var field = item.size || 'default';
+  if (p) {
+    if (!stockMap[productId]) stockMap[productId] = {};
+    stockMap[productId][field] = (stockMap[productId][field] || 0) + item.qty;
+    p.stock = getTotalStock(productId);
   }
-  cart = cart.filter(function(item) { return item.id !== productId; });
+  cart.splice(idx, 1);
   saveCart();
   if (item) {
-    firestoreRestoreStock(productId, item.qty);
+    firestoreRestoreStock(productId, item.qty, item.size);
     renderProducts();
   }
   renderCart();
 }
 
-function updateCartQty(productId, delta) {
-  var item = cart.find(function(x) { return x.id === productId; });
-  if (!item) return;
+function updateCartQty(productId, delta, size) {
+  var key = cartKey(productId, size);
+  var idx = cart.findIndex(function(x) { return cartKey(x.id, x.size) === key; });
+  if (idx === -1) return;
+  var item = cart[idx];
   var p = products.find(function(x) { return x.id === productId; });
-  var stock = p ? (p.stock !== undefined ? p.stock : 5) : 99;
+  var field = item.size || 'default';
+  var avail = p ? getSizeStock(productId, field) : 0;
   var newQty = item.qty + delta;
-  if (newQty <= 0) { removeFromCart(productId); return; }
-  if (delta > 0 && delta > stock) { alert('Not enough stock.'); return; }
-  if (p) { p.stock = stock - delta; }
+  if (newQty <= 0) { removeFromCart(productId, item.size); return; }
+  if (delta > 0 && delta > avail) { alert('Not enough stock for size ' + (item.size || 'this item') + '.'); return; }
+  if (p) {
+    if (!stockMap[productId]) stockMap[productId] = {};
+    stockMap[productId][field] = Math.max(0, (stockMap[productId][field] || 0) - delta);
+    p.stock = getTotalStock(productId);
+  }
   item.qty = newQty;
   saveCart();
   if (p) {
-    if (delta > 0) { firestoreAddToCart(productId); }
-    else { firestoreRestoreStock(productId, Math.abs(delta)); }
+    if (delta > 0) { firestoreAddToCart(productId, item.size); }
+    else { firestoreRestoreStock(productId, Math.abs(delta), item.size); }
     renderProducts();
   }
   renderCart();
@@ -949,17 +1038,18 @@ function renderCart() {
   list.innerHTML = cart.map(function(item) {
     var price = parseFloat(item.price.replace(/[^0-9.]/g, ''));
     var subtotal = isNaN(price) ? item.price : '₱' + (price * item.qty).toFixed(2);
+    var sizeLabel = item.size ? ' <span style="font-size:11px;color:#888">(' + item.size + ')</span>' : '';
     return '<div class="cart-item">' +
       '<img src="' + item.image + '" class="cart-item-img" onerror="this.src=\'images/products/placeholder.svg\'">' +
       '<div class="cart-item-info">' +
-      '<div class="cart-item-name">' + item.name + '</div>' +
+      '<div class="cart-item-name">' + item.name + sizeLabel + '</div>' +
       '<div class="cart-item-price">' + item.price + '</div>' +
       '<div class="cart-item-qty">' +
-      '<button class="cart-qty-btn" onclick="updateCartQty(' + item.id + ',-1)">−</button>' +
+      '<button class="cart-qty-btn" onclick="updateCartQty(' + item.id + ',-1,\'' + (item.size || '') + '\')">−</button>' +
       '<span>' + item.qty + '</span>' +
-      '<button class="cart-qty-btn" onclick="updateCartQty(' + item.id + ',1)">+</button>' +
+      '<button class="cart-qty-btn" onclick="updateCartQty(' + item.id + ',1,\'' + (item.size || '') + '\')">+</button>' +
       '</div></div>' +
-      '<button class="cart-item-remove" onclick="removeFromCart(' + item.id + ')">×</button>' +
+      '<button class="cart-item-remove" onclick="removeFromCart(' + item.id + ',\'' + (item.size || '') + '\')">×</button>' +
       '</div>';
   }).join('');
   if (totalEl) {
@@ -1009,9 +1099,18 @@ function openModal(product) {
     
     _modalImages = (Array.isArray(product.images) && product.images.length > 0) ? product.images : [product.image || 'images/products/placeholder.svg'];
     _modalImageIdx = 0;
-    var sizesHtml = Array.isArray(product.sizes) && product.sizes.length > 0 ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">' + product.sizes.map(function(s) { return '<span style="font-size:12px;padding:3px 8px;border:1px solid #ddd;border-radius:4px;color:#666;background:#f5f5f7">' + s + '</span>'; }).join('') + '</div>' : '';
+    var productHasSizes = hasSizes(product);
+    var sizesHtml = '';
+    if (productHasSizes) {
+      sizesHtml = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">' + product.sizes.map(function(s) {
+        var sStock = getSizeStock(product.id, s);
+        var sClass = sStock > 0 ? 'modal-size-btn' : 'modal-size-btn size-oos';
+        var sLabel = sStock > 0 ? s : s + ' (OOS)';
+        return '<button class="' + sClass + '" data-size="' + s + '" onclick="selectModalSize(this,\'' + s + '\')">' + sLabel + '</button>';
+      }).join('') + '</div>';
+    }
     var dotsHtml = _modalImages.length > 1 ? '<div style="display:flex;justify-content:center;gap:6px;padding:8px 0;position:absolute;bottom:0;left:0;right:0">' + _modalImages.map(function(_, i) { return '<span class="modal-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + (i === 0 ? '#e94560' : '#ddd') + ';cursor:pointer" onclick="modalGoTo(' + i + ')"></span>'; }).join('') + '</div>' : '';
-    var stock = product.stock !== undefined ? product.stock : 5;
+    var totalAvail = getTotalStock(product.id);
     
     overlay.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.15)">' +
       '<button onclick="closeLiveModal()" style="position:absolute;top:12px;right:16px;background:rgba(0,0,0,0.06);border:none;font-size:24px;cursor:pointer;color:#666;z-index:10;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center">×</button>' +
@@ -1029,8 +1128,8 @@ function openModal(product) {
           sizesHtml +
           '<p style="color:#666;margin:0 0 16px;line-height:1.6;font-size:14px">' + (product.description || '') + '</p>' +
           '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
-          '<span style="font-size:0.8rem;font-weight:600;padding:4px 10px;border-radius:4px;' + (stock > 0 ? 'background:#e8f5e9;color:#2e7d32' : 'background:#ffebee;color:#c62828') + '">' + (stock > 3 ? 'In Stock' : stock > 0 ? 'Only ' + stock + ' left' : 'Out of Stock') + '</span>' +
-          (stock > 0 ? '<button onclick="addToCart(' + product.id + ');closeLiveModal()" style="padding:12px 32px;border-radius:8px;border:none;font-weight:600;font-size:14px;background:#e94560;color:#fff;cursor:pointer">Add to Cart</button>' : '') +
+          '<span style="font-size:0.8rem;font-weight:600;padding:4px 10px;border-radius:4px;' + (totalAvail > 0 ? 'background:#e8f5e9;color:#2e7d32' : 'background:#ffebee;color:#c62828') + '">' + (totalAvail > 3 ? 'In Stock' : totalAvail > 0 ? 'Only ' + totalAvail + ' left' : 'Out of Stock') + '</span>' +
+          (totalAvail > 0 ? '<button id="modalAddToCartBtn" onclick="addToCartFromModal(' + product.id + ')" style="padding:12px 32px;border-radius:8px;border:none;font-weight:600;font-size:14px;background:#e94560;color:#fff;cursor:pointer">' + (productHasSizes ? 'Select a size' : 'Add to Cart') + '</button>' : '') +
           '<a href="https://m.me/yokosoosaka" target="_blank" style="display:inline-block;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;background:#e94560;color:#fff">Inquire / Order</a>' +
           '</div>' +
         '</div>' +
@@ -1046,6 +1145,30 @@ function openModal(product) {
   } catch (e) {
     console.error('openModal error:', e);
   }
+}
+
+// Modal size selection
+var _modalSelectedSize = null;
+
+function selectModalSize(el, size) {
+  document.querySelectorAll('#liveModal .modal-size-btn').forEach(function(b) { b.style.borderColor = '#ddd'; b.style.background = '#f5f5f7'; });
+  el.style.borderColor = '#e94560';
+  el.style.background = '#ffe8eb';
+  _modalSelectedSize = size;
+  var btn = document.getElementById('modalAddToCartBtn');
+  if (btn) btn.textContent = 'Add to Cart' + ' (' + size + ')';
+}
+
+function addToCartFromModal(productId) {
+  var p = products.find(function(x) { return x.id === productId; });
+  if (!p) return;
+  if (hasSizes(p)) {
+    if (!_modalSelectedSize) { alert('Please select a size first.'); return; }
+    addToCart(productId, _modalSelectedSize);
+  } else {
+    addToCart(productId);
+  }
+  closeLiveModal();
 }
 
 var _modalImgRetry = 0;
@@ -1619,7 +1742,15 @@ if (pf) pf.addEventListener('submit', function(e) {
       var maxId = products.length > 0 ? Math.max.apply(null, products.map(function(p) { return p.id; })) : 0;
       products.push({ id: maxId + 1, name: name, category0: category0, category1: category1, category2: category2, price: price, description: description, images: images, sizes: selectedSizes.slice(), available: document.getElementById('formAvailable').checked, stock: stock });
     }
+    // Initialize stockMap for size-based products
+    var savedProduct = products[editingId ? products.findIndex(function(p) { return p.id === editingId; }) : products.length - 1];
+    if (hasSizes(savedProduct) && !stockMap[savedProduct.id]) {
+      stockMap[savedProduct.id] = {};
+      var perSize = Math.max(1, Math.floor(stock / savedProduct.sizes.length));
+      savedProduct.sizes.forEach(function(s) { stockMap[savedProduct.id][s] = perSize; });
+    }
     saveProducts();
+    syncStockToFirestore(savedProduct.id);
     resetForm();
     renderAdminList();
     renderFilters();

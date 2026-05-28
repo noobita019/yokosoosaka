@@ -48,7 +48,9 @@ async function firestoreCreate(docId, fields) {
 }
 
 // Atomic increment/decrement via Firestore transform — no read-modify-write race
-async function firestoreTransform(docId, amount) {
+// fieldPath defaults to 'default' (for products without sizes)
+async function firestoreTransform(docId, amount, fieldPath) {
+  fieldPath = fieldPath || 'default';
   const docName = `projects/japan-goodies/databases/(default)/documents/stocks/${docId}`;
   const resp = await fetch(`${FIRESTORE_BASE}:commit?key=${API_KEY}`, {
     method: 'POST',
@@ -58,7 +60,7 @@ async function firestoreTransform(docId, amount) {
         transform: {
           document: docName,
           fieldTransforms: [{
-            fieldPath: 'quantity',
+            fieldPath: fieldPath,
             increment: { integerValue: String(amount) }
           }]
         }
@@ -71,12 +73,20 @@ async function firestoreTransform(docId, amount) {
 }
 
 function parseStockDoc(doc) {
-  if (!doc || !doc.fields || !doc.fields.quantity) return null;
+  if (!doc || !doc.fields) return null;
   const match = doc.name.match(/\/stocks\/([^/]+)$/);
-  return {
-    id: match ? match[1] : null,
-    quantity: parseInt(doc.fields.quantity.integerValue || doc.fields.quantity.stringValue, 10)
-  };
+  const id = match ? match[1] : null;
+  const fields = {};
+  let total = 0;
+  for (const [key, val] of Object.entries(doc.fields)) {
+    const qty = parseInt(val.integerValue || val.stringValue, 10);
+    if (!isNaN(qty)) {
+      const fieldKey = key === 'quantity' ? 'default' : key;
+      fields[fieldKey] = qty;
+      total += qty;
+    }
+  }
+  return { id, fields, total };
 }
 
 function corsHeaders(origin) {
@@ -110,57 +120,64 @@ async function handleRequest(request) {
     if (request.method === 'GET' && parts.length === 2 && parts[0] === 'stocks') {
       const data = await firestoreGet(`stocks/${parts[1]}`);
       const parsed = parseStockDoc(data);
-      if (!parsed) return new Response(JSON.stringify({ quantity: null }), { headers: corsHeaders(origin) });
+      if (!parsed) return new Response(JSON.stringify({ id: parts[1], fields: {}, total: 0 }), { headers: corsHeaders(origin) });
       return new Response(JSON.stringify(parsed), { headers: corsHeaders(origin) });
     }
 
-    // PUT /stocks/:id  — set absolute quantity (idempotent, no race)
+    // PUT /stocks/:id  — set fields (idempotent)
     if (request.method === 'PUT' && parts.length === 2 && parts[0] === 'stocks') {
       const body = await request.json();
-      const qty = parseInt(body.quantity, 10);
-      if (isNaN(qty)) return new Response(JSON.stringify({ error: 'invalid quantity' }), { status: 400, headers: corsHeaders(origin) });
-      // Always do PATCH then fallback to CREATE if needed
-      const r = await firestorePatch(`stocks/${parts[1]}`, { quantity: qty });
-      if (r === null || r === false) {
-        const created = await firestoreCreate(parts[1], { quantity: qty });
+      const fields = {};
+      let hasValid = false;
+      for (const [k, v] of Object.entries(body)) {
+        const qty = parseInt(v, 10);
+        if (!isNaN(qty)) { fields[k] = qty; hasValid = true; }
+      }
+      if (!hasValid) return new Response(JSON.stringify({ error: 'no valid fields' }), { status: 400, headers: corsHeaders(origin) });
+      const r = await firestorePatch(`stocks/${parts[1]}`, fields);
+      if (r === null) {
+        const created = await firestoreCreate(parts[1], fields);
         return new Response(JSON.stringify({ ok: created }), { headers: corsHeaders(origin) });
       }
-      return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders(origin) });
+      return new Response(JSON.stringify({ ok: r }), { headers: corsHeaders(origin) });
     }
 
-    // POST /stocks/:id/decrement  — atomic decrement by amount
+    // POST /stocks/:id/decrement  — atomic decrement by amount on a field
     if (request.method === 'POST' && parts.length === 3 && parts[0] === 'stocks' && parts[2] === 'decrement') {
       const body = await request.json().catch(() => ({}));
       const amount = parseInt(body.amount, 10) || 1;
-      const r = await firestoreTransform(parts[1], -amount);
+      const field = body.field || 'default';
+      const r = await firestoreTransform(parts[1], -amount, field);
       if (r === true) {
-        // Re-fetch to return current quantity
         const data = await firestoreGet(`stocks/${parts[1]}`);
         const parsed = parseStockDoc(data);
-        return new Response(JSON.stringify(parsed || { quantity: null }), { headers: corsHeaders(origin) });
+        return new Response(JSON.stringify(parsed || { id: parts[1], fields: {}, total: 0 }), { headers: corsHeaders(origin) });
       }
-      // Doc didn't exist — create it with base quantity first, then retry
       if (typeof r === 'object' && r.error) {
-        const initial = Math.max(0, 5 - amount);
-        await firestoreCreate(parts[1], { quantity: initial });
-        return new Response(JSON.stringify({ quantity: initial }), { headers: corsHeaders(origin) });
+        const fields = {};
+        fields[field] = Math.max(0, 5 - amount);
+        await firestoreCreate(parts[1], fields);
+        return new Response(JSON.stringify({ id: parts[1], fields, total: fields[field] }), { headers: corsHeaders(origin) });
       }
       throw new Error(`Transform failed: ${JSON.stringify(r)}`);
     }
 
-    // POST /stocks/:id/increment  — atomic increment by amount
+    // POST /stocks/:id/increment  — atomic increment by amount on a field
     if (request.method === 'POST' && parts.length === 3 && parts[0] === 'stocks' && parts[2] === 'increment') {
       const body = await request.json().catch(() => ({}));
       const amount = parseInt(body.amount, 10) || 1;
-      const r = await firestoreTransform(parts[1], amount);
+      const field = body.field || 'default';
+      const r = await firestoreTransform(parts[1], amount, field);
       if (r === true) {
         const data = await firestoreGet(`stocks/${parts[1]}`);
         const parsed = parseStockDoc(data);
-        return new Response(JSON.stringify(parsed || { quantity: null }), { headers: corsHeaders(origin) });
+        return new Response(JSON.stringify(parsed || { id: parts[1], fields: {}, total: 0 }), { headers: corsHeaders(origin) });
       }
       if (typeof r === 'object' && r.error) {
-        await firestoreCreate(parts[1], { quantity: amount });
-        return new Response(JSON.stringify({ quantity: amount }), { headers: corsHeaders(origin) });
+        const fields = {};
+        fields[field] = amount;
+        await firestoreCreate(parts[1], fields);
+        return new Response(JSON.stringify({ id: parts[1], fields, total: amount }), { headers: corsHeaders(origin) });
       }
       throw new Error(`Transform failed: ${JSON.stringify(r)}`);
     }
