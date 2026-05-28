@@ -26,7 +26,8 @@
       "12",
       "One Size",
       "Free Size"
-    ]
+    ],
+    "category0": "MENS"
   },
   {
     "available": true,
@@ -39,7 +40,8 @@
     ],
     "category1": "Shoes",
     "category2": "",
-    "sizes": []
+    "sizes": [],
+    "category0": "MENS"
   },
   {
     "id": 3,
@@ -52,7 +54,8 @@
     "available": true,
     "category1": "Shoes",
     "category2": "",
-    "sizes": []
+    "sizes": [],
+    "category0": "MENS"
   },
   {
     "available": true,
@@ -65,7 +68,8 @@
     "id": 4,
     "category1": "Clothing",
     "category2": "",
-    "sizes": []
+    "sizes": [],
+    "category0": "MENS"
   },
   {
     "available": true,
@@ -78,7 +82,8 @@
     "id": 5,
     "category1": "Clothing",
     "category2": "",
-    "sizes": []
+    "sizes": [],
+    "category0": "MENS"
   },
   {
     "description": "GU wide-leg pants. Comfortable and stylish. Premium cotton blend. Available in black, beige, and navy.",
@@ -91,7 +96,8 @@
     "name": "GU Wide Leg Pants",
     "category1": "Clothing",
     "category2": "",
-    "sizes": []
+    "sizes": [],
+    "category0": "MENS"
   },
   {
     "name": "Uniqlo Light Down Jacket",
@@ -104,7 +110,8 @@
     "description": "Lightweight Uniqlo down jacket. Packable design. 750 fill power. Warm without being bulky. Water-repellent.",
     "category1": "Clothing",
     "category2": "",
-    "sizes": []
+    "sizes": [],
+    "category0": "MENS"
   },
   {
     "price": "₱550",
@@ -117,7 +124,8 @@
     "id": 8,
     "category1": "Cosmetics",
     "category2": "",
-    "sizes": []
+    "sizes": [],
+    "category0": "WOMENS"
   },
   {
     "name": "Japanese Sheet Mask Variety Pack (10pcs)",
@@ -130,7 +138,8 @@
     "description": "Assorted Japanese facial sheet masks. Infused with collagen, hyaluronic acid, and vitamin C. 10-piece pack.",
     "category1": "Cosmetics",
     "category2": "",
-    "sizes": []
+    "sizes": [],
+    "category0": "WOMENS"
   },
   {
     "name": "Heroine Make Waterproof Eyeliner",
@@ -143,7 +152,8 @@
     "description": "Japanese Heroine Make waterproof liquid eyeliner. Ultra-fine 0.1mm tip. Smudge-proof and long-lasting. Black.",
     "category1": "Cosmetics",
     "category2": "",
-    "sizes": []
+    "sizes": [],
+    "category0": "WOMENS"
   },
   {
     "description": "Classic Onitsuka Tiger Mexico 66 sneakers. Japan-exclusive colorway. Iconic design. Comfortable sole. Sizes 6-10 US.",
@@ -156,7 +166,8 @@
     "name": "Onitsuka Tiger Mexico 66",
     "category1": "Shoes",
     "category2": "",
-    "sizes": []
+    "sizes": [],
+    "category0": "MENS"
   },
   {
     "images": [
@@ -169,7 +180,8 @@
     "available": true,
     "category1": "Clothing",
     "category2": "",
-    "sizes": []
+    "sizes": [],
+    "category0": "MENS"
   },
   {
     "images": [
@@ -182,7 +194,8 @@
     "price": "₱5,200",
     "category1": "NEW",
     "category2": "",
-    "sizes": []
+    "sizes": [],
+    "category0": "MENS"
   },
   {
     "images": [
@@ -195,7 +208,8 @@
     "price": "₱5,200",
     "category1": "clothes",
     "category2": "",
-    "sizes": []
+    "sizes": [],
+    "category0": "MENS"
   },
   {
     "id": 15,
@@ -208,6 +222,7 @@
       "images/products/placeholder.svg"
     ],
     "available": true,
-    "sizes": []
+    "sizes": [],
+    "category0": "MENS"
   }
 ]
