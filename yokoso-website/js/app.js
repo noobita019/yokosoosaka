@@ -2133,7 +2133,11 @@ function parseURLParams() {
     var ch = document.getElementById('catalogHeader');
     if (ch) { ch.style.display = 'block'; }
     var ct = document.getElementById('catalogTitle');
-    if (ct) { ct.textContent = group; }
+    if (ct) {
+      ct.textContent = group;
+      ct.style.cursor = 'pointer';
+      ct.onclick = function() { window.location.href = 'index.html'; };
+    }
     var cc = document.getElementById('categoryCarousel');
     if (cc) { cc.style.display = 'none'; }
   }
