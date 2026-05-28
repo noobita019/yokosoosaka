@@ -1615,6 +1615,11 @@ if (mcb) mcb.addEventListener('click', function() {
   renderCategoryManagement();
 });
 
+var sgp = document.getElementById('subcategoryGroupPicker');
+if (sgp) sgp.addEventListener('change', function() {
+  renderCategoryManagement();
+});
+
 var backBtn = document.getElementById('backToPublicBtn');
 if (backBtn) backBtn.addEventListener('click', function() {
   var ac = document.getElementById('adminCategories');
