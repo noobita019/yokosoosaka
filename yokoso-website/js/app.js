@@ -529,7 +529,7 @@ function openFullscreen() {
   if (old) old.remove();
   var ov = document.createElement('div');
   ov.id = 'liveFullscreen';
-  ov.style.cssText = 'display:flex!important;position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;background:#000!important;z-index:99999!important;align-items:center!important;justify-content:center!important;';
+  ov.style.cssText = 'display:flex!important;position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;background:#000!important;z-index:99999!important;align-items:center!important;justify-content:center!important;overscroll-behavior:none!important;touch-action:none!important;';
   document.body.appendChild(ov);
   var track = document.createElement('div');
   track.style.cssText = 'position:relative;width:100%;height:100%;display:flex;flex-direction:column;';
@@ -547,8 +547,10 @@ function openFullscreen() {
   ov.appendChild(track);
   var closeBtn = document.createElement('button');
   closeBtn.textContent = '\u00D7';
-  closeBtn.style.cssText = 'position:fixed!important;top:16px!important;right:20px!important;background:rgba(255,255,255,0.1)!important;border:none!important;color:#fff!important;font-size:2rem!important;width:44px!important;height:44px!important;border-radius:50%!important;cursor:pointer!important;z-index:10!important;display:flex!important;align-items:center!important;justify-content:center!important;';
+  closeBtn.style.cssText = 'position:fixed!important;top:16px!important;right:20px!important;background:rgba(255,255,255,0.1)!important;border:none!important;color:#fff!important;font-size:2rem!important;width:44px!important;height:44px!important;border-radius:50%!important;cursor:pointer!important;z-index:999999!important;display:flex!important;align-items:center!important;justify-content:center!important;';
   closeBtn.onclick = closeFullscreen;
+  closeBtn.addEventListener('touchstart', function(e) { e.stopPropagation(); closeFullscreen(); });
+  closeBtn.addEventListener('touchend', function(e) { e.preventDefault(); });
   ov.appendChild(closeBtn);
   var counter = document.createElement('div');
   counter.id = 'fsCounter';
