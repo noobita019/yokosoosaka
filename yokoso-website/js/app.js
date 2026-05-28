@@ -1,17 +1,16 @@
 const DEFAULT_PRODUCTS = [
-  { id: 1, name: "Nike Air Force 1 Low (Japan Exclusive)", category1: "Shoes", category2: "Nike", sizes: ["7", "8", "9", "10", "11", "12"], price: "₱5,200", description: "Authentic Nike Air Force 1 Low from Japan. Limited Japan-exclusive colorway. Leather upper with Air-Sole cushioning.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 2, name: "Nike Dunk Low Retro", category1: "Shoes", category2: "Nike", sizes: ["7", "8", "9", "10", "11"], price: "₱4,800", description: "Classic Nike Dunk Low in premium leather. Japan release. Available in multiple colors.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 3, name: "Nike Air Max 90 (Japan Pack)", category1: "Shoes", category2: "Nike", sizes: ["7", "8", "9", "10", "11", "12"], price: "₱5,500", description: "Nike Air Max 90 from the Japan-exclusive pack. Visible Air cushioning. Iconic silhouette.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 4, name: "GU Fluffy Knit Sweater", category1: "Clothing", category2: "GU", sizes: ["S", "M", "L", "XL"], price: "₱850", description: "Soft fluffy knit sweater from GU. Available in multiple colors. Perfect for cold season. Oversized relaxed fit.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 5, name: "Uniqlo Airism Oversized T-Shirt", category1: "Clothing", category2: "Uniqlo", sizes: ["S", "M", "L", "XL"], price: "₱650", description: "Authentic Uniqlo Airism oversized t-shirt. Ultra-lightweight and breathable. Moisture-wicking fabric.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 6, name: "GU Wide Leg Pants", category1: "Clothing", category2: "GU", sizes: ["S", "M", "L", "XL"], price: "₱950", description: "GU wide-leg pants. Comfortable and stylish. Premium cotton blend. Available in black, beige, and navy.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 7, name: "Uniqlo Light Down Jacket", category1: "Clothing", category2: "Uniqlo", sizes: ["S", "M", "L", "XL"], price: "₱2,200", description: "Lightweight Uniqlo down jacket. Packable design. 750 fill power. Warm without being bulky. Water-repellent.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 8, name: "Japanese Biore UV Aqua Rich SPF50+", category1: "Cosmetics", category2: "Biore", sizes: [], price: "₱550", description: "Biore UV Aqua Rich watery essence sunscreen. SPF50+ PA++++. Lightweight, non-sticky, refreshing finish. 80g.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 9, name: "Japanese Sheet Mask Variety Pack (10pcs)", category1: "Cosmetics", category2: "Generic", sizes: [], price: "₱380", description: "Assorted Japanese facial sheet masks. Infused with collagen, hyaluronic acid, and vitamin C. 10-piece pack.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 10, name: "Heroine Make Waterproof Eyeliner", category1: "Cosmetics", category2: "Heroine Make", sizes: [], price: "₱480", description: "Japanese Heroine Make waterproof liquid eyeliner. Ultra-fine 0.1mm tip. Smudge-proof and long-lasting. Black.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 11, name: "Onitsuka Tiger Mexico 66", category1: "Shoes", category2: "Onitsuka Tiger", sizes: ["6", "7", "8", "9", "10"], price: "₱3,800", description: "Classic Onitsuka Tiger Mexico 66 sneakers. Japan-exclusive colorway. Iconic design. Comfortable sole.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 12, name: "GU Knit Cardigan", category1: "Clothing", category2: "GU", sizes: ["S", "M", "L", "XL"], price: "₱1,100", description: "GU open-front knit cardigan. Soft acrylic blend. Oversized fit. Perfect layering piece for any outfit.", available: true, images: ["images/products/placeholder.svg"] },
-  { id: 13, name: "test", category1: "test", category2: "test", sizes: [], price: "11", description: "test", available: true, images: ["images/products/placeholder.svg"] }
+  { id: 1, name: "Nike Air Force 1 Low (Japan Exclusive)", category0: "MENS", category1: "Shoes", category2: "Nike", sizes: ["7", "8", "9", "10", "11", "12"], price: "₱5,200", description: "Authentic Nike Air Force 1 Low from Japan. Limited Japan-exclusive colorway. Leather upper with Air-Sole cushioning.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 2, name: "Nike Dunk Low Retro", category0: "MENS", category1: "Shoes", category2: "Nike", sizes: ["7", "8", "9", "10", "11"], price: "₱4,800", description: "Classic Nike Dunk Low in premium leather. Japan release. Available in multiple colors.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 3, name: "Nike Air Max 90 (Japan Pack)", category0: "MENS", category1: "Shoes", category2: "Nike", sizes: ["7", "8", "9", "10", "11", "12"], price: "₱5,500", description: "Nike Air Max 90 from the Japan-exclusive pack. Visible Air cushioning. Iconic silhouette.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 4, name: "GU Fluffy Knit Sweater", category0: "MENS", category1: "Clothing", category2: "GU", sizes: ["S", "M", "L", "XL"], price: "₱850", description: "Soft fluffy knit sweater from GU. Available in multiple colors. Perfect for cold season. Oversized relaxed fit.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 5, name: "Uniqlo Airism Oversized T-Shirt", category0: "MENS", category1: "Clothing", category2: "Uniqlo", sizes: ["S", "M", "L", "XL"], price: "₱650", description: "Authentic Uniqlo Airism oversized t-shirt. Ultra-lightweight and breathable. Moisture-wicking fabric.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 6, name: "GU Wide Leg Pants", category0: "MENS", category1: "Clothing", category2: "GU", sizes: ["S", "M", "L", "XL"], price: "₱950", description: "GU wide-leg pants. Comfortable and stylish. Premium cotton blend. Available in black, beige, and navy.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 7, name: "Uniqlo Light Down Jacket", category0: "MENS", category1: "Clothing", category2: "Uniqlo", sizes: ["S", "M", "L", "XL"], price: "₱2,200", description: "Lightweight Uniqlo down jacket. Packable design. 750 fill power. Warm without being bulky. Water-repellent.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 8, name: "Japanese Biore UV Aqua Rich SPF50+", category0: "WOMENS", category1: "Cosmetics", category2: "Biore", sizes: [], price: "₱550", description: "Biore UV Aqua Rich watery essence sunscreen. SPF50+ PA++++. Lightweight, non-sticky, refreshing finish. 80g.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 9, name: "Japanese Sheet Mask Variety Pack (10pcs)", category0: "WOMENS", category1: "Cosmetics", category2: "Generic", sizes: [], price: "₱380", description: "Assorted Japanese facial sheet masks. Infused with collagen, hyaluronic acid, and vitamin C. 10-piece pack.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 10, name: "Heroine Make Waterproof Eyeliner", category0: "WOMENS", category1: "Cosmetics", category2: "Heroine Make", sizes: [], price: "₱480", description: "Japanese Heroine Make waterproof liquid eyeliner. Ultra-fine 0.1mm tip. Smudge-proof and long-lasting. Black.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 11, name: "Onitsuka Tiger Mexico 66", category0: "MENS", category1: "Shoes", category2: "Onitsuka Tiger", sizes: ["6", "7", "8", "9", "10"], price: "₱3,800", description: "Classic Onitsuka Tiger Mexico 66 sneakers. Japan-exclusive colorway. Iconic design. Comfortable sole.", available: true, images: ["images/products/placeholder.svg"] },
+  { id: 12, name: "GU Knit Cardigan", category0: "MENS", category1: "Clothing", category2: "GU", sizes: ["S", "M", "L", "XL"], price: "₱1,100", description: "GU open-front knit cardigan. Soft acrylic blend. Oversized fit. Perfect layering piece for any outfit.", available: true, images: ["images/products/placeholder.svg"] }
 ];
 
 // Firebase
@@ -33,9 +32,42 @@ try {
 const FB_COLLECTION = 'yokoso';
 const FB_DOC = 'products';
 
-let categoriesConfig = { types: ["Clothing", "Shoes", "Cosmetics"], brands: ["Nike", "Uniqlo", "GU", "Biore", "Onitsuka Tiger", "Heroine Make", "Generic"], sizes: ["S", "M", "L", "XL", "6", "7", "8", "9", "10", "11", "12", "One Size", "Free Size"] };
+function migrateCategoriesConfig(cfg) {
+  if (cfg.types && !cfg.groups) {
+    cfg.groups = [{ name: "All", image: "" }];
+    cfg.subcategoryMap = { "All": cfg.types || [] };
+    delete cfg.types;
+  }
+  if (!cfg.groups) cfg.groups = [];
+  if (!cfg.subcategoryMap) {
+    cfg.subcategoryMap = {};
+    cfg.groups.forEach(function(g) { if (!cfg.subcategoryMap[g.name]) cfg.subcategoryMap[g.name] = []; });
+  }
+  cfg.groups.forEach(function(g) {
+    if (!cfg.subcategoryMap[g.name]) cfg.subcategoryMap[g.name] = [];
+  });
+  if (!cfg.brands) cfg.brands = [];
+  if (!cfg.sizes) cfg.sizes = [];
+  return cfg;
+}
+
+let categoriesConfig = migrateCategoriesConfig({
+  groups: [
+    { name: "MENS", image: "" },
+    { name: "WOMENS", image: "" }
+  ],
+  subcategoryMap: {
+    "MENS": ["Shoes", "Clothing"],
+    "WOMENS": ["Shoes", "Clothing", "Cosmetics"]
+  },
+  brands: ["Nike", "Uniqlo", "GU", "Biore", "Onitsuka Tiger", "Heroine Make", "Generic"],
+  sizes: ["S", "M", "L", "XL", "6", "7", "8", "9", "10", "11", "12", "One Size", "Free Size"]
+});
+
+let currentGroup = 'all';
 let currentBrand = 'all';
 var adminSearchVal = '';
+var adminFilterGroup = 'all';
 var adminFilterType = 'all';
 var adminFilterBrand = 'all';
 
@@ -114,6 +146,19 @@ function migrateProducts() {
     if (p.category && !p.category1) {
       p.category1 = p.category;
       delete p.category;
+      migrated = true;
+    }
+    if (!p.category0) {
+      // Assign to first group that has this subcategory
+      var assigned = false;
+      (categoriesConfig.groups || []).forEach(function(g) {
+        var subs = categoriesConfig.subcategoryMap[g.name] || [];
+        if (subs.indexOf(p.category1) !== -1) {
+          p.category0 = g.name;
+          assigned = true;
+        }
+      });
+      if (!assigned) p.category0 = (categoriesConfig.groups[0] || {}).name || '';
       migrated = true;
     }
     if (!p.category2) {
@@ -203,9 +248,8 @@ function loadCategories() {
   fetch('data/categories.json?_=' + Date.now())
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (data && data.types && data.brands) {
-        categoriesConfig = data;
-        if (!categoriesConfig.sizes) categoriesConfig.sizes = [];
+      if (data) {
+        categoriesConfig = migrateCategoriesConfig(data);
         localStorage.setItem('yokoso_categories', JSON.stringify(categoriesConfig));
       }
     })
@@ -214,9 +258,10 @@ function loadCategories() {
       if (savedConfig) {
         try {
           var parsed = JSON.parse(savedConfig);
-          if (parsed.types && parsed.brands) { categoriesConfig = parsed; if (!categoriesConfig.sizes) categoriesConfig.sizes = []; }
+          categoriesConfig = migrateCategoriesConfig(parsed);
         } catch(e) {}
       }
+      categoriesConfig = migrateCategoriesConfig(categoriesConfig);
     })
     .finally(function() {
       // Stage 2: Overlay with localStorage (working edits)
@@ -224,10 +269,26 @@ function loadCategories() {
       if (localCfg) {
         try {
           var parsed = JSON.parse(localCfg);
-          if (parsed.types && parsed.brands) { categoriesConfig = parsed; if (!categoriesConfig.sizes) categoriesConfig.sizes = []; }
+          categoriesConfig = migrateCategoriesConfig(parsed);
         } catch(e) {}
       }
       localStorage.setItem('yokoso_categories', JSON.stringify(categoriesConfig));
+
+      // Re-assign category0 for products that were migrated under old config
+      products.forEach(function(p) {
+        if (p.category0 === 'All' || !p.category0) {
+          var assigned = false;
+          (categoriesConfig.groups || []).forEach(function(g) {
+            var subs = categoriesConfig.subcategoryMap[g.name] || [];
+            if (subs.indexOf(p.category1) !== -1) {
+              p.category0 = g.name;
+              assigned = true;
+            }
+          });
+          if (!assigned) p.category0 = (categoriesConfig.groups[0] || {}).name || '';
+        }
+      });
+      localStorage.setItem('yokoso_products', JSON.stringify(products));
 
       // Stage 3: Firebase sync (if available)
       if (fbDB) {
@@ -236,10 +297,12 @@ function loadCategories() {
           .then(function(doc) {
             if (!catDone) {
               catDone = true;
-              if (doc.exists && doc.data().types && doc.data().brands) {
-                categoriesConfig = doc.data();
-                if (!categoriesConfig.sizes) categoriesConfig.sizes = [];
-                localStorage.setItem('yokoso_categories', JSON.stringify(categoriesConfig));
+              if (doc.exists) {
+                var fbData = doc.data();
+                if (fbData.types || fbData.groups) {
+                  categoriesConfig = migrateCategoriesConfig(fbData);
+                  localStorage.setItem('yokoso_categories', JSON.stringify(categoriesConfig));
+                }
               }
               renderCategoryDropdowns();
               renderCategoryManagement();
@@ -258,6 +321,9 @@ function saveCategoriesConfig() {
   localStorage.setItem('yokoso_categories', JSON.stringify(categoriesConfig));
   if (fbDB) {
     fbDB.collection(FB_COLLECTION).doc('categories').set(categoriesConfig).catch(function() {});
+  }
+  if (localStorage.getItem('autoSyncEnabled') === 'true' && localStorage.getItem('github_token')) {
+    syncCategoriesToGitHub();
   }
 }
 
@@ -290,16 +356,37 @@ function uploadImage(dataUrl) {
     return Promise.resolve(dataUrl);
   }
 
+function getGroups() {
+  return categoriesConfig.groups || [];
+}
+
+function getSubcategories(groupName) {
+  if (!groupName || groupName === 'all') {
+    var all = [];
+    categoriesConfig.groups.forEach(function(g) {
+      (categoriesConfig.subcategoryMap[g.name] || []).forEach(function(s) {
+        if (all.indexOf(s) === -1) all.push(s);
+      });
+    });
+    return all;
+  }
+  return categoriesConfig.subcategoryMap[groupName] || [];
+}
+
 function getTypes() {
-  var types = [...new Set(products.filter(p => p.category1).map(p => p.category1))].sort();
-  categoriesConfig.types.forEach(function(t) {
-    if (types.indexOf(t) === -1) types.push(t);
-  });
-  return types.sort();
+  var subs = getSubcategories(currentGroup === 'all' ? null : currentGroup);
+  return subs;
 }
 
 function getBrands() {
-  var brands = [...new Set(products.filter(p => p.category2).map(p => p.category2))].sort();
+  var filtered = products.filter(function(p) { return p.available !== false; });
+  if (currentGroup !== 'all') {
+    filtered = filtered.filter(function(p) { return p.category0 === currentGroup; });
+  }
+  if (currentCategory !== 'all') {
+    filtered = filtered.filter(function(p) { return p.category1 === currentCategory; });
+  }
+  var brands = [...new Set(filtered.map(function(p) { return p.category2; }).filter(Boolean))].sort();
   categoriesConfig.brands.forEach(function(b) {
     if (brands.indexOf(b) === -1) brands.push(b);
   });
@@ -307,30 +394,41 @@ function getBrands() {
 }
 
 function renderFilters() {
-  var container = document.getElementById('filterContainer');
-  var types = getTypes();
-  container.innerHTML = '<button class="filter-btn active" data-category="all">All</button>';
-  types.forEach(function(t) {
-    container.innerHTML += '<button class="filter-btn" data-category="' + t + '">' + t + '</button>';
-  });
-
-  var brandContainer = document.getElementById('brandFilterContainer');
-  if (brandContainer) {
-    var brands = getBrands();
-    var brandHtml = '<button class="filter-btn' + (currentBrand === 'all' ? ' active' : '') + '" data-brand="all">All Brands</button>';
-    brands.forEach(function(b) {
-      brandHtml += '<button class="filter-btn' + (currentBrand === b ? ' active' : '') + '" data-brand="' + b + '">' + b + '</button>';
-    });
-    brandContainer.innerHTML = brandHtml;
-  }
+  renderCarousel();
+  renderBrandFilter();
 }
 
-document.getElementById('filterContainer').addEventListener('click', function(e) {
-  var btn = e.target.closest('.filter-btn');
+function renderCarousel() {
+  var container = document.getElementById('categoryCarousel');
+  if (!container) return;
+  var groups = getGroups();
+  container.innerHTML = groups.map(function(g) {
+    var active = currentGroup === g.name ? ' active' : '';
+    var imgStyle = g.image ? ' style="background-image:url(' + g.image + ');background-size:cover;background-position:center"' : '';
+    return '<button class="carousel-group-btn' + active + '" data-group="' + g.name + '"' + imgStyle + '><span class="carousel-group-label">' + g.name + '</span></button>';
+  }).join('');
+}
+
+function renderBrandFilter() {
+  var brandContainer = document.getElementById('brandFilterContainer');
+  if (!brandContainer) return;
+  var brands = getBrands();
+  var brandHtml = '<button class="filter-btn' + (currentBrand === 'all' ? ' active' : '') + '" data-brand="all">All Brands</button>';
+  brands.forEach(function(b) {
+    brandHtml += '<button class="filter-btn' + (currentBrand === b ? ' active' : '') + '" data-brand="' + b + '">' + b + '</button>';
+  });
+  brandContainer.innerHTML = brandHtml;
+}
+
+document.getElementById('categoryCarousel').addEventListener('click', function(e) {
+  var btn = e.target.closest('.carousel-group-btn');
   if (!btn) return;
-  document.querySelectorAll('#filterContainer .filter-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('#categoryCarousel .carousel-group-btn').forEach(function(b) { b.classList.remove('active'); });
   btn.classList.add('active');
-  currentCategory = btn.dataset.category;
+  currentGroup = btn.dataset.group;
+  currentCategory = 'all';
+  currentBrand = 'all';
+  renderFilters();
   renderProducts();
 });
 
@@ -352,6 +450,9 @@ function renderProducts() {
   var grid = document.getElementById('productGrid');
   var empty = document.getElementById('emptyState');
   var filtered = products.filter(function(p) { return p.available !== false; });
+  if (currentGroup !== 'all') {
+    filtered = filtered.filter(function(p) { return p.category0 === currentGroup; });
+  }
   if (currentCategory !== 'all') {
     filtered = filtered.filter(function(p) { return p.category1 === currentCategory; });
   }
@@ -362,6 +463,7 @@ function renderProducts() {
     var q = currentSearch.toLowerCase();
     filtered = filtered.filter(function(p) {
       return (p.name && p.name.toLowerCase().indexOf(q) !== -1) ||
+             (p.category0 && p.category0.toLowerCase().indexOf(q) !== -1) ||
              (p.category1 && p.category1.toLowerCase().indexOf(q) !== -1) ||
              (p.category2 && p.category2.toLowerCase().indexOf(q) !== -1);
     });
@@ -378,6 +480,7 @@ function renderProducts() {
     return '<div class="product-card" data-id="' + p.id + '" onclick="openProduct(' + p.id + ')">' +
       '<img class="product-image" src="' + (p.images?.[0] || 'images/products/placeholder.svg') + '" alt="' + p.name + '" loading="lazy" onerror="if(this.dataset.retry){this.src=\'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\';this.style.background=\'#eee\'}else{this.dataset.retry=\'1\';this.src=\'images/products/placeholder.svg\'}">' +
       '<div class="product-info">' +
+      (p.category0 ? '<div class="product-group">' + p.category0 + '</div>' : '') +
       '<div class="product-category">' + p.category1 + '</div>' +
       brandHtml +
       '<div class="product-name">' + p.name + '</div>' +
@@ -443,7 +546,7 @@ function openModal(product) {
         '<div style="padding:24px 32px 32px">' +
           '<h2 style="font-size:20px;margin:0 0 4px;line-height:1.3">' + (product.name || '') + '</h2>' +
           '<p style="font-size:18px;font-weight:700;color:#e94560;margin:0 0 4px">' + (product.price || '') + '</p>' +
-          '<p style="font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:#888;font-weight:600;margin:0 0 8px">' + (product.category1 || '') + (product.category2 ? ' · ' + product.category2 : '') + '</p>' +
+          '<p style="font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:#888;font-weight:600;margin:0 0 8px">' + (product.category0 ? product.category0 + ' / ' : '') + (product.category1 || '') + (product.category2 ? ' · ' + product.category2 : '') + '</p>' +
           sizesHtml +
           '<p style="color:#666;margin:0 0 16px;line-height:1.6;font-size:14px">' + (product.description || '') + '</p>' +
           '<a href="https://m.me/yokosoosaka" target="_blank" style="display:inline-block;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;background:#e94560;color:#fff">Inquire / Order</a>' +
@@ -784,9 +887,13 @@ function renderAdminList() {
     var q = adminSearchVal.toLowerCase();
     filtered = filtered.filter(function(p) {
       return (p.name && p.name.toLowerCase().indexOf(q) !== -1) ||
+             (p.category0 && p.category0.toLowerCase().indexOf(q) !== -1) ||
              (p.category1 && p.category1.toLowerCase().indexOf(q) !== -1) ||
              (p.category2 && p.category2.toLowerCase().indexOf(q) !== -1);
     });
+  }
+  if (adminFilterGroup !== 'all') {
+    filtered = filtered.filter(function(p) { return p.category0 === adminFilterGroup; });
   }
   if (adminFilterType !== 'all') {
     filtered = filtered.filter(function(p) { return p.category1 === adminFilterType; });
@@ -801,6 +908,7 @@ function renderAdminList() {
   }
   container.innerHTML = filtered.map(function(p) {
     var catStr = p.category1;
+    if (p.category0) catStr = p.category0 + ' / ' + catStr;
     if (p.category2) catStr += ' · ' + p.category2;
     var sizesStr = p.sizes && p.sizes.length > 0 ? ' · Sizes: ' + p.sizes.join(', ') : '';
     return '<div class="admin-product-item" data-id="' + p.id + '">' +
@@ -845,19 +953,53 @@ function renderAdminList() {
 }
 
 function renderCategoryDropdowns() {
+  var groupSelect = document.getElementById('formCategory0');
   var typeSelect = document.getElementById('formCategory1');
   var brandSelect = document.getElementById('formCategory2');
-  if (!typeSelect || !brandSelect) return;
+  if (!groupSelect || !typeSelect || !brandSelect) return;
 
-  var types = categoriesConfig.types.slice();
-  getTypes().forEach(function(t) { if (types.indexOf(t) === -1) types.push(t); });
+  var groups = getGroups();
+  groupSelect.innerHTML = groups.map(function(g) {
+    return '<option value="' + g.name + '">' + g.name + '</option>';
+  }).join('');
 
-  var brands = categoriesConfig.brands.slice();
-  getBrands().forEach(function(b) { if (brands.indexOf(b) === -1) brands.push(b); });
-
-  typeSelect.innerHTML = '<option value="">Select type...</option>' + types.map(function(t) { return '<option value="' + t + '">' + t + '</option>'; }).join('');
-  brandSelect.innerHTML = '<option value="">Select brand...</option>' + brands.map(function(b) { return '<option value="' + b + '">' + b + '</option>'; }).join('');
+  updateSubcategoryDropdown();
+  updateBrandDropdown();
   renderSizePresets();
+}
+
+function updateSubcategoryDropdown() {
+  var groupSelect = document.getElementById('formCategory0');
+  var typeSelect = document.getElementById('formCategory1');
+  if (!groupSelect || !typeSelect) return;
+  var group = groupSelect.value;
+  var subs = getSubcategories(group);
+  var currentVal = typeSelect.value;
+  typeSelect.innerHTML = '<option value="">Select subcategory...</option>' + subs.map(function(t) {
+    var sel = t === currentVal ? ' selected' : '';
+    return '<option value="' + t + '"' + sel + '>' + t + '</option>';
+  }).join('');
+  updateBrandDropdown();
+}
+
+function updateBrandDropdown() {
+  var groupSelect = document.getElementById('formCategory0');
+  var typeSelect = document.getElementById('formCategory1');
+  var brandSelect = document.getElementById('formCategory2');
+  if (!groupSelect || !typeSelect || !brandSelect) return;
+  var group = groupSelect.value;
+  var sub = typeSelect.value;
+  var filtered = products.filter(function(p) { return p.available !== false; });
+  if (group) filtered = filtered.filter(function(p) { return p.category0 === group; });
+  if (sub) filtered = filtered.filter(function(p) { return p.category1 === sub; });
+  var usedBrands = [...new Set(filtered.map(function(p) { return p.category2; }).filter(Boolean))].sort();
+  var allBrands = categoriesConfig.brands.slice();
+  usedBrands.forEach(function(b) { if (allBrands.indexOf(b) === -1) allBrands.push(b); });
+  var currentVal = brandSelect.value;
+  brandSelect.innerHTML = '<option value="">Select brand...</option>' + allBrands.map(function(b) {
+    var sel = b === currentVal ? ' selected' : '';
+    return '<option value="' + b + '"' + sel + '>' + b + '</option>';
+  }).join('');
 }
 
 function renderSizePresets() {
@@ -913,6 +1055,8 @@ function resetForm() {
   document.getElementById('productForm').reset();
   selectedImagesData = [];
   selectedSizes = [];
+  updateSubcategoryDropdown();
+  updateBrandDropdown();
   renderImagePreview();
   renderSizeTags();
   renderSizePresets();
@@ -924,7 +1068,10 @@ function populateForm(product) {
   document.getElementById('formSubmitBtn').textContent = 'Save Changes';
   document.getElementById('formCancelBtn').style.display = 'inline-block';
   document.getElementById('formName').value = product.name;
+  document.getElementById('formCategory0').value = product.category0 || '';
+  updateSubcategoryDropdown();
   document.getElementById('formCategory1').value = product.category1 || '';
+  updateBrandDropdown();
   document.getElementById('formCategory2').value = product.category2 || '';
   document.getElementById('formPrice').value = product.price;
   document.getElementById('formDesc').value = product.description;
@@ -954,11 +1101,12 @@ function deleteProduct(id) {
 document.getElementById('productForm').addEventListener('submit', function(e) {
   e.preventDefault();
   var name = document.getElementById('formName').value.trim();
+  var category0 = document.getElementById('formCategory0').value;
   var category1 = document.getElementById('formCategory1').value;
   var category2 = document.getElementById('formCategory2').value;
   var price = document.getElementById('formPrice').value.trim();
   var description = document.getElementById('formDesc').value.trim();
-  if (!name || !category1 || !category2 || !price || !description) return;
+  if (!name || !category0 || !category1 || !category2 || !price || !description) return;
 
   var submitBtn = document.getElementById('formSubmitBtn');
   var origText = submitBtn.textContent;
@@ -972,11 +1120,11 @@ document.getElementById('productForm').addEventListener('submit', function(e) {
     if (editingId) {
       var idx = products.findIndex(function(p) { return p.id === editingId; });
       if (idx !== -1) {
-        products[idx] = Object.assign({}, products[idx], { name: name, category1: category1, category2: category2, price: price, description: description, images: images, sizes: selectedSizes.slice(), available: document.getElementById('formAvailable').checked });
+        products[idx] = Object.assign({}, products[idx], { name: name, category0: category0, category1: category1, category2: category2, price: price, description: description, images: images, sizes: selectedSizes.slice(), available: document.getElementById('formAvailable').checked });
       }
     } else {
       var maxId = products.length > 0 ? Math.max.apply(null, products.map(function(p) { return p.id; })) : 0;
-      products.push({ id: maxId + 1, name: name, category1: category1, category2: category2, price: price, description: description, images: images, sizes: selectedSizes.slice(), available: document.getElementById('formAvailable').checked });
+      products.push({ id: maxId + 1, name: name, category0: category0, category1: category1, category2: category2, price: price, description: description, images: images, sizes: selectedSizes.slice(), available: document.getElementById('formAvailable').checked });
     }
     saveProducts();
     resetForm();
@@ -1015,6 +1163,19 @@ document.getElementById('addSizeBtn').addEventListener('click', function() {
   var val = input.value.trim();
   if (val && selectedSizes.indexOf(val) === -1) { selectedSizes.push(val); input.value = ''; renderSizeTags(); renderSizePresets(); }
 });
+
+var fc0 = document.getElementById('formCategory0');
+if (fc0) {
+  fc0.addEventListener('change', function() {
+    updateSubcategoryDropdown();
+  });
+}
+var fc1 = document.getElementById('formCategory1');
+if (fc1) {
+  fc1.addEventListener('change', function() {
+    updateBrandDropdown();
+  });
+}
 
 function renderImagePreview() {
   const container = document.getElementById('formImagePreview');
@@ -1108,6 +1269,7 @@ document.getElementById('importFileInput').addEventListener('change', e => {
           p.category1 = p.category;
           delete p.category;
         }
+        if (!p.category0) p.category0 = (categoriesConfig.groups[0] || {}).name || '';
         if (!p.category2) p.category2 = '';
         if (!p.sizes) p.sizes = [];
         return p;
@@ -1133,6 +1295,7 @@ document.getElementById('importFileInput').addEventListener('change', e => {
 var GITHUB_OWNER = 'japangoodies';
 var GITHUB_REPO = 'yokosoosaka';
 var GITHUB_PATH = 'yokoso-website/data/products.json';
+var GITHUB_CATEGORIES_PATH = 'yokoso-website/data/categories.json';
 var GITHUB_BRANCH = 'main';
 
 document.getElementById('syncSettingsBtn').addEventListener('click', function() {
@@ -1186,6 +1349,35 @@ function syncToGitHub() {
   });
 }
 
+function syncCategoriesToGitHub() {
+  var token = localStorage.getItem('github_token');
+  if (!token) return;
+  var content = JSON.stringify(categoriesConfig, null, 2);
+  var encoded = btoa(unescape(encodeURIComponent(content)));
+  fetch('https://api.github.com/repos/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/contents/' + GITHUB_CATEGORIES_PATH, {
+    headers: { 'Authorization': 'token ' + token }
+  })
+  .then(function(r) {
+    if (r.status === 404) return null;
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
+  .then(function(data) {
+    var sha = data ? data.sha : null;
+    return fetch('https://api.github.com/repos/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/contents/' + GITHUB_CATEGORIES_PATH, {
+      method: 'PUT',
+      headers: { 'Authorization': 'token ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Auto-sync categories from admin panel', content: encoded, sha: sha, branch: GITHUB_BRANCH })
+    });
+  })
+  .then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+  })
+  .catch(function(err) {
+    console.error('Categories sync failed:', err.message);
+  });
+}
+
 // Navigation between public and admin view
 const ADMIN_PASSWORD = 'amped2016';
 
@@ -1220,17 +1412,34 @@ document.getElementById('footerAdminLink').addEventListener('click', e => {
 });
 
 function renderAdminFilterDropdowns() {
+  var groupSelect = document.getElementById('adminFilterGroup');
   var typeSelect = document.getElementById('adminFilterType');
   var brandSelect = document.getElementById('adminFilterBrand');
   if (!typeSelect || !brandSelect) return;
+  if (groupSelect) {
+    var groups = getGroups();
+    groupSelect.innerHTML = '<option value="all">All Groups</option>' + groups.map(function(g) {
+      var sel = adminFilterGroup === g.name ? ' selected' : '';
+      return '<option value="' + g.name + '"' + sel + '>' + g.name + '</option>';
+    }).join('');
+  }
   var types = getTypes();
   var brands = getBrands();
-  typeSelect.innerHTML = '<option value="all">All Types</option>' + types.map(function(t) { return '<option value="' + t + '"' + (adminFilterType === t ? ' selected' : '') + '>' + t + '</option>'; }).join('');
-  brandSelect.innerHTML = '<option value="all">All Brands</option>' + brands.map(function(b) { return '<option value="' + b + '"' + (adminFilterBrand === b ? ' selected' : '') + '>' + b + '</option>'; }).join('');
+  typeSelect.innerHTML = '<option value="all">All Subcategories</option>' + types.map(function(t) {
+    return '<option value="' + t + '"' + (adminFilterType === t ? ' selected' : '') + '>' + t + '</option>';
+  }).join('');
+  brandSelect.innerHTML = '<option value="all">All Brands</option>' + brands.map(function(b) {
+    return '<option value="' + b + '"' + (adminFilterBrand === b ? ' selected' : '') + '>' + b + '</option>';
+  }).join('');
 }
 
 document.getElementById('adminSearch').addEventListener('input', function() {
   adminSearchVal = this.value;
+  renderAdminList();
+});
+
+document.getElementById('adminFilterGroup').addEventListener('change', function() {
+  adminFilterGroup = this.value;
   renderAdminList();
 });
 
@@ -1254,6 +1463,7 @@ document.getElementById('backToPublicBtn').addEventListener('click', function() 
   document.getElementById('adminCategories').style.display = 'none';
   document.getElementById('adminPanel').style.display = 'none';
   adminSearchVal = '';
+  adminFilterGroup = 'all';
   adminFilterType = 'all';
   adminFilterBrand = 'all';
   if (typeof MAINTENANCE_MODE !== 'undefined' && MAINTENANCE_MODE) {
@@ -1262,6 +1472,8 @@ document.getElementById('backToPublicBtn').addEventListener('click', function() 
     document.getElementById('maintenanceOverlay').classList.remove('active');
   }
 });
+
+var selectedSubcategoryGroup = '';
 
 // ---- CATEGORY MANAGEMENT ----
 
@@ -1298,32 +1510,73 @@ function makeEditableTag(el, list, key) {
 }
 
 function renderCategoryManagement() {
-  var typeList = document.getElementById('typeTagList');
+  var groupList = document.getElementById('groupTagList');
+  var subList = document.getElementById('subcategoryTagList');
   var brandList = document.getElementById('brandTagList');
   var sizeList = document.getElementById('sizeTagList');
-  if (!typeList || !brandList) return;
-  typeList.innerHTML = categoriesConfig.types.map(function(t) {
-    return '<span class="admin-tag"><span class="admin-tag-label" title="Double-click to rename">' + t + '</span><span class="admin-tag-remove" data-type="' + t + '">×</span></span>';
+  if (!groupList || !brandList) return;
+
+  // Groups
+  groupList.innerHTML = (categoriesConfig.groups || []).map(function(g) {
+    return '<span class="admin-tag"><span class="admin-tag-label" title="Double-click to rename">' + g.name + '</span><span class="admin-tag-remove" data-group="' + g.name + '">×</span></span>';
   }).join('');
-  brandList.innerHTML = categoriesConfig.brands.map(function(b) {
+
+  // Subcategories picker
+  var subPicker = document.getElementById('subcategoryGroupPicker');
+  if (subPicker) {
+    var groups = getGroups();
+    subPicker.innerHTML = groups.map(function(g) {
+      var sel = g.name === (selectedSubcategoryGroup || (groups[0] || {}).name) ? ' selected' : '';
+      return '<option value="' + g.name + '"' + sel + '>' + g.name + '</option>';
+    }).join('');
+    var selectedGroup = subPicker.value;
+    var subs = getSubcategories(selectedGroup);
+    subList.innerHTML = subs.map(function(s) {
+      return '<span class="admin-tag"><span class="admin-tag-label" title="Double-click to rename">' + s + '</span><span class="admin-tag-remove" data-subcategory="' + s + '" data-group="' + selectedGroup + '">×</span></span>';
+    }).join('');
+  }
+
+  brandList.innerHTML = (categoriesConfig.brands || []).map(function(b) {
     return '<span class="admin-tag"><span class="admin-tag-label" title="Double-click to rename">' + b + '</span><span class="admin-tag-remove" data-brand="' + b + '">×</span></span>';
   }).join('');
   if (sizeList) {
-    sizeList.innerHTML = categoriesConfig.sizes.map(function(s) {
+    sizeList.innerHTML = (categoriesConfig.sizes || []).map(function(s) {
       return '<span class="admin-tag"><span class="admin-tag-label" title="Double-click to rename">' + s + '</span><span class="admin-tag-remove" data-size-cat="' + s + '">×</span></span>';
     }).join('');
   }
-  document.querySelectorAll('#typeTagList .admin-tag-remove').forEach(function(el) {
+
+  // Group remove handlers
+  groupList.querySelectorAll('.admin-tag-remove').forEach(function(el) {
     el.addEventListener('click', function() {
-      var t = this.dataset.type;
-      categoriesConfig.types = categoriesConfig.types.filter(function(x) { return x !== t; });
+      var g = this.dataset.group;
+      categoriesConfig.groups = categoriesConfig.groups.filter(function(x) { return x.name !== g; });
+      delete categoriesConfig.subcategoryMap[g];
       saveCategoriesConfig();
       renderCategoryManagement();
       renderCategoryDropdowns();
       renderAdminFilterDropdowns();
+      renderFilters();
     });
   });
-  document.querySelectorAll('#brandTagList .admin-tag-remove').forEach(function(el) {
+
+  // Subcategory remove handlers
+  subList.querySelectorAll('.admin-tag-remove').forEach(function(el) {
+    el.addEventListener('click', function() {
+      var s = this.dataset.subcategory;
+      var g = this.dataset.group;
+      var arr = categoriesConfig.subcategoryMap[g];
+      if (arr) {
+        categoriesConfig.subcategoryMap[g] = arr.filter(function(x) { return x !== s; });
+        saveCategoriesConfig();
+        renderCategoryManagement();
+        renderCategoryDropdowns();
+        renderAdminFilterDropdowns();
+        renderFilters();
+      }
+    });
+  });
+
+  brandList.querySelectorAll('.admin-tag-remove').forEach(function(el) {
     el.addEventListener('click', function() {
       var b = this.dataset.brand;
       categoriesConfig.brands = categoriesConfig.brands.filter(function(x) { return x !== b; });
@@ -1333,6 +1586,7 @@ function renderCategoryManagement() {
       renderAdminFilterDropdowns();
     });
   });
+
   if (sizeList) {
     sizeList.querySelectorAll('.admin-tag-remove').forEach(function(el) {
       el.addEventListener('click', function() {
@@ -1347,25 +1601,173 @@ function renderCategoryManagement() {
       el.addEventListener('dblclick', function() { makeEditableTag(el.parentNode, categoriesConfig.sizes, 'sizes'); });
     });
   }
-  document.querySelectorAll('#typeTagList .admin-tag-label').forEach(function(el) {
-    el.addEventListener('dblclick', function() { makeEditableTag(el.parentNode, categoriesConfig.types, 'types'); });
+
+  // Rename handlers
+  groupList.querySelectorAll('.admin-tag-label').forEach(function(el) {
+    el.addEventListener('dblclick', function() { makeEditableGroupTag(el.parentNode); });
   });
-  document.querySelectorAll('#brandTagList .admin-tag-label').forEach(function(el) {
+  subList.querySelectorAll('.admin-tag-label').forEach(function(el) {
+    el.addEventListener('dblclick', function() { makeEditableSubcategoryTag(el.parentNode); });
+  });
+  brandList.querySelectorAll('.admin-tag-label').forEach(function(el) {
     el.addEventListener('dblclick', function() { makeEditableTag(el.parentNode, categoriesConfig.brands, 'brands'); });
+  });
+
+  // Group image preview
+  renderGroupImagePreview();
+}
+
+function makeEditableGroupTag(el) {
+  var span = el.querySelector('.admin-tag-label') || el;
+  var orig = span.textContent;
+  span.contentEditable = true;
+  span.focus();
+  var range = document.createRange();
+  range.selectNodeContents(span);
+  var sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  function save() {
+    span.contentEditable = false;
+    var val = span.textContent.trim();
+    if (val && val !== orig) {
+      // Update subcategoryMap key
+      var subs = categoriesConfig.subcategoryMap[orig] || [];
+      delete categoriesConfig.subcategoryMap[orig];
+      categoriesConfig.subcategoryMap[val] = subs;
+      // Update group name
+      var grp = categoriesConfig.groups.find(function(g) { return g.name === orig; });
+      if (grp) grp.name = val;
+      // Update all products with this group
+      products.forEach(function(p) {
+        if (p.category0 === orig) p.category0 = val;
+      });
+      saveCategoriesConfig();
+      saveProducts();
+      renderCategoryManagement();
+      renderCategoryDropdowns();
+      renderAdminFilterDropdowns();
+      renderFilters();
+      renderProducts();
+    } else {
+      span.textContent = orig;
+    }
+  }
+  span.addEventListener('blur', save);
+  span.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); span.blur(); }
+    if (e.key === 'Escape') { span.textContent = orig; span.blur(); }
   });
 }
 
-document.getElementById('addTypeBtn').addEventListener('click', function() {
-  var input = document.getElementById('newTypeInput');
-  var val = input.value.trim();
+function makeEditableSubcategoryTag(el) {
+  var span = el.querySelector('.admin-tag-label') || el;
+  var orig = span.textContent;
+  span.contentEditable = true;
+  span.focus();
+  var range = document.createRange();
+  range.selectNodeContents(span);
+  var sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  var subPicker = document.getElementById('subcategoryGroupPicker');
+  var group = subPicker ? subPicker.value : '';
+  function save() {
+    span.contentEditable = false;
+    var val = span.textContent.trim();
+    if (val && val !== orig && group) {
+      var arr = categoriesConfig.subcategoryMap[group];
+      if (arr) {
+        var idx = arr.indexOf(orig);
+        if (idx !== -1) arr[idx] = val;
+      }
+      products.forEach(function(p) {
+        if (p.category0 === group && p.category1 === orig) p.category1 = val;
+      });
+      saveCategoriesConfig();
+      saveProducts();
+      renderCategoryManagement();
+      renderCategoryDropdowns();
+      renderAdminFilterDropdowns();
+      renderFilters();
+      renderProducts();
+    } else {
+      span.textContent = orig;
+    }
+  }
+  span.addEventListener('blur', save);
+  span.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); span.blur(); }
+    if (e.key === 'Escape') { span.textContent = orig; span.blur(); }
+  });
+}
+
+function renderGroupImagePreview() {
+  var container = document.getElementById('groupImagePreview');
+  if (!container) return;
+  var groups = getGroups();
+  container.innerHTML = groups.map(function(g) {
+    var imgHtml = g.image ? '<img src="' + g.image + '" style="width:60px;height:60px;object-fit:cover;border-radius:6px;cursor:pointer" title="' + g.name + '" data-group-image="' + g.name + '">' : '';
+    return imgHtml;
+  }).join('');
+  container.querySelectorAll('[data-group-image]').forEach(function(img) {
+    img.addEventListener('click', function() {
+      var gn = this.dataset.groupImage;
+      if (confirm('Remove image for ' + gn + '?')) {
+        var grp = categoriesConfig.groups.find(function(g) { return g.name === gn; });
+        if (grp) { grp.image = ''; saveCategoriesConfig(); renderGroupImagePreview(); renderCarousel(); }
+      }
+    });
+  });
+}
+
+document.getElementById('subcategoryGroupPicker').addEventListener('change', function() {
+  selectedSubcategoryGroup = this.value;
+  renderCategoryManagement();
+});
+
+document.getElementById('addGroupBtn').addEventListener('click', function() {
+  var input = document.getElementById('newGroupInput');
+  var val = input.value.trim().toUpperCase();
   if (!val) return;
-  if (categoriesConfig.types.indexOf(val) === -1) {
-    categoriesConfig.types.push(val);
+  var existing = categoriesConfig.groups.find(function(g) { return g.name === val; });
+  if (!existing) {
+    categoriesConfig.groups.push({ name: val, image: '' });
+    if (!categoriesConfig.subcategoryMap[val]) categoriesConfig.subcategoryMap[val] = [];
     saveCategoriesConfig();
     renderCategoryManagement();
     renderCategoryDropdowns();
+    renderAdminFilterDropdowns();
+    renderFilters();
   }
   input.value = '';
+});
+
+document.getElementById('newGroupInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addGroupBtn').click(); }
+});
+
+document.getElementById('addSubcategoryBtn').addEventListener('click', function() {
+  var subPicker = document.getElementById('subcategoryGroupPicker');
+  var group = subPicker ? subPicker.value : '';
+  if (!group) { alert('Select a group first.'); return; }
+  var input = document.getElementById('newSubcategoryInput');
+  var val = input.value.trim();
+  if (!val) return;
+  var arr = categoriesConfig.subcategoryMap[group];
+  if (arr && arr.indexOf(val) === -1) {
+    arr.push(val);
+    saveCategoriesConfig();
+    renderCategoryManagement();
+    renderCategoryDropdowns();
+    renderAdminFilterDropdowns();
+    renderFilters();
+  }
+  input.value = '';
+});
+
+document.getElementById('newSubcategoryInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addSubcategoryBtn').click(); }
 });
 
 document.getElementById('addBrandBtn').addEventListener('click', function() {
@@ -1377,8 +1779,13 @@ document.getElementById('addBrandBtn').addEventListener('click', function() {
     saveCategoriesConfig();
     renderCategoryManagement();
     renderCategoryDropdowns();
+    renderAdminFilterDropdowns();
   }
   input.value = '';
+});
+
+document.getElementById('newBrandInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addBrandBtn').click(); }
 });
 
 document.getElementById('addSizeCatBtn').addEventListener('click', function() {
@@ -1394,14 +1801,50 @@ document.getElementById('addSizeCatBtn').addEventListener('click', function() {
   input.value = '';
 });
 
-document.getElementById('newTypeInput').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addTypeBtn').click(); }
-});
-document.getElementById('newBrandInput').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addBrandBtn').click(); }
-});
 document.getElementById('newSizeCatInput').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addSizeCatBtn').click(); }
+});
+
+// Group image upload
+document.getElementById('uploadGroupImageBtn').addEventListener('click', function() {
+  document.getElementById('groupImageInput').click();
+});
+
+document.getElementById('groupImageInput').addEventListener('change', function(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  resizeImage(file, 400, 0.7, function(dataUrl) {
+    var urlInput = document.getElementById('groupImageUrl');
+    urlInput.value = dataUrl;
+    // Assign to last selected or first group without image
+    var groups = categoriesConfig.groups;
+    var target = groups.find(function(g) { return !g.image; });
+    if (target) {
+      target.image = dataUrl;
+    } else if (groups.length > 0) {
+      groups[groups.length - 1].image = dataUrl;
+    }
+    saveCategoriesConfig();
+    renderGroupImagePreview();
+    renderCarousel();
+  });
+  e.target.value = '';
+});
+
+document.getElementById('groupImageUrl').addEventListener('input', function() {
+  var url = this.value.trim();
+  if (url) {
+    var groups = categoriesConfig.groups;
+    var target = groups.find(function(g) { return !g.image; });
+    if (target) {
+      target.image = url;
+    } else if (groups.length > 0) {
+      groups[groups.length - 1].image = url;
+    }
+    saveCategoriesConfig();
+    renderGroupImagePreview();
+    renderCarousel();
+  }
 });
 
 // ---- HERO CAROUSEL ----

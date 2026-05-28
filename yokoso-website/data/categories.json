@@ -1,1 +1,12 @@
-{ "types": ["Clothing", "Shoes", "Cosmetics"], "brands": ["Nike", "Uniqlo", "GU", "Biore", "Onitsuka Tiger", "Heroine Make", "Generic"], "sizes": ["S", "M", "L", "XL", "6", "7", "8", "9", "10", "11", "12", "One Size", "Free Size"] }
+{
+  "groups": [
+    { "name": "MENS", "image": "" },
+    { "name": "WOMENS", "image": "" }
+  ],
+  "subcategoryMap": {
+    "MENS": ["Shoes", "Clothing"],
+    "WOMENS": ["Shoes", "Clothing", "Cosmetics"]
+  },
+  "brands": ["Nike", "Uniqlo", "GU", "Biore", "Onitsuka Tiger", "Heroine Make", "Generic"],
+  "sizes": ["S", "M", "L", "XL", "6", "7", "8", "9", "10", "11", "12", "One Size", "Free Size"]
+}
