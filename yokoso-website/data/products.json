@@ -27,7 +27,8 @@
       "One Size",
       "Free Size"
     ],
-    "category0": "MENS"
+    "category0": "MENS",
+    "stock": 4
   },
   {
     "available": true,
@@ -41,7 +42,8 @@
     "category1": "Shoes",
     "category2": "",
     "sizes": [],
-    "category0": "MENS"
+    "category0": "MENS",
+    "stock": 5
   },
   {
     "id": 3,
@@ -55,7 +57,8 @@
     "category1": "Shoes",
     "category2": "",
     "sizes": [],
-    "category0": "MENS"
+    "category0": "MENS",
+    "stock": 5
   },
   {
     "available": true,
@@ -69,7 +72,8 @@
     "category1": "Clothing",
     "category2": "",
     "sizes": [],
-    "category0": "MENS"
+    "category0": "MENS",
+    "stock": 5
   },
   {
     "available": true,
@@ -83,7 +87,8 @@
     "category1": "Clothing",
     "category2": "",
     "sizes": [],
-    "category0": "MENS"
+    "category0": "MENS",
+    "stock": 5
   },
   {
     "description": "GU wide-leg pants. Comfortable and stylish. Premium cotton blend. Available in black, beige, and navy.",
@@ -97,7 +102,8 @@
     "category1": "Clothing",
     "category2": "",
     "sizes": [],
-    "category0": "MENS"
+    "category0": "MENS",
+    "stock": 5
   },
   {
     "name": "Uniqlo Light Down Jacket",
@@ -111,7 +117,8 @@
     "category1": "Clothing",
     "category2": "",
     "sizes": [],
-    "category0": "MENS"
+    "category0": "MENS",
+    "stock": 5
   },
   {
     "price": "₱550",
@@ -125,7 +132,8 @@
     "category1": "Cosmetics",
     "category2": "",
     "sizes": [],
-    "category0": "WOMENS"
+    "category0": "WOMENS",
+    "stock": 5
   },
   {
     "name": "Japanese Sheet Mask Variety Pack (10pcs)",
@@ -139,7 +147,8 @@
     "category1": "Cosmetics",
     "category2": "",
     "sizes": [],
-    "category0": "WOMENS"
+    "category0": "WOMENS",
+    "stock": 5
   },
   {
     "name": "Heroine Make Waterproof Eyeliner",
@@ -153,7 +162,8 @@
     "category1": "Cosmetics",
     "category2": "",
     "sizes": [],
-    "category0": "WOMENS"
+    "category0": "WOMENS",
+    "stock": 5
   },
   {
     "description": "Classic Onitsuka Tiger Mexico 66 sneakers. Japan-exclusive colorway. Iconic design. Comfortable sole. Sizes 6-10 US.",
@@ -167,7 +177,8 @@
     "category1": "Shoes",
     "category2": "",
     "sizes": [],
-    "category0": "MENS"
+    "category0": "MENS",
+    "stock": 5
   },
   {
     "images": [
@@ -181,7 +192,8 @@
     "category1": "Clothing",
     "category2": "",
     "sizes": [],
-    "category0": "MENS"
+    "category0": "MENS",
+    "stock": 5
   },
   {
     "images": [
@@ -195,7 +207,8 @@
     "category1": "NEW",
     "category2": "",
     "sizes": [],
-    "category0": "MENS"
+    "category0": "MENS",
+    "stock": 5
   },
   {
     "images": [
@@ -209,7 +222,8 @@
     "category1": "clothes",
     "category2": "",
     "sizes": [],
-    "category0": "MENS"
+    "category0": "MENS",
+    "stock": 5
   },
   {
     "id": 15,
@@ -223,6 +237,7 @@
     ],
     "available": true,
     "sizes": [],
-    "category0": "MENS"
+    "category0": "MENS",
+    "stock": 5
   }
 ]
