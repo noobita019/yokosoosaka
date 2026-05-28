@@ -1433,20 +1433,22 @@ body {
     font-size: 0.8rem;
   }
   .carousel-group-btn {
-    width: calc(33.33% - 0.5rem);
+    width: 33.33%;
     height: 110px;
+    border-radius: 0;
   }
   .category-carousel {
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    overflow-x: visible;
+    gap: 0;
+    padding: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
   }
   .carousel-group-label {
     font-size: 0.7rem;
     padding: 0.25rem 0.4rem;
-  }
-  .category-carousel {
-    gap: 0.5rem;
+    background: none;
+    color: #fff;
+    backdrop-filter: none;
   }
   .filters {
     gap: 0.3rem;
