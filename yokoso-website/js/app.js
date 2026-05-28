@@ -549,6 +549,17 @@ document.addEventListener('click', function(e) {
   }
 });
 
+document.addEventListener('mouseover', function(e) {
+  var wrapper = e.target.closest('.subcategory-wrapper');
+  if (!wrapper) return;
+  var sub = wrapper.querySelector('.filter-btn').dataset.subcategory;
+  if (sub && !openSubcats[sub]) {
+    openSubcats = {};
+    openSubcats[sub] = true;
+    renderSubcategoryFilter();
+  }
+});
+
 function openProduct(id) {
   const product = products.find(p => p.id === id);
   if (product) openModal(product);
