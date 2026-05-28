@@ -1068,11 +1068,11 @@ function renderCart() {
   list.innerHTML = cart.map(function(item) {
     var price = parseFloat(item.price.replace(/[^0-9.]/g, ''));
     var subtotal = isNaN(price) ? item.price : '₱' + (price * item.qty).toFixed(2);
-    var sizeLabel = item.size ? ' <span class="cart-item-size">' + item.size + '</span>' : '';
+    var sizeEl = item.size ? '<div class="cart-item-size">Size ' + item.size + '</div>' : '';
     return '<div class="cart-item">' +
       '<img src="' + item.image + '" class="cart-item-img" onerror="this.src=\'images/products/placeholder.svg\'">' +
       '<div class="cart-item-info">' +
-      '<div class="cart-item-name">' + item.name + sizeLabel + '</div>' +
+      '<div class="cart-item-name">' + item.name + '</div>' + sizeEl +
       '<div class="cart-item-price">' + item.price + '</div>' +
       '<div class="cart-item-qty">' +
       '<button class="cart-qty-btn" onclick="updateCartQty(' + item.id + ',-1,\'' + (item.size || '') + '\')">−</button>' +
