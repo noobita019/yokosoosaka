@@ -454,36 +454,43 @@ document.querySelector('#productModal .modal-close').addEventListener('click', c
 // Fullscreen image viewer
 function openFullscreen() {
   if (currentModalImages.length === 0) return;
-  var fs = document.getElementById('fullscreenViewer');
-  if (!fs) return;
-  fs.style.cssText = 'display:flex!important;position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;background:#000!important;z-index:10000!important;align-items:center;justify-content:center;touch-action:none;overflow:hidden;';
-  fs.classList.add('active');
-  lockBody();
-  renderFullscreenTrack();
-  history.pushState({fullscreen: true}, '', '#fullscreen');
-}
-
-function renderFullscreenTrack() {
-  var track = document.getElementById('fullscreenTrack');
+  var old = document.getElementById('liveFullscreen');
+  if (old) old.remove();
+  var ov = document.createElement('div');
+  ov.id = 'liveFullscreen';
+  ov.style.cssText = 'display:flex!important;position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;background:#000!important;z-index:99999!important;align-items:center!important;justify-content:center!important;';
+  var track = document.createElement('div');
+  track.style.cssText = 'position:relative;width:100%;height:100%;display:flex;flex-direction:column;';
   var h = window.innerHeight;
-  var html = '';
   for (var i = 0; i < currentModalImages.length; i++) {
-    html += '<div class="fullscreen-slide" style="height:' + h + 'px"><img src="' + currentModalImages[i] + '" alt=""></div>';
+    var slide = document.createElement('div');
+    slide.style.cssText = 'height:' + h + 'px;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+    var img = document.createElement('img');
+    img.src = currentModalImages[i];
+    img.style.cssText = 'max-width:100vw;max-height:100vh;object-fit:contain;user-select:none;';
+    slide.appendChild(img);
+    track.appendChild(slide);
   }
-  track.innerHTML = html;
-  updateCounter();
-  track.style.transition = 'none';
   track.style.transform = 'translate3d(0,' + (-currentImageIndex * h) + 'px,0)';
-}
-
-function updateCounter() {
-  document.getElementById('fullscreenCounter').textContent =
-    (currentImageIndex + 1) + ' / ' + currentModalImages.length;
+  ov.appendChild(track);
+  var closeBtn = document.createElement('button');
+  closeBtn.textContent = '\u00D7';
+  closeBtn.style.cssText = 'position:fixed!important;top:16px!important;right:20px!important;background:rgba(255,255,255,0.1)!important;border:none!important;color:#fff!important;font-size:2rem!important;width:44px!important;height:44px!important;border-radius:50%!important;cursor:pointer!important;z-index:10!important;display:flex!important;align-items:center!important;justify-content:center!important;';
+  closeBtn.onclick = closeFullscreen;
+  ov.appendChild(closeBtn);
+  var counter = document.createElement('div');
+  counter.id = 'fsCounter';
+  counter.style.cssText = 'position:fixed!important;top:20px!important;left:50%!important;transform:translateX(-50%)!important;color:rgba(255,255,255,0.5)!important;font-size:0.85rem!important;z-index:10!important;pointer-events:none!important;';
+  counter.textContent = (currentImageIndex + 1) + ' / ' + currentModalImages.length;
+  ov.appendChild(counter);
+  ov.addEventListener('click', function(e) { if (e.target === this) closeFullscreen(); });
+  document.body.appendChild(ov);
+  lockBody();
 }
 
 function closeFullscreen() {
-  var fs = document.getElementById('fullscreenViewer');
-  if (fs) { fs.style.cssText = ''; fs.classList.remove('active'); }
+  var ov = document.getElementById('liveFullscreen');
+  if (ov) ov.remove();
   var modal = document.getElementById('productModal');
   var live = document.getElementById('liveModal');
   if ((!modal || !modal.classList.contains('active')) && !live) unlockBody();
