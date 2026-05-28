@@ -17,14 +17,18 @@ async function firestorePatch(path, fields) {
   const keys = Object.keys(fields);
   const maskParams = keys.map(k => `updateMask.fieldPaths=${encodeURIComponent(k)}`).join('&');
   const url = `${FIRESTORE_BASE}/${path}?key=${API_KEY}&${maskParams}`;
+  const mappedFields = {};
+  for (const [k, v] of Object.entries(fields)) {
+    if (k === 'passwordHash') {
+      mappedFields[k] = { stringValue: String(v) };
+    } else {
+      mappedFields[k] = { integerValue: String(v) };
+    }
+  }
   const resp = await fetch(url, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      fields: Object.fromEntries(
-        Object.entries(fields).map(([k, v]) => [k, { integerValue: String(v) }])
-      )
-    })
+    body: JSON.stringify({ fields: mappedFields })
   });
   if (resp.ok) return true;
   const text = await resp.text().catch(() => '');
@@ -249,6 +253,20 @@ async function handleRequest(request, env) {
       }
       const acct = parseAccountDoc(data);
       return new Response(JSON.stringify(acct || { error: 'Account not found' }), { headers: corsHeaders(origin) });
+    }
+
+    // POST /accounts/:contact/reset-password
+    if (request.method === 'POST' && parts.length === 3 && parts[0] === 'accounts' && parts[2] === 'reset-password') {
+      const body = await request.json();
+      if (!body.password) {
+        return new Response(JSON.stringify({ error: 'password required' }), { status: 400, headers: corsHeaders(origin) });
+      }
+      const passwordHash = await hashPassword(body.password);
+      const r = await firestorePatch(`accounts/${encodeURIComponent(parts[1])}`, { passwordHash });
+      if (r === null) {
+        return new Response(JSON.stringify({ error: 'Account not found' }), { status: 404, headers: corsHeaders(origin) });
+      }
+      return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders(origin) });
     }
 
     // POST /cart/send-order

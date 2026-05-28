@@ -151,14 +151,15 @@ function loadUsers() {
         list.innerHTML = '<p style="color:#888">No registered users yet.</p>';
         return;
       }
-      var html = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;font-weight:600;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.1);color:#ff6b81;font-size:0.8rem">' +
-        '<span>Name</span><span>Contact</span><span>Email</span><span>Address</span></div>';
+      var html = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 80px;gap:4px;font-weight:600;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.1);color:#ff6b81;font-size:0.8rem">' +
+        '<span>Name</span><span>Contact</span><span>Email</span><span>Address</span><span style="text-align:center">Action</span></div>';
       users.forEach(function(u) {
-        html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.8rem">' +
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 80px;gap:4px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.8rem;align-items:center">' +
           '<span>' + (u.name || '-') + '</span>' +
           '<span>' + (u.contact || '-') + '</span>' +
           '<span>' + (u.email || '-') + '</span>' +
-          '<span style="font-size:0.75rem;color:#aaa">' + (u.address || '-') + '</span></div>';
+          '<span style="font-size:0.75rem;color:#aaa">' + (u.address || '-') + '</span>' +
+          '<span style="text-align:center"><button onclick="resetPassword(\'' + u.contact.replace(/'/g, "\\'") + '\')" style="padding:2px 8px;border:none;border-radius:3px;background:#e94560;color:#fff;font-size:0.7rem;cursor:pointer">Reset</button></span></div>';
       });
       html += '<div style="margin-top:8px;font-size:0.75rem;color:#888">Total: ' + users.length + ' user(s)</div>';
       list.innerHTML = html;
@@ -166,6 +167,18 @@ function loadUsers() {
     .catch(function() {
       list.innerHTML = '<p style="color:#c62828">Failed to load users. Check worker connection.</p>';
     });
+}
+function resetPassword(contact) {
+  var newPass = prompt('Enter new password for ' + contact + ':');
+  if (!newPass || newPass.trim().length < 4) { alert('Password must be at least 4 characters.'); return; }
+  var base = STOCK_PROXY_URL.replace(/\/+$/, '');
+  fetch(base + '/accounts/' + encodeURIComponent(contact) + '/reset-password', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:newPass.trim()}) })
+    .then(function(r) { return r.json(); })
+    .then(function(j) {
+      if (j.ok) { alert('Password reset successfully for ' + contact + '!'); loadUsers(); }
+      else { alert(j.error || 'Failed to reset password.'); }
+    })
+    .catch(function() { alert('Network error.'); });
 }
 // ---- END ADMIN USERS ----
 
