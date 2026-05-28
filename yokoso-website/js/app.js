@@ -180,6 +180,18 @@ function loadDepositConfig() {
   }).catch(function() {});
 }
 
+function saveAdminEmail() {
+  var input = document.getElementById('adminEmailInput');
+  var status = document.getElementById('adminEmailStatus');
+  if (!input || !status) return;
+  var val = input.value.trim();
+  if (!val) { status.textContent = 'Please enter an email.'; return; }
+  adminEmail = val;
+  status.textContent = 'Saved!';
+  setTimeout(function() { status.textContent = ''; }, 2000);
+  showCartNotification('Admin email updated.');
+}
+
 function getDepositAmount() {
   return getCartTotal() * depositPercent / 100;
 }
@@ -283,6 +295,7 @@ function emailOrderDetails() {
 }
 
 function sendOrderEmail() {
+  if (!adminEmail) return;
   if (!adminEmail) return;
   var text = getOrderText();
   var customerEmail = currentUser && currentUser.email ? currentUser.email : '';
@@ -2408,6 +2421,10 @@ function showAdminPanel() {
   document.getElementById('adminPanel').style.display = 'block';
   var proxySection = document.getElementById('adminStockProxy');
   if (proxySection) proxySection.style.display = 'block';
+  var emailSection = document.getElementById('adminEmailConfig');
+  if (emailSection) emailSection.style.display = 'block';
+  var emailInput = document.getElementById('adminEmailInput');
+  if (emailInput) emailInput.value = adminEmail;
   var syncSection = document.getElementById('adminSyncSettings');
   if (syncSection) syncSection.style.display = 'block';
   renderAdminFilterDropdowns();
