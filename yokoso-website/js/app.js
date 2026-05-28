@@ -1374,7 +1374,9 @@ function syncCategoriesToGitHub() {
   var token = localStorage.getItem('github_token');
   if (!token) return;
   var statusEl = document.getElementById('syncStatus');
+  var groupStatusEl = document.getElementById('groupImageSyncStatus');
   if (statusEl) { statusEl.textContent = 'Syncing categories...'; statusEl.style.color = '#666'; }
+  if (groupStatusEl) { groupStatusEl.textContent = 'Syncing categories to GitHub...'; groupStatusEl.style.color = '#888'; }
   var content = JSON.stringify(categoriesConfig, null, 2);
   var encoded = btoa(unescape(encodeURIComponent(content)));
   fetch('https://api.github.com/repos/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/contents/' + GITHUB_CATEGORIES_PATH, {
@@ -1396,10 +1398,12 @@ function syncCategoriesToGitHub() {
   .then(function(r) {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     if (statusEl) { statusEl.textContent = 'Categories synced to GitHub ✓'; statusEl.style.color = '#28a745'; }
+    if (groupStatusEl) { groupStatusEl.textContent = 'Synced ✓'; groupStatusEl.style.color = '#28a745'; setTimeout(function() { groupStatusEl.textContent = ''; }, 4000); }
   })
   .catch(function(err) {
     console.error('Categories sync failed:', err.message);
     if (statusEl) { statusEl.textContent = 'Sync failed: ' + err.message; statusEl.style.color = '#dc3545'; }
+    if (groupStatusEl) { groupStatusEl.textContent = 'Sync failed: ' + err.message; groupStatusEl.style.color = '#dc3545'; }
   });
 }
 
