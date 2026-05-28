@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Trace Test</title></head>
+<body>
+<div id="result">Running...</div>
+<script src="maintenance.js"></script>
+<!-- Intentionally NO Firebase scripts -->
+<script src="js/app.js?v=20250529"></script>
+<script>
+var R = document.getElementById('result');
+var lines = [];
+
+function check(name) {
+  var v = eval(name); // careful but needed for let-scoped vars
+  lines.push(name + ': ' + (typeof v) + (typeof v !== 'undefined' ? ' = ' + JSON.stringify(v).substring(0,80) : ''));
+}
+
+lines.push('--- AFTER app.js loaded ---');
+lines.push('fbDB: ' + (typeof fbDB) + ' val=' + (fbDB === null ? 'null' : (typeof fbDB)));
+
+// Check if loadProducts ran by checking products
+check('products');
+
+// Check _modalImages 
+check('_modalImages');
+
+// Run loadProducts manually now
+lines.push('--- Manual loadProducts call ---');
+loadProducts(function() {
+  lines.push('Callback fired!');
+  check('products');
+});
+
+// Also check right now
+lines.push('--- Immediate check ---');
+check('products');
+
+// Check if there's localStorage data
+try {
+  var saved = localStorage.getItem('yokoso_products');
+  lines.push('localStorage yokoso_products: ' + (saved ? saved.substring(0, 80) : 'null'));
+} catch(e) {
+  lines.push('localStorage error: ' + e.message);
+}
+
+R.innerHTML = lines.join('<br>');
+</script>
+</body>
+</html>

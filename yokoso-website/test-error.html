@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Error Test</title></head>
+<body>
+  <div id="result">Loading...</div>
+  <script src="maintenance.js"></script>
+  <script>
+    window.onerror = function(msg, url, line, col, err) {
+      document.getElementById('result').innerHTML = 'ERROR: ' + msg + ' at ' + url + ':' + line + ':' + col + '<br>' + (err ? err.stack : '');
+    };
+  </script>
+  <script src="js/app.js?v=20250529" onerror="document.getElementById('result').innerHTML+='<br>SCRIPT LOAD FAILED'"></script>
+  <script>
+    document.getElementById('result').innerHTML = 
+      'openModalFullscreen: ' + (typeof openModalFullscreen) + '<br>' +
+      'openFullscreen: ' + (typeof openFullscreen) + '<br>' +
+      'openModal: ' + (typeof openModal) + '<br>' +
+      'products: ' + (typeof products) + ' len=' + (products ? products.length : 'N/A');
+  </script>
+</body>
+</html>

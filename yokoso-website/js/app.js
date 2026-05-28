@@ -454,7 +454,10 @@ document.querySelector('#productModal .modal-close').addEventListener('click', c
 // Fullscreen image viewer
 function openFullscreen() {
   if (currentModalImages.length === 0) return;
-  document.getElementById('fullscreenViewer').classList.add('active');
+  var fs = document.getElementById('fullscreenViewer');
+  if (!fs) return;
+  fs.style.display = 'flex';
+  fs.classList.add('active');
   lockBody();
   renderFullscreenTrack();
   history.pushState({fullscreen: true}, '', '#fullscreen');
@@ -479,7 +482,8 @@ function updateCounter() {
 }
 
 function closeFullscreen() {
-  document.getElementById('fullscreenViewer').classList.remove('active');
+  var fs = document.getElementById('fullscreenViewer');
+  if (fs) { fs.style.display = ''; fs.classList.remove('active'); }
   var modal = document.getElementById('productModal');
   var live = document.getElementById('liveModal');
   if ((!modal || !modal.classList.contains('active')) && !live) unlockBody();

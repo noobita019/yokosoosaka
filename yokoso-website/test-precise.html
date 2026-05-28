@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Precise Test</title></head>
+<body>
+<div id="result">Loading...</div>
+<script src="maintenance.js"></script>
+<script src="js/app.js?v=20250529"></script>
+<script>
+var R = document.getElementById('result');
+var lines = [];
+
+// DON'T declare any var/let/const that might shadow app.js names
+lines.push('typeof openModalFullscreen: ' + (typeof openModalFullscreen));
+lines.push('typeof openFullscreen: ' + (typeof openFullscreen));
+lines.push('typeof openModal: ' + (typeof openModal));
+lines.push('typeof closeLiveModal: ' + (typeof closeLiveModal));
+lines.push('typeof renderProducts: ' + (typeof renderProducts));
+lines.push('typeof loadProducts: ' + (typeof loadProducts));
+
+// Check products - but don't shadow it
+var _pType = typeof products;
+lines.push('typeof products: ' + _pType);
+if (_pType !== 'undefined') {
+  var _pLen = products.length;
+  lines.push('products.length: ' + _pLen);
+  if (_pLen > 0) {
+    lines.push('First product name: ' + products[0].name);
+  }
+}
+
+lines.push('typeof _modalImages: ' + (typeof _modalImages));
+lines.push('typeof currentModalImages: ' + (typeof currentModalImages));
+
+// Check if there's a window error
+lines.push('window.onerror was: ' + (window._caughtError || 'not set'));
+
+lines.push('---');
+lines.push('URL of app.js loaded: js/app.js?v=20250529');
+
+R.innerHTML = lines.join('<br>');
+</script>
+</body>
+</html>

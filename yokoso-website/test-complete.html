@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Complete Test</title>
+<style>
+ body{font-family:sans-serif;background:#f5f5f7;color:#1a1a2e;margin:0;padding:20px}
+ .fullscreen-viewer{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#000;z-index:10000;align-items:center;justify-content:center}
+ .fullscreen-viewer.active{display:flex}
+ .fullscreen-track{display:flex;flex-direction:column}
+ .fullscreen-slide{width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+ .fullscreen-slide img{max-width:100vw;max-height:100vh;object-fit:contain}
+ #result{margin:20px;padding:20px;font-family:monospace;white-space:pre;background:#eee;border-radius:8px;font-size:14px}
+ .pass{color:green;font-weight:bold}.fail{color:red;font-weight:bold}
+ .product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem}
+ .product-card{background:#fff;border-radius:8px;padding:1rem;cursor:pointer}
+ .product-image{width:100%;height:200px;object-fit:cover}
+ .filters{display:flex;gap:0.5rem;margin:1rem 0}
+ .filter-btn{padding:0.45rem 1.2rem;border:1.5px solid #e0e0e0;border-radius:20px;background:#fff;cursor:pointer}
+ .filter-btn.active{background:#e94560;color:#fff}
+</style></head>
+<body>
+<div id="result">Running...</div>
+
+<!-- ALL DOM elements from index.html that app.js references -->
+<div class="filters" id="filterContainer"><button class="filter-btn active" data-category="all">All</button></div>
+<div class="filters" id="brandFilterContainer"><button class="filter-btn active" data-brand="all">All Brands</button></div>
+<div class="product-grid" id="productGrid"></div>
+<div class="empty-state" id="emptyState"><p>No products found.</p></div>
+<div class="search-bar"><form id="searchForm"><input type="search" id="searchInput" placeholder="Search..."></form></div>
+<button class="menu-toggle" id="menuToggle">☰</button>
+
+<!-- Fullscreen viewer -->
+<div class="fullscreen-viewer" id="fullscreenViewer">
+  <button class="fullscreen-close">&times;</button>
+  <div class="fullscreen-track-container">
+    <div class="fullscreen-track" id="fullscreenTrack"></div>
+  </div>
+  <div class="fullscreen-counter" id="fullscreenCounter"></div>
+</div>
+
+<!-- Static modal (needed for modalImage, carouselPrev/Next/Dots) -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal">
+    <button class="modal-close">&times;</button>
+    <div class="modal-content">
+      <div class="modal-image-container">
+        <img class="modal-image" id="modalImage" src="" alt="">
+        <button class="carousel-btn carousel-prev" id="carouselPrev">‹</button>
+        <button class="carousel-btn carousel-next" id="carouselNext">›</button>
+        <div class="carousel-dots" id="carouselDots"></div>
+      </div>
+      <div class="modal-info">
+        <h2 id="modalTitle"></h2>
+        <p class="modal-price" id="modalPrice"></p>
+        <p class="modal-category" id="modalCategory"></p>
+        <div class="modal-sizes" id="modalSizes"></div>
+        <p class="modal-desc" id="modalDesc"></p>
+        <a href="#" class="btn btn-primary" id="modalOrderBtn">Order</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Maintenance overlay + admin panel (needed for admin elements) -->
+<div class="maintenance-overlay" id="maintenanceOverlay">
+ <div class="admin-panel" id="adminPanel" style="display:none">
+  <div class="admin-layout">
+   <div class="admin-form">
+    <h3 id="formTitle">Add Product</h3>
+    <form id="productForm">
+     <div class="form-group"><label>Name</label><input type="text" id="formName"></div>
+     <div class="form-row">
+      <div class="form-group"><label>Type</label><select id="formCategory1"></select></div>
+      <div class="form-group"><label>Brand</label><select id="formCategory2"></select></div>
+     </div>
+     <div class="form-group"><label>Price</label><input type="text" id="formPrice"></div>
+     <div class="form-group"><label>Desc</label><textarea id="formDesc"></textarea></div>
+     <div class="form-group"><label class="checkbox-label"><input type="checkbox" id="formAvailable" checked> Available</label></div>
+     <div class="form-group">
+      <label>Sizes</label>
+      <input type="text" id="newSizeInput" placeholder="Custom size">
+      <button type="button" id="addSizeBtn">Add</button>
+      <div id="formSizeTags"></div>
+      <div id="formSizePresets"></div>
+     </div>
+     <div class="form-group">
+      <label>Images</label>
+      <input type="file" id="formImage" accept="image/*">
+      <button type="button" id="addImageBtn">Add Image</button>
+      <div id="formImagePreview"></div>
+     </div>
+     <div class="form-actions">
+      <button type="submit" id="formSubmitBtn">Add Product</button>
+      <button type="button" id="formCancelBtn" style="display:none">Cancel</button>
+     </div>
+    </form>
+   </div>
+   <div class="admin-list">
+    <h3>All Products (<span id="productCount">0</span>)</h3>
+    <div class="admin-list-toolbar">
+     <input type="search" id="adminSearch" placeholder="Search...">
+     <select id="adminFilterType"><option value="all">All Types</option></select>
+     <select id="adminFilterBrand"><option value="all">All Brands</option></select>
+    </div>
+    <div class="admin-product-list" id="adminProductList"></div>
+    <div class="admin-categories" id="adminCategories" style="display:none">
+     <h3>Manage Categories</h3>
+     <div class="admin-categories-grid">
+      <div><h4>Types</h4><div id="typeTagList"></div><input id="newTypeInput"><button id="addTypeBtn">Add</button></div>
+      <div><h4>Brands</h4><div id="brandTagList"></div><input id="newBrandInput"><button id="addBrandBtn">Add</button></div>
+      <div><h4>Sizes</h4><div id="sizeTagList"></div><input id="newSizeCatInput"><button id="addSizeCatBtn">Add</button></div>
+     </div>
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+<div id="maintenancePublic" style="display:none"><button id="enterAdminBtn">Admin</button></div>
+<a href="#" id="footerAdminLink" style="display:none">Admin</a>
+<div id="adminCategories" style="display:none"></div>
+
+<script src="maintenance.js"></script>
+<script src="js/app.js?v=20250529"></script>
+<script>
+var R = document.getElementById('result');
+var lines = [];
+function al(p,m){lines.push((p?'<span class=\"pass\">PASS</span>':'<span class=\"fail\">FAIL</span>')+' '+m);R.innerHTML=lines.join('<br>');}
+
+al(true,'All DOM elements present, app.js loaded');
+
+// Check all functions and globals
+al(typeof openModalFullscreen==='function','openModalFullscreen');
+al(typeof openFullscreen==='function','openFullscreen');
+al(typeof openModal==='function','openModal');
+al(typeof closeLiveModal==='function','closeLiveModal');
+al(typeof loadProducts==='function','loadProducts');
+al(typeof products!=='undefined','products exists');
+al(typeof _modalImages!=='undefined','_modalImages exists');
+al(typeof currentModalImages!=='undefined','currentModalImages exists');
+
+al(products.length>0,'products.length: '+products.length);
+
+if (products.length>0) {
+  al(true,'First product: '+products[0].name);
+  
+  // TEST 1: Open modal
+  openModal(products[0]);
+  var mi = document.getElementById('modalMainImg');
+  if (mi) {
+    al(true,'#modalMainImg found after openModal');
+    al(mi.hasAttribute('onclick'),'inline onclick present');
+    
+    // TEST 2: Click image
+    var titleBefore = document.title;
+    mi.click();
+    
+    if (document.title !== titleBefore) {
+      al(true,'doc.title changed to "'+document.title+'"');
+    } else {
+      al(false,'doc.title unchanged');
+    }
+    
+    // TEST 3: Check fullscreen viewer
+    var fs = document.getElementById('fullscreenViewer');
+    if (fs.classList.contains('active')) {
+      al(true,'fullscreen viewer IS active');
+      al(true,'slides: '+fs.querySelectorAll('.fullscreen-slide').length);
+      al(true,'counter: '+document.getElementById('fullscreenCounter').textContent);
+    } else {
+      al(false,'fullscreen viewer NOT active');
+    }
+    
+    closeLiveModal();
+    al(true,'Modal closed');
+  } else {
+    al(false,'#modalMainImg NOT found');
+  }
+}
+
+al(true,'--- COMPLETE ---');
+</script>
+</body>
+</html>

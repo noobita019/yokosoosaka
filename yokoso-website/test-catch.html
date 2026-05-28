@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Error Catch</title></head>
+<body>
+<div id="result"></div>
+<script>
+var R = document.getElementById('result');
+R.innerHTML = 'Loading app.js via fetch...';
+
+fetch('js/app.js?v=20250529').then(function(res) {
+  if (!res.ok) { R.innerHTML = 'Fetch failed: ' + res.status; return; }
+  return res.text();
+}).then(function(code) {
+  R.innerHTML = 'Fetched ' + code.length + ' bytes. Executing...<br>';
+  
+  // Check if code contains openModalFullscreen
+  if (code.indexOf('openModalFullscreen') !== -1) {
+    R.innerHTML += 'Source contains openModalFullscreen<br>';
+  } else {
+    R.innerHTML += 'SOURCE DOES NOT CONTAIN openModalFullscreen!!!<br>';
+  }
+  
+  // Execute with try-catch
+  try {
+    eval(code);
+    R.innerHTML += 'eval() completed without throwing<br>';
+  } catch(e) {
+    R.innerHTML += 'EVAL ERROR: ' + e.message + '<br>' + (e.stack || '');
+  }
+  
+  // Check what's defined
+  R.innerHTML += '<br>After eval:<br>';
+  R.innerHTML += 'products: ' + (typeof products) + ' len=' + (products ? products.length : 'N/A') + '<br>';
+  R.innerHTML += 'openModalFullscreen: ' + (typeof openModalFullscreen) + '<br>';
+  R.innerHTML += 'openFullscreen: ' + (typeof openFullscreen) + '<br>';
+  R.innerHTML += 'openModal: ' + (typeof openModal) + '<br>';
+  R.innerHTML += '_modalImages: ' + (typeof _modalImages) + '<br>';
+  R.innerHTML += 'fbDB: ' + (typeof fbDB) + '<br>';
+});
+</script>
+</body>
+</html>

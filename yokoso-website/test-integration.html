@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Integration Test</title>
+<style>
+  .fullscreen-viewer { display:none; position:fixed; top:0;left:0;right:0;bottom:0; background:#000; z-index:10000; align-items:center; justify-content:center; }
+  .fullscreen-viewer.active { display:flex; }
+  .fullscreen-track { display:flex; flex-direction:column; }
+  .fullscreen-slide { width:100vw; height:100vh; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .fullscreen-slide img { max-width:100vw; max-height:100vh; object-fit:contain; }
+  #result { margin:20px; padding:20px; font-family:monospace; white-space:pre; background:#eee; border-radius:8px; font-size:14px; }
+  .pass { color:green; font-weight:bold; } .fail { color:red; font-weight:bold; }
+</style>
+</head>
+<body>
+  <h1>Integration Test - app.js</h1>
+  <div id="result">Running...</div>
+
+  <div class="fullscreen-viewer" id="fullscreenViewer">
+    <button class="fullscreen-close">&times;</button>
+    <div class="fullscreen-track-container">
+      <div class="fullscreen-track" id="fullscreenTrack"></div>
+    </div>
+    <div class="fullscreen-counter" id="fullscreenCounter"></div>
+  </div>
+
+  <div class="modal-overlay" id="productModal"></div>
+
+  <script src="maintenance.js"></script>
+  <script src="js/app.js?v=20250529"></script>
+  <script>
+    var log = [];
+    function add(passed, msg) {
+      log.push((passed ? '<span class="pass">PASS</span>' : '<span class="fail">FAIL</span>') + ' ' + msg);
+      document.getElementById('result').innerHTML = log.join('<br>');
+    }
+
+    // Wait for loadProducts to finish
+    setTimeout(function() {
+      add(true, 'Test suite starting');
+
+      // Check that app.js functions are defined
+      if (typeof openModalFullscreen === 'function') add(true, 'openModalFullscreen is defined');
+      else add(false, 'openModalFullscreen is NOT defined');
+
+      if (typeof openFullscreen === 'function') add(true, 'openFullscreen is defined');
+      else add(false, 'openFullscreen is NOT defined');
+
+      if (typeof openModal === 'function') add(true, 'openModal is defined');
+      else add(false, 'openModal is NOT defined');
+
+      if (typeof closeLiveModal === 'function') add(true, 'closeLiveModal is defined');
+      else add(false, 'closeLiveModal is NOT defined');
+
+      if (typeof openProduct === 'function') add(true, 'openProduct is defined');
+      else add(false, 'openProduct is NOT defined');
+
+      // Check globals
+      if (typeof _modalImages !== 'undefined') add(true, '_modalImages global exists');
+      else add(false, '_modalImages global does NOT exist');
+
+      if (typeof currentModalImages !== 'undefined') add(true, 'currentModalImages global exists');
+      else add(false, 'currentModalImages global does NOT exist');
+
+      // Check elements
+      var fsViewer = document.getElementById('fullscreenViewer');
+      if (fsViewer) add(true, '#fullscreenViewer element exists');
+      else add(false, '#fullscreenViewer element NOT found');
+
+      var fsTrack = document.getElementById('fullscreenTrack');
+      if (fsTrack) add(true, '#fullscreenTrack element exists');
+      else add(false, '#fullscreenTrack element NOT found');
+
+      var fsCounter = document.getElementById('fullscreenCounter');
+      if (fsCounter) add(true, '#fullscreenCounter element exists');
+      else add(false, '#fullscreenCounter element NOT found');
+
+      // Check that products loaded
+      if (typeof products !== 'undefined' && products.length > 0) {
+        add(true, products.length + ' products loaded');
+      } else {
+        add(false, 'No products loaded. products=' + (typeof products) + ' len=' + (products ? products.length : 'N/A'));
+      }
+
+      // Simulate openProduct
+      if (typeof products !== 'undefined' && products.length > 0) {
+        var firstProduct = products[0];
+        openModal(firstProduct);
+        add(true, 'openModal() called for "' + firstProduct.name + '"');
+
+        var modalImg = document.getElementById('modalMainImg');
+        if (modalImg) {
+          add(true, '#modalMainImg found in DOM after openModal');
+          
+          // Check inline onclick exists
+          if (modalImg.hasAttribute('onclick')) {
+            add(true, '#modalMainImg has onclick attribute');
+          } else {
+            add(false, '#modalMainImg missing onclick attribute');
+          }
+          
+          // Simulate click
+          var titleBefore = document.title;
+          modalImg.click();
+          setTimeout(function() {
+            if (document.title !== titleBefore) {
+              add(true, 'After click: document.title changed to "' + document.title + '" - openModalFullscreen WAS called');
+            } else {
+              add(false, 'After click: document.title unchanged - openModalFullscreen was NOT called');
+            }
+            
+            // Check if fullscreen activated
+            if (fsViewer.classList.contains('active')) {
+              add(true, 'Fullscreen viewer IS active after click');
+              var slideCount = document.querySelectorAll('#fullscreenTrack .fullscreen-slide').length;
+              add(true, slideCount + ' slides rendered in fullscreen track');
+            } else {
+              add(false, 'Fullscreen viewer is NOT active');
+            }
+            
+            // Cleanup
+            closeLiveModal();
+            
+            add(true, '--- TEST COMPLETE ---');
+          }, 100);
+        } else {
+          add(false, '#modalMainImg NOT found in DOM after openModal');
+        }
+      }
+    }, 2000);
+  </script>
+</body>
+</html>

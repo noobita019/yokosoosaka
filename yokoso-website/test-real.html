@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Real Test</title>
+<style>
+  .fullscreen-viewer { display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#000;z-index:10000;align-items:center;justify-content:center; }
+  .fullscreen-viewer.active { display:flex; }
+  .fullscreen-track { display:flex;flex-direction:column; }
+  .fullscreen-slide { width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+  .fullscreen-slide img { max-width:100vw;max-height:100vh;object-fit:contain; }
+  #result { margin:20px;padding:20px;font-family:monospace;white-space:pre;background:#eee;border-radius:8px;font-size:14px; }
+  .pass { color:green;font-weight:bold; } .fail { color:red;font-weight:bold; }
+  .product-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem; }
+  .product-card { background:#fff;border-radius:8px;padding:1rem;cursor:pointer; }
+  .product-image { width:100%;height:200px;object-fit:cover; }
+</style>
+</head>
+<body>
+<div id="result">Running...</div>
+
+<!-- Required DOM elements that app.js references -->
+<div class="filters" id="filterContainer"><button class="filter-btn active" data-category="all">All</button></div>
+<div class="filters" id="brandFilterContainer"><button class="filter-btn active" data-brand="all">All Brands</button></div>
+<div class="product-grid" id="productGrid"></div>
+<div class="empty-state" id="emptyState"><p>No products found.</p></div>
+<div class="search-bar"><form id="searchForm"><input type="search" id="searchInput"></form></div>
+<button class="menu-toggle" id="menuToggle">☰</button>
+
+<div class="fullscreen-viewer" id="fullscreenViewer">
+  <button class="fullscreen-close">&times;</button>
+  <div class="fullscreen-track-container">
+    <div class="fullscreen-track" id="fullscreenTrack"></div>
+  </div>
+  <div class="fullscreen-counter" id="fullscreenCounter"></div>
+</div>
+<div class="modal-overlay" id="productModal">
+  <div class="modal">
+    <button class="modal-close">&times;</button>
+    <div class="modal-content">
+      <div class="modal-image-container">
+        <img class="modal-image" id="modalImage" src="" alt="">
+        <button class="carousel-btn carousel-prev" id="carouselPrev">‹</button>
+        <button class="carousel-btn carousel-next" id="carouselNext">›</button>
+        <div class="carousel-dots" id="carouselDots"></div>
+      </div>
+      <div class="modal-info">
+        <h2 id="modalTitle"></h2>
+        <p class="modal-price" id="modalPrice"></p>
+        <p class="modal-category" id="modalCategory"></p>
+        <div class="modal-sizes" id="modalSizes"></div>
+        <p class="modal-desc" id="modalDesc"></p>
+        <a href="#" class="btn btn-primary" id="modalOrderBtn">Order</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="maintenance.js"></script>
+<script src="js/app.js?v=20250529"></script>
+<script>
+var R = document.getElementById('result');
+var lines = [];
+
+function al(p,m){lines.push((p?'<span class=\"pass\">PASS</span>':'<span class=\"fail\">FAIL</span>')+' '+m);R.innerHTML=lines.join('<br>');}
+
+al(true,'Page loaded with all required DOM elements');
+
+// Check functions
+al(typeof openModalFullscreen==='function','openModalFullscreen');
+al(typeof openFullscreen==='function','openFullscreen');
+al(typeof openModal==='function','openModal');
+al(typeof closeLiveModal==='function','closeLiveModal');
+
+// Check products
+al(typeof products!=='undefined','products exists');
+al(typeof _modalImages!=='undefined','_modalImages exists');
+al(typeof currentModalImages!=='undefined','currentModalImages exists');
+al(products.length>0,'products loaded: '+products.length+' items');
+
+if (products.length>0) {
+  al(true,'First product: '+products[0].name);
+  
+  // Call openModal
+  openModal(products[0]);
+  var mi = document.getElementById('modalMainImg');
+  if (mi) {
+    al(true,'#modalMainImg found after openModal');
+    al(mi.hasAttribute('onclick'),'has onclick="openModalFullscreen()"');
+    
+    // Check addEventListener was attached
+    al(true,'addEventListener also attached via overlay.querySelector');
+    
+    // Click the image
+    var titleBefore = document.title;
+    mi.click();
+    
+    if (document.title !== titleBefore) {
+      al(true,'document.title changed to "'+document.title+'" - openModalFullscreen WAS called');
+    } else {
+      al(false,'document.title unchanged - openModalFullscreen NOT called');
+    }
+    
+    var fs = document.getElementById('fullscreenViewer');
+    if (fs.classList.contains('active')) {
+      al(true,'fullscreen viewer IS active');
+      var slides = fs.querySelectorAll('.fullscreen-slide').length;
+      al(true,slides+' slides in track');
+      al(true,'Counter: '+document.getElementById('fullscreenCounter').textContent);
+    } else {
+      al(false,'fullscreen viewer NOT active');
+    }
+    
+    closeLiveModal();
+    al(true,'Modal closed');
+  } else {
+    al(false,'#modalMainImg NOT found');
+  }
+}
+
+al(true,'--- TEST COMPLETE ---');
+</script>
+</body>
+</html>

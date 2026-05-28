@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Env Test</title></head>
+<body>
+<div id="result"></div>
+<script>
+var L=[];
+function a(p,m){L.push((p?'PASS':'FAIL')+' '+m);document.getElementById('result').innerHTML=L.join('<br>');}
+
+// Test var hoisting
+a(typeof testVar!=='undefined','var testVar accessible before declaration? '+(typeof testVar));
+var testVar = 42;
+a(testVar===42,'var testVar = 42 works');
+
+// Test let hoisting  
+try {
+  a(typeof testLet,'typeof testLet: '+(typeof testLet));
+} catch(e) {
+  a(false,'testLet throws: '+e.message);
+}
+let testLet = 99;
+a(testLet===99,'let testLet = 99 works');
+
+// Test const
+const TEST_CONST = 'hello';
+a(TEST_CONST==='hello','const works');
+
+// Test localStorage
+try {
+  localStorage.setItem('_test_key','test_value');
+  var val = localStorage.getItem('_test_key');
+  a(val==='test_value','localStorage get/set works');
+  localStorage.removeItem('_test_key');
+} catch(e) {
+  a(false,'localStorage error: '+e.message);
+}
+
+// Test JSON parse
+var DEFAULT = [{id:1,name:'Test Product'}];
+var products = JSON.parse(JSON.stringify(DEFAULT));
+a(products.length===1 && products[0].name==='Test Product','JSON parse/stringify works');
+
+// Test function declaration hoisting
+a(typeof testFunc==='function','function declaration hoisted');
+function testFunc(){return true;}
+a(testFunc()===true,'function returns true');
+
+// Test that script runs after app.js
+a(typeof openModalFullscreen==='function','openModalFullscreen from app.js: '+(typeof openModalFullscreen));
+a(typeof products!=='undefined','products from app.js: '+(typeof products));
+if(typeof products!=='undefined') {
+  a(Array.isArray(products),'products is array: '+Array.isArray(products));
+  a(products.length>0,'products.length: '+products.length);
+}
+
+a(true,'--- ENV TEST DONE ---');
+</script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Error Test 2</title></head>
+<body>
+  <div id="result">Loading...</div>
+  <script>
+    // Catch ALL errors before app.js runs
+    window.onerror = function(msg, url, line, col, err) {
+      var el = document.getElementById('result');
+      el.innerHTML = 'ERROR: ' + msg + '<br>at: ' + url + ':' + line + ':' + col + '<br>stack: ' + (err && err.stack ? err.stack : 'N/A');
+    };
+    window.addEventListener('error', function(e) {
+      var el = document.getElementById('result');
+      el.innerHTML += '<br>CAPTURED: ' + e.message + ' (filename: ' + e.filename + ' line: ' + e.lineno + ')';
+    }, true);
+  </script>
+  <!-- Include Firebase SDK like the real page -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="maintenance.js"></script>
+  <script>
+    // Add a flag to check if we get past app.js
+    window.__beforeApp = true;
+  </script>
+  <script src="js/app.js?v=20250529"></script>
+  <script>
+    window.__afterApp = true;
+    var el = document.getElementById('result');
+    el.innerHTML = 'app.js loaded successfully<br>' +
+      'Before: ' + window.__beforeApp + '<br>' +
+      'After: ' + window.__afterApp + '<br>' +
+      '<br>Functions:' +
+      '<br>  openModalFullscreen: ' + (typeof openModalFullscreen) +
+      '<br>  openFullscreen: ' + (typeof openFullscreen) +
+      '<br>  openModal: ' + (typeof openModal) +
+      '<br>  closeLiveModal: ' + (typeof closeLiveModal) +
+      '<br>  openProduct: ' + (typeof openProduct) +
+      '<br>  renderProducts: ' + (typeof renderProducts) +
+      '<br><br>Globals:' +
+      '<br>  products: ' + (typeof products) +
+      '<br>  _modalImages: ' + (typeof _modalImages) +
+      '<br>  currentModalImages: ' + (typeof currentModalImages) +
+      '<br>  fbDB: ' + (typeof fbDB);
+  </script>
+</body>
+</html>

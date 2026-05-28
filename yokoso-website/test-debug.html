@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Debug Test</title>
+<style>
+ body{font-family:sans-serif;padding:20px}
+ #result{margin:20px;padding:20px;font-family:monospace;white-space:pre;background:#eee;border-radius:8px;font-size:14px}
+ .pass{color:green;font-weight:bold}.fail{color:red;font-weight:bold}
+</style></head>
+<body>
+<div id="result">Loading...</div>
+
+<script src="maintenance.js"></script>
+<script src="js/app.js?v=20250529"></script>
+<script>
+var R = document.getElementById('result');
+var lines = [];
+
+// First: what is fbDB?
+lines.push('fbDB: ' + (fbDB === null ? 'null' : typeof fbDB));
+lines.push('firebase: ' + (typeof firebase));
+
+// Did the init code run?
+lines.push('_modalImages: ' + (typeof _modalImages) + ' val=' + _modalImages);
+lines.push('currentModalImages: ' + typeof currentModalImages);
+lines.push('products: ' + typeof products + ' len=' + (products ? products.length : 'N/A'));
+
+// Check productGrid - was renderProducts called?
+var grid = document.getElementById('productGrid');
+lines.push('productGrid innerHTML length: ' + (grid ? grid.innerHTML.length : 'NO GRID'));
+lines.push('productGrid HTML: ' + (grid ? grid.innerHTML.substring(0, 200) : 'N/A'));
+
+// Run loadProducts manually
+lines.push('--- Manual loadProducts ---');
+loadProducts(function() {
+  lines.push('Manual callback: products len=' + products.length);
+});
+
+R.innerHTML = lines.join('<br>');
+</script>
+</body>
+</html>

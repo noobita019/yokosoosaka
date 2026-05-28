@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JapanGoodies</title>
+  <title>Test Index</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -264,6 +264,51 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <script src="maintenance.js"></script>
-  <script src="js/app.js?v=20250530"></script>
+  <script src="js/app.js?v=20250529"></script>
+<div id="testResult" style="position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:3px solid #e94560;padding:12px 20px;font-family:monospace;font-size:13px;z-index:99999;max-height:200px;overflow-y:auto;box-shadow:0 -4px 12px rgba(0,0,0,0.1)"></div>
+<script>
+(function(){
+  var R = document.getElementById('testResult');
+  var L = [];
+  function log(m){L.push(m);R.innerHTML=L.join('<br>');}
+  function test(p,m){log((p?'✓ ':'✗ ')+m);}
+
+  setTimeout(function(){
+    log('=== REAL INDEX TEST ===');
+    test(typeof openModalFullscreen==='function','openModalFullscreen defined');
+    test(typeof openFullscreen==='function','openFullscreen defined');
+    test(typeof openModal==='function','openModal defined');
+    test(typeof closeLiveModal==='function','closeLiveModal defined');
+    test(typeof products!=='undefined','products exists');
+    test(typeof _modalImages!=='undefined','_modalImages exists');
+    test(products.length>0,'products count: '+products.length);
+
+    if(products.length>0){
+      log('--- Opening modal for "'+products[0].name+'" ---');
+      openModal(products[0]);
+      var mi=document.getElementById('modalMainImg');
+      if(mi){
+        test(true,'#modalMainImg found');
+        test(mi.hasAttribute('onclick'),'has onclick');
+        var t0=document.title;
+        mi.click();
+        test(document.title!==t0,'doc.title changed to "'+document.title+'"');
+        var fs=document.getElementById('fullscreenViewer');
+        test(fs.classList.contains('active'),'fullscreen active');
+        if(fs.classList.contains('active')){
+          test(true,'slides: '+fs.querySelectorAll('.fullscreen-slide').length);
+          test(true,'counter: '+document.getElementById('fullscreenCounter').textContent);
+        }
+        closeLiveModal();
+        test(true,'modal closed');
+      } else {
+        test(false,'#modalMainImg NOT found');
+        log('liveModal HTML: '+(document.getElementById('liveModal')?document.getElementById('liveModal').innerHTML.substring(0,500):'NO liveModal'));
+      }
+    }
+    log('=== DONE ===');
+  }, 3000);
+})();
+</script>
 </body>
 </html>
