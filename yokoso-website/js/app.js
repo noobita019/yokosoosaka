@@ -284,12 +284,12 @@ function loadCategories() {
       if (savedConfig) {
         try {
           var parsed = JSON.parse(savedConfig);
-          // Merge: use file structure but keep user's images
+          // Merge: API data is authoritative — use localStorage image only as fallback if API has none
           var fileGroups = categoriesConfig.groups || [];
           var userGroups = parsed.groups || [];
           userGroups.forEach(function(ug) {
             var fg = fileGroups.find(function(g) { return g.name === ug.name; });
-            if (fg && ug.image) fg.image = ug.image;
+            if (fg && !fg.image && ug.image) fg.image = ug.image;
           });
           categoriesConfig = migrateCategoriesConfig(categoriesConfig);
         } catch(e) {}
