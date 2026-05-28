@@ -262,6 +262,19 @@ function saveProducts() {
   if (fbDB) {
     fbDB.collection(FB_COLLECTION).doc(FB_DOC).set({ items: products }).catch(() => {});
   }
+  // Show commit reminder in admin panel
+  var reminder = document.getElementById('commitReminder');
+  if (!reminder) {
+    reminder = document.createElement('div');
+    reminder.id = 'commitReminder';
+    reminder.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#ffc107;color:#333;padding:12px 20px;border-radius:8px;font-size:14px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2);cursor:pointer;max-width:300px;';
+    reminder.addEventListener('click', function() { this.remove(); });
+    document.body.appendChild(reminder);
+  }
+  reminder.innerHTML = 'Changes saved locally. <b>Export JSON</b> and commit <code>data/products.json</code> to GitHub to sync all devices.';
+  reminder.style.display = 'block';
+  clearTimeout(reminder._timeout);
+  reminder._timeout = setTimeout(function() { if (reminder) reminder.style.display = 'none'; }, 6000);
 }
 
 function uploadImage(dataUrl) {
@@ -1050,7 +1063,7 @@ document.getElementById('exportBtn').addEventListener('click', () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'yokoso-products.json';
+  a.download = 'products.json';
   a.click();
   URL.revokeObjectURL(url);
 });
