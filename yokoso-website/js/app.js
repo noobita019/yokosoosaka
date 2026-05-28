@@ -152,6 +152,7 @@ function migrateProducts() {
       // Assign to first group that has this subcategory
       var assigned = false;
       (categoriesConfig.groups || []).forEach(function(g) {
+        if (assigned) return;
         var subs = categoriesConfig.subcategoryMap[g.name] || [];
         if (subs.indexOf(p.category1) !== -1) {
           p.category0 = g.name;
@@ -279,6 +280,7 @@ function loadCategories() {
         if (p.category0 === 'All' || !p.category0) {
           var assigned = false;
           (categoriesConfig.groups || []).forEach(function(g) {
+            if (assigned) return;
             var subs = categoriesConfig.subcategoryMap[g.name] || [];
             if (subs.indexOf(p.category1) !== -1) {
               p.category0 = g.name;
