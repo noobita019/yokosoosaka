@@ -245,17 +245,16 @@ function loadProducts(callback) {
 function loadCategories() {
   var savedConfig = localStorage.getItem('yokoso_categories');
 
-  // Stage 1: Load committed categories from file
+  // Stage 1: Load committed categories from file as structure base
   fetch('data/categories.json?_=' + Date.now())
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (data) {
         categoriesConfig = migrateCategoriesConfig(data);
-        localStorage.setItem('yokoso_categories', JSON.stringify(categoriesConfig));
       }
     })
     .catch(function() {
-      // Fallback to localStorage or defaults
+      // Fallback: keep whatever we had before
       if (savedConfig) {
         try {
           var parsed = JSON.parse(savedConfig);
@@ -265,12 +264,18 @@ function loadCategories() {
       categoriesConfig = migrateCategoriesConfig(categoriesConfig);
     })
     .finally(function() {
-      // Stage 2: Overlay with localStorage (working edits)
-      var localCfg = localStorage.getItem('yokoso_categories');
-      if (localCfg) {
+      // Stage 2: Overlay with savedConfig (preserves user's images/edits from before fetch)
+      if (savedConfig) {
         try {
-          var parsed = JSON.parse(localCfg);
-          categoriesConfig = migrateCategoriesConfig(parsed);
+          var parsed = JSON.parse(savedConfig);
+          // Merge: use file structure but keep user's images
+          var fileGroups = categoriesConfig.groups || [];
+          var userGroups = parsed.groups || [];
+          userGroups.forEach(function(ug) {
+            var fg = fileGroups.find(function(g) { return g.name === ug.name; });
+            if (fg && ug.image) fg.image = ug.image;
+          });
+          categoriesConfig = migrateCategoriesConfig(categoriesConfig);
         } catch(e) {}
       }
       localStorage.setItem('yokoso_categories', JSON.stringify(categoriesConfig));
