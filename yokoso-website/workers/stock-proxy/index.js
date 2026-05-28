@@ -27,7 +27,7 @@ async function firestorePatch(path, fields) {
   });
   if (resp.ok) return true;
   const text = await resp.text().catch(() => '');
-  if (resp.status === 404) return null; // doesn't exist yet
+  if (resp.status === 404) return null;
   throw new Error(`Firestore PATCH ${path}: HTTP ${resp.status} ${resp.statusText} ${text}`);
 }
 
@@ -45,6 +45,29 @@ async function firestoreCreate(docId, fields) {
   if (resp.ok) return true;
   const text = await resp.text().catch(() => '');
   throw new Error(`Firestore CREATE ${docId}: HTTP ${resp.status} ${resp.statusText} ${text}`);
+}
+
+// Atomic increment/decrement via Firestore transform — no read-modify-write race
+async function firestoreTransform(docId, amount) {
+  const docName = `projects/japan-goodies/databases/(default)/documents/stocks/${docId}`;
+  const resp = await fetch(`${FIRESTORE_BASE}:commit?key=${API_KEY}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      writes: [{
+        transform: {
+          document: docName,
+          fieldTransforms: [{
+            fieldPath: 'quantity',
+            increment: { integerValue: String(amount) }
+          }]
+        }
+      }]
+    })
+  });
+  if (resp.ok) return true;
+  const text = await resp.text().catch(() => '');
+  return { error: `HTTP ${resp.status}: ${text}` };
 }
 
 function parseStockDoc(doc) {
@@ -105,46 +128,41 @@ async function handleRequest(request) {
       return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders(origin) });
     }
 
-    // POST /stocks/:id/decrement  — decrement by 1 (or body.amount)
+    // POST /stocks/:id/decrement  — atomic decrement by amount
     if (request.method === 'POST' && parts.length === 3 && parts[0] === 'stocks' && parts[2] === 'decrement') {
       const body = await request.json().catch(() => ({}));
       const amount = parseInt(body.amount, 10) || 1;
-      // Retry loop for safety
-      let result = null;
-      for (let i = 0; i < 3; i++) {
+      const r = await firestoreTransform(parts[1], -amount);
+      if (r === true) {
+        // Re-fetch to return current quantity
         const data = await firestoreGet(`stocks/${parts[1]}`);
-        if (!data || !data.fields || !data.fields.quantity) {
-          const initial = Math.max(0, 5 - amount);
-          await firestoreCreate(parts[1], { quantity: initial });
-          result = { quantity: initial };
-          break;
-        }
-        const current = parseInt(data.fields.quantity.integerValue || data.fields.quantity.stringValue, 10);
-        const newQty = Math.max(0, current - amount);
-        const ok = await firestorePatch(`stocks/${parts[1]}`, { quantity: newQty });
-        if (ok) { result = { quantity: newQty }; break; }
+        const parsed = parseStockDoc(data);
+        return new Response(JSON.stringify(parsed || { quantity: null }), { headers: corsHeaders(origin) });
       }
-      return new Response(JSON.stringify(result || { quantity: null }), { headers: corsHeaders(origin) });
+      // Doc didn't exist — create it with base quantity first, then retry
+      if (typeof r === 'object' && r.error) {
+        const initial = Math.max(0, 5 - amount);
+        await firestoreCreate(parts[1], { quantity: initial });
+        return new Response(JSON.stringify({ quantity: initial }), { headers: corsHeaders(origin) });
+      }
+      throw new Error(`Transform failed: ${JSON.stringify(r)}`);
     }
 
-    // POST /stocks/:id/increment  — increment by N (body.amount)
+    // POST /stocks/:id/increment  — atomic increment by amount
     if (request.method === 'POST' && parts.length === 3 && parts[0] === 'stocks' && parts[2] === 'increment') {
       const body = await request.json().catch(() => ({}));
       const amount = parseInt(body.amount, 10) || 1;
-      let result = null;
-      for (let i = 0; i < 3; i++) {
+      const r = await firestoreTransform(parts[1], amount);
+      if (r === true) {
         const data = await firestoreGet(`stocks/${parts[1]}`);
-        if (!data || !data.fields || !data.fields.quantity) {
-          await firestoreCreate(parts[1], { quantity: amount });
-          result = { quantity: amount };
-          break;
-        }
-        const current = parseInt(data.fields.quantity.integerValue || data.fields.quantity.stringValue, 10);
-        const newQty = current + amount;
-        const ok = await firestorePatch(`stocks/${parts[1]}`, { quantity: newQty });
-        if (ok) { result = { quantity: newQty }; break; }
+        const parsed = parseStockDoc(data);
+        return new Response(JSON.stringify(parsed || { quantity: null }), { headers: corsHeaders(origin) });
       }
-      return new Response(JSON.stringify(result || { quantity: null }), { headers: corsHeaders(origin) });
+      if (typeof r === 'object' && r.error) {
+        await firestoreCreate(parts[1], { quantity: amount });
+        return new Response(JSON.stringify({ quantity: amount }), { headers: corsHeaders(origin) });
+      }
+      throw new Error(`Transform failed: ${JSON.stringify(r)}`);
     }
 
     return new Response(JSON.stringify({ error: 'not found' }), { status: 404, headers: corsHeaders(origin) });
