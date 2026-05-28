@@ -679,19 +679,26 @@ function syncAllStockToFirestore() {
 }
 
 function loadStockFromFirestore(callback) {
-  if (!isProxyReady()) { stockInitialized = true; if (callback) callback(); return; }
-  fetch(proxyUrl('stocks'))
+  if (!isProxyReady()) { console.log('[Stock] Proxy not ready, using local stock'); stockInitialized = true; if (callback) callback(); return; }
+  var url = proxyUrl('stocks');
+  console.log('[Stock] Loading from', url);
+  fetch(url)
     .then(function(r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
+      console.log('[Stock] Load response', r.status);
       return r.json();
     })
     .then(function(docs) {
+      console.log('[Stock] Got docs:', docs ? docs.length : 0);
       if (Array.isArray(docs)) {
         docs.forEach(function(doc) {
           if (doc && doc.quantity !== undefined) {
             var id = parseInt(doc.id);
             var p = products.find(function(x) { return x.id === id; });
-            if (p) p.stock = doc.quantity;
+            if (p) {
+              console.log('[Stock] Product', id, 'stock:', p.stock, '->', doc.quantity);
+              p.stock = doc.quantity;
+            }
           }
         });
       }
@@ -700,6 +707,7 @@ function loadStockFromFirestore(callback) {
       if (callback) callback();
     })
     .catch(function(err) {
+      console.warn('[Stock] Load error:', err.message);
       stockInitialized = true;
       setProxyStatus('Proxy error: ' + (err.message || 'connection failed'), true);
       if (callback) callback();
@@ -732,29 +740,37 @@ function subscribeStockUpdates() {
 }
 
 function firestoreAddToCart(productId) {
-  if (!isProxyReady()) return;
-  fetch(proxyUrl('stocks/' + productId + '/decrement'), {
+  if (!isProxyReady()) { console.warn('[Stock] Proxy not ready'); return; }
+  var url = proxyUrl('stocks/' + productId + '/decrement');
+  console.log('[Stock] Decrement fetch to', url);
+  fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ amount: 1 })
   }).then(function(r) {
+    console.log('[Stock] Decrement response', r.status);
     if (r.ok) setProxyStatus('Stock updated via proxy');
     else setProxyStatus('Proxy write failed (HTTP ' + r.status + ')', true);
   }).catch(function(err) {
+    console.warn('[Stock] Decrement error', err.message);
     setProxyStatus('Proxy write error: ' + (err.message || 'connection failed'), true);
   });
 }
 
 function firestoreRestoreStock(productId, amount) {
   if (!isProxyReady() || amount <= 0) return;
-  fetch(proxyUrl('stocks/' + productId + '/increment'), {
+  var url = proxyUrl('stocks/' + productId + '/increment');
+  console.log('[Stock] Increment fetch to', url);
+  fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ amount: amount })
   }).then(function(r) {
+    console.log('[Stock] Increment response', r.status);
     if (r.ok) setProxyStatus('Stock restored via proxy');
     else setProxyStatus('Proxy restore failed (HTTP ' + r.status + ')', true);
   }).catch(function(err) {
+    console.warn('[Stock] Increment error', err.message);
     setProxyStatus('Proxy restore error: ' + (err.message || 'connection failed'), true);
   });
 }
