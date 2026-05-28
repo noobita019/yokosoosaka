@@ -1617,7 +1617,8 @@ if (mcb) mcb.addEventListener('click', function() {
 
 var sgp = document.getElementById('subcategoryGroupPicker');
 if (sgp) sgp.addEventListener('change', function() {
-  renderCategoryManagement();
+  selectedSubcategoryGroup = this.value;
+  renderSubcategoryTagList();
 });
 
 var backBtn = document.getElementById('backToPublicBtn');
@@ -1671,9 +1672,38 @@ function makeEditableTag(el, list, key) {
   });
 }
 
+function renderSubcategoryTagList() {
+  var subList = document.getElementById('subcategoryTagList');
+  var subPicker = document.getElementById('subcategoryGroupPicker');
+  if (!subList || !subPicker) return;
+  var selectedGroup = subPicker.value;
+  if (!selectedGroup) return;
+  var subs = getSubcategories(selectedGroup);
+  subList.innerHTML = subs.map(function(s) {
+    return '<span class="admin-tag"><span class="admin-tag-label" title="Double-click to rename">' + s + '</span><span class="admin-tag-remove" data-subcategory="' + s + '" data-group="' + selectedGroup + '">×</span></span>';
+  }).join('');
+  subList.querySelectorAll('.admin-tag-remove').forEach(function(el) {
+    el.addEventListener('click', function() {
+      var s = this.dataset.subcategory;
+      var g = this.dataset.group;
+      var arr = categoriesConfig.subcategoryMap[g];
+      if (arr) {
+        categoriesConfig.subcategoryMap[g] = arr.filter(function(x) { return x !== s; });
+        saveCategoriesConfig();
+        renderCategoryManagement();
+        renderCategoryDropdowns();
+        renderAdminFilterDropdowns();
+        renderFilters();
+      }
+    });
+  });
+  subList.querySelectorAll('.admin-tag-label').forEach(function(el) {
+    el.addEventListener('dblclick', function() { makeEditableSubcategoryTag(el.parentNode); });
+  });
+}
+
 function renderCategoryManagement() {
   var groupList = document.getElementById('groupTagList');
-  var subList = document.getElementById('subcategoryTagList');
   var brandList = document.getElementById('brandTagList');
   var sizeList = document.getElementById('sizeTagList');
   if (!groupList || !brandList) return;
@@ -1683,19 +1713,28 @@ function renderCategoryManagement() {
     return '<span class="admin-tag"><span class="admin-tag-label" title="Double-click to rename">' + g.name + '</span><span class="admin-tag-remove" data-group="' + g.name + '">×</span></span>';
   }).join('');
 
-  // Subcategories picker
+  // Subcategories picker - only populate if empty or groups changed
   var subPicker = document.getElementById('subcategoryGroupPicker');
   if (subPicker) {
     var groups = getGroups();
-    subPicker.innerHTML = groups.map(function(g) {
-      var sel = g.name === (selectedSubcategoryGroup || (groups[0] || {}).name) ? ' selected' : '';
-      return '<option value="' + g.name + '"' + sel + '>' + g.name + '</option>';
-    }).join('');
-    var selectedGroup = subPicker.value;
-    var subs = getSubcategories(selectedGroup);
-    subList.innerHTML = subs.map(function(s) {
-      return '<span class="admin-tag"><span class="admin-tag-label" title="Double-click to rename">' + s + '</span><span class="admin-tag-remove" data-subcategory="' + s + '" data-group="' + selectedGroup + '">×</span></span>';
-    }).join('');
+    var needsRepopulate = subPicker.options.length !== groups.length;
+    if (!needsRepopulate) {
+      for (var i = 0; i < groups.length; i++) {
+        if (subPicker.options[i].value !== groups[i].name) { needsRepopulate = true; break; }
+      }
+    }
+    if (needsRepopulate) {
+      subPicker.innerHTML = groups.map(function(g) {
+        return '<option value="' + g.name + '">' + g.name + '</option>';
+      }).join('');
+    }
+    if (selectedSubcategoryGroup && groups.some(function(g) { return g.name === selectedSubcategoryGroup; })) {
+      subPicker.value = selectedSubcategoryGroup;
+    } else {
+      selectedSubcategoryGroup = groups.length ? groups[0].name : '';
+      if (selectedSubcategoryGroup) subPicker.value = selectedSubcategoryGroup;
+    }
+    renderSubcategoryTagList();
   }
 
   brandList.innerHTML = (categoriesConfig.brands || []).map(function(b) {
@@ -1718,23 +1757,6 @@ function renderCategoryManagement() {
       renderCategoryDropdowns();
       renderAdminFilterDropdowns();
       renderFilters();
-    });
-  });
-
-  // Subcategory remove handlers
-  subList.querySelectorAll('.admin-tag-remove').forEach(function(el) {
-    el.addEventListener('click', function() {
-      var s = this.dataset.subcategory;
-      var g = this.dataset.group;
-      var arr = categoriesConfig.subcategoryMap[g];
-      if (arr) {
-        categoriesConfig.subcategoryMap[g] = arr.filter(function(x) { return x !== s; });
-        saveCategoriesConfig();
-        renderCategoryManagement();
-        renderCategoryDropdowns();
-        renderAdminFilterDropdowns();
-        renderFilters();
-      }
     });
   });
 
@@ -1767,9 +1789,6 @@ function renderCategoryManagement() {
   // Rename handlers
   groupList.querySelectorAll('.admin-tag-label').forEach(function(el) {
     el.addEventListener('dblclick', function() { makeEditableGroupTag(el.parentNode); });
-  });
-  subList.querySelectorAll('.admin-tag-label').forEach(function(el) {
-    el.addEventListener('dblclick', function() { makeEditableSubcategoryTag(el.parentNode); });
   });
   brandList.querySelectorAll('.admin-tag-label').forEach(function(el) {
     el.addEventListener('dblclick', function() { makeEditableTag(el.parentNode, categoriesConfig.brands, 'brands'); });
