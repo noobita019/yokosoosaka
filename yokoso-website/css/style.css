@@ -381,49 +381,63 @@ body {
   border-color: #e94560;
 }
 
-.subcategory-wrapper {
-  position: relative;
-  display: inline-block;
+.brand-grid-section {
+  width: 100%;
+  margin-top: 0.8rem;
 }
 
-.subcategory-brands {
-  display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 4px;
-  z-index: 20;
-  min-width: 140px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+.brand-grid-heading {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
 }
 
-.subcategory-wrapper:hover .subcategory-brands {
+.brand-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.brand-card {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-}
-
-.brand-option {
-  display: flex;
   align-items: center;
-  width: 100%;
-  padding: 0.4rem 0.8rem;
-  border: none;
-  background: none;
+  gap: 0.4rem;
+  padding: 0.8rem 0.5rem;
+  border: 1.5px solid #e8e8e8;
+  border-radius: 8px;
+  background: #fff;
   cursor: pointer;
-  font-size: 0.8rem;
-  color: #333;
-  text-align: left;
-  border-radius: 3px;
-  transition: background 0.15s;
+  transition: all 0.2s;
 }
 
-.brand-option:hover {
-  background: #f0f0f5;
-  color: #e94560;
+.brand-card:hover {
+  border-color: #e94560;
+  box-shadow: 0 2px 8px rgba(233,69,96,0.12);
+}
+
+.brand-card.active {
+  border-color: #e94560;
+  background: #fff5f6;
+}
+
+.brand-card-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.brand-card-name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #444;
+  text-align: center;
+  line-height: 1.2;
 }
 
 /* Products */
@@ -1439,6 +1453,18 @@ body {
 
   .admin-layout {
     grid-template-columns: 1fr;
+  }
+
+  .brand-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 0.4rem;
+  }
+  .brand-card-logo {
+    width: 48px;
+    height: 48px;
+  }
+  .brand-card-name {
+    font-size: 0.65rem;
   }
 
   .admin-categories-grid {

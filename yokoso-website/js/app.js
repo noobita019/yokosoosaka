@@ -293,6 +293,12 @@ function loadCategories() {
             var fg = fileGroups.find(function(g) { return g.name === ug.name; });
             if (fg && !fg.image && ug.image) fg.image = ug.image;
           });
+          if (parsed.brandLogos) {
+            if (!categoriesConfig.brandLogos) categoriesConfig.brandLogos = {};
+            Object.keys(parsed.brandLogos).forEach(function(b) {
+              if (!categoriesConfig.brandLogos[b]) categoriesConfig.brandLogos[b] = parsed.brandLogos[b];
+            });
+          }
           categoriesConfig = migrateCategoriesConfig(categoriesConfig);
         } catch(e) {}
       }
@@ -327,7 +333,11 @@ function loadCategories() {
               if (doc.exists) {
                 var fbData = doc.data();
                 if (fbData.types || fbData.groups) {
+                  var currentBrandLogos = categoriesConfig.brandLogos || {};
                   categoriesConfig = migrateCategoriesConfig(fbData);
+                  Object.keys(currentBrandLogos).forEach(function(b) {
+                    if (!categoriesConfig.brandLogos[b]) categoriesConfig.brandLogos[b] = currentBrandLogos[b];
+                  });
                   localStorage.setItem('yokoso_categories', JSON.stringify(categoriesConfig));
                 }
               }
@@ -454,14 +464,19 @@ function renderSubcategoryFilter() {
   if (!container) return;
   if (currentGroup === 'all') { container.innerHTML = ''; return; }
   var subs = getSubcategories(currentGroup);
-  var html = '<button class="filter-btn' + (currentCategory === 'all' ? ' active' : '') + '" data-subcategory="all">All ' + currentGroup + ' Products</button>';
+  var html = '<div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.5rem"><button class="filter-btn' + (currentCategory === 'all' ? ' active' : '') + '" data-subcategory="all">All ' + currentGroup + ' Products</button></div>';
   subs.forEach(function(s) {
     var brands = getBrandsForSubcategory(s);
-    var brandHtml = brands.length ? brands.map(function(b) {
+    if (!brands.length) return;
+    html += '<div class="brand-grid-section"><div class="brand-grid-heading">' + s + '</div><div class="brand-grid">';
+    brands.forEach(function(b) {
       var logo = categoriesConfig.brandLogos && categoriesConfig.brandLogos[b] ? categoriesConfig.brandLogos[b] : '';
-      var imgHtml = logo ? '<img src="' + logo + '" style="width:20px;height:20px;object-fit:contain;vertical-align:middle;margin-right:6px">' : '';
-      return '<button class="brand-option" data-subcategory="' + s + '" data-brand="' + b + '">' + imgHtml + b + '</button>'; }).join('') : '';
-    html += '<div class="subcategory-wrapper"><button class="filter-btn' + (currentCategory === s ? ' active' : '') + '" data-subcategory="' + s + '">' + s + '</button>' + (brandHtml ? '<div class="subcategory-brands">' + brandHtml + '</div>' : '') + '</div>';
+      var active = currentCategory === s && currentBrand === b ? ' active' : '';
+      html += '<button class="brand-card' + active + '" data-subcategory="' + s + '" data-brand="' + b + '">';
+      if (logo) html += '<img src="' + logo + '" class="brand-card-logo">';
+      html += '<span class="brand-card-name">' + b + '</span></button>';
+    });
+    html += '</div></div>';
   });
   container.innerHTML = html;
 }
@@ -501,13 +516,10 @@ if (cc) {
 }
 
 document.addEventListener('click', function(e) {
-  var brandOpt = e.target.closest('.brand-option');
-  if (brandOpt) {
-    var sub = brandOpt.dataset.subcategory;
-    var brand = brandOpt.dataset.brand;
-    document.querySelectorAll('#subcategoryFilterContainer .filter-btn').forEach(function(b) { b.classList.remove('active'); });
-    var activeSubBtn = document.querySelector('#subcategoryFilterContainer .filter-btn[data-subcategory="' + sub + '"]');
-    if (activeSubBtn) activeSubBtn.classList.add('active');
+  var brandCard = e.target.closest('.brand-card');
+  if (brandCard) {
+    var sub = brandCard.dataset.subcategory;
+    var brand = brandCard.dataset.brand;
     currentCategory = sub;
     currentBrand = brand;
     renderSubcategoryFilter();
@@ -518,7 +530,7 @@ document.addEventListener('click', function(e) {
   if (subBtn) {
     document.querySelectorAll('#subcategoryFilterContainer .filter-btn').forEach(function(b) { b.classList.remove('active'); });
     subBtn.classList.add('active');
-    currentCategory = subBtn.dataset.subcategory;
+    currentCategory = 'all';
     currentBrand = 'all';
     renderSubcategoryFilter();
     renderProducts();
@@ -678,19 +690,22 @@ function showModalImage() {
   }
 }
 
-document.getElementById('carouselPrev').addEventListener('click', () => {
+var cp = document.getElementById('carouselPrev');
+if (cp) cp.addEventListener('click', () => {
   if (currentModalImages.length < 2) return;
   currentImageIndex = (currentImageIndex - 1 + currentModalImages.length) % currentModalImages.length;
   showModalImage();
 });
 
-document.getElementById('carouselNext').addEventListener('click', () => {
+var cn = document.getElementById('carouselNext');
+if (cn) cn.addEventListener('click', () => {
   if (currentModalImages.length < 2) return;
   currentImageIndex = (currentImageIndex + 1) % currentModalImages.length;
   showModalImage();
 });
 
-document.getElementById('carouselDots').addEventListener('click', e => {
+var cd = document.getElementById('carouselDots');
+if (cd) cd.addEventListener('click', e => {
   const dot = e.target.closest('.carousel-dot');
   if (!dot) return;
   currentImageIndex = parseInt(dot.dataset.index);
@@ -706,10 +721,12 @@ function closeModal() {
   if (location.hash === '#modal') history.back();
 }
 
-document.getElementById('productModal').addEventListener('click', e => {
+var pm = document.getElementById('productModal');
+if (pm) pm.addEventListener('click', e => {
   if (e.target === e.currentTarget) closeModal();
 });
-document.querySelector('#productModal .modal-close').addEventListener('click', closeModal);
+var mc = document.querySelector('#productModal .modal-close');
+if (mc) mc.addEventListener('click', closeModal);
 // Fullscreen image viewer
 function openFullscreen() {
   if (currentModalImages.length === 0) return;
@@ -926,7 +943,8 @@ document.addEventListener('keydown', e => {
   }
 });
 
-document.getElementById('searchInput').addEventListener('input', e => {
+var si = document.getElementById('searchInput');
+if (si) si.addEventListener('input', e => {
   currentSearch = e.target.value;
   renderProducts();
 });
@@ -948,15 +966,16 @@ function doSearch(e) {
   }, 600);
 }
 
-document.getElementById('searchInput').addEventListener('search', doSearch);
+if (si) si.addEventListener('search', doSearch);
 
-document.getElementById('searchInput').addEventListener('keydown', function(e) {
+if (si) si.addEventListener('keydown', function(e) {
   if (e.key === 'Enter' || e.keyCode === 13) {
     doSearch(e);
   }
 });
 
-document.getElementById('menuToggle').addEventListener('click', () => {
+var mt = document.getElementById('menuToggle');
+if (mt) mt.addEventListener('click', () => {
   document.querySelector('.nav').classList.toggle('open');
 });
 
@@ -1181,7 +1200,8 @@ function deleteProduct(id) {
   renderFilters();
 }
 
-document.getElementById('productForm').addEventListener('submit', function(e) {
+var pf = document.getElementById('productForm');
+if (pf) pf.addEventListener('submit', function(e) {
   e.preventDefault();
   var name = document.getElementById('formName').value.trim();
   var category0 = document.getElementById('formCategory0').value;
@@ -1231,9 +1251,11 @@ document.getElementById('productForm').addEventListener('submit', function(e) {
   });
 });
 
-document.getElementById('formCancelBtn').addEventListener('click', resetForm);
+var fcb = document.getElementById('formCancelBtn');
+if (fcb) fcb.addEventListener('click', resetForm);
 
-document.getElementById('newSizeInput').addEventListener('keydown', function(e) {
+var nsi = document.getElementById('newSizeInput');
+if (nsi) nsi.addEventListener('keydown', function(e) {
   if (e.key === 'Enter') {
     e.preventDefault();
     var val = this.value.trim();
@@ -1241,7 +1263,8 @@ document.getElementById('newSizeInput').addEventListener('keydown', function(e) 
   }
 });
 
-document.getElementById('addSizeBtn').addEventListener('click', function() {
+var asb = document.getElementById('addSizeBtn');
+if (asb) asb.addEventListener('click', function() {
   var input = document.getElementById('newSizeInput');
   var val = input.value.trim();
   if (val && selectedSizes.indexOf(val) === -1) { selectedSizes.push(val); input.value = ''; renderSizeTags(); renderSizePresets(); }
@@ -1281,7 +1304,8 @@ function renderImagePreview() {
   });
 }
 
-document.getElementById('addImageBtn').addEventListener('click', () => {
+var aib = document.getElementById('addImageBtn');
+if (aib) aib.addEventListener('click', () => {
   document.getElementById('formImage').click();
 });
 
@@ -1300,6 +1324,8 @@ function resizeImage(file, maxW, maxQ, cb) {
       canvas.width = w;
       canvas.height = h;
       const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, w, h);
       ctx.drawImage(img, 0, 0, w, h);
       cb(canvas.toDataURL('image/jpeg', maxQ));
     };
@@ -1316,7 +1342,8 @@ function resizeImage(file, maxW, maxQ, cb) {
   reader.readAsDataURL(file);
 }
 
-document.getElementById('formImage').addEventListener('change', e => {
+var fi = document.getElementById('formImage');
+if (fi) fi.addEventListener('change', e => {
   const file = e.target.files[0];
   if (!file) return;
   resizeImage(file, 800, 0.8, function(dataUrl) {
@@ -1327,7 +1354,8 @@ document.getElementById('formImage').addEventListener('change', e => {
 });
 
 // Import/Export
-document.getElementById('exportBtn').addEventListener('click', () => {
+var eb = document.getElementById('exportBtn');
+if (eb) eb.addEventListener('click', () => {
   const data = JSON.stringify(products, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -1338,11 +1366,13 @@ document.getElementById('exportBtn').addEventListener('click', () => {
   URL.revokeObjectURL(url);
 });
 
-document.getElementById('importBtn').addEventListener('click', () => {
+var ib = document.getElementById('importBtn');
+if (ib) ib.addEventListener('click', () => {
   document.getElementById('importFileInput').click();
 });
 
-document.getElementById('importFileInput').addEventListener('change', e => {
+var ifi = document.getElementById('importFileInput');
+if (ifi) ifi.addEventListener('change', e => {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
@@ -1389,18 +1419,23 @@ var GITHUB_PATH = 'yokoso-website/data/products.json';
 var GITHUB_CATEGORIES_PATH = 'yokoso-website/data/categories.json';
 var GITHUB_BRANCH = 'main';
 
-document.getElementById('syncSettingsBtn').addEventListener('click', function() {
+var ssb = document.getElementById('syncSettingsBtn');
+if (ssb) ssb.addEventListener('click', function() {
   var el = document.getElementById('adminSyncSettings');
-  el.style.display = el.style.display === 'none' ? 'block' : 'none';
-  document.getElementById('githubTokenInput').value = localStorage.getItem('github_token') || '';
-  document.getElementById('autoSyncToggle').checked = localStorage.getItem('autoSyncEnabled') === 'true';
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  var gti = document.getElementById('githubTokenInput');
+  if (gti) gti.value = localStorage.getItem('github_token') || '';
+  var ast = document.getElementById('autoSyncToggle');
+  if (ast) ast.checked = localStorage.getItem('autoSyncEnabled') === 'true';
 });
 
-document.getElementById('githubTokenInput').addEventListener('input', function() {
+var gti = document.getElementById('githubTokenInput');
+if (gti) gti.addEventListener('input', function() {
   localStorage.setItem('github_token', this.value);
 });
 
-document.getElementById('autoSyncToggle').addEventListener('change', function() {
+var ast = document.getElementById('autoSyncToggle');
+if (ast) ast.addEventListener('change', function() {
   localStorage.setItem('autoSyncEnabled', this.checked ? 'true' : 'false');
 });
 
@@ -1473,7 +1508,7 @@ function syncCategoriesToGitHub() {
   .catch(function(err) {
     console.error('Categories sync failed:', err.message);
     if (statusEl) { statusEl.textContent = 'Sync failed: ' + err.message; statusEl.style.color = '#dc3545'; }
-    if (groupStatusEl) { groupStatusEl.textContent = 'Sync failed: ' + err.message; groupStatusEl.style.color = '#dc3545'; }
+    if (groupStatusEl) { groupStatusEl.innerHTML = 'Saved locally. GitHub sync failed (' + err.message + '). Check token in <a href="#" onclick="document.getElementById(\'syncSettingsBtn\').click();return false" style="color:#007bff">sync settings</a>.'; groupStatusEl.style.color = '#e67e22'; }
   });
 }
 
@@ -1503,9 +1538,11 @@ function showAdminPanel() {
   renderAdminList();
 }
 
-document.getElementById('enterAdminBtn').addEventListener('click', showAdminPanel);
+var eab = document.getElementById('enterAdminBtn');
+if (eab) eab.addEventListener('click', showAdminPanel);
 
-document.getElementById('footerAdminLink').addEventListener('click', e => {
+var fal = document.getElementById('footerAdminLink');
+if (fal) fal.addEventListener('click', e => {
   e.preventDefault();
   showAdminPanel();
 });
@@ -1532,7 +1569,8 @@ function renderAdminFilterDropdowns() {
   }).join('');
 }
 
-document.getElementById('adminSearch').addEventListener('input', function() {
+var admSearch = document.getElementById('adminSearch');
+if (admSearch) admSearch.addEventListener('input', function() {
   adminSearchVal = this.value;
   renderAdminList();
 });
@@ -1545,34 +1583,38 @@ if (afg) {
   });
 }
 
-document.getElementById('adminFilterType').addEventListener('change', function() {
+var aft = document.getElementById('adminFilterType');
+if (aft) aft.addEventListener('change', function() {
   adminFilterType = this.value;
   renderAdminList();
 });
 
-document.getElementById('adminFilterBrand').addEventListener('change', function() {
+var afb = document.getElementById('adminFilterBrand');
+if (afb) afb.addEventListener('change', function() {
   adminFilterBrand = this.value;
   renderAdminList();
 });
 
-document.getElementById('manageCategoriesBtn').addEventListener('click', function() {
+var mcb = document.getElementById('manageCategoriesBtn');
+if (mcb) mcb.addEventListener('click', function() {
   var el = document.getElementById('adminCategories');
-  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
   renderCategoryManagement();
 });
 
-document.getElementById('backToPublicBtn').addEventListener('click', function() {
-  document.getElementById('adminCategories').style.display = 'none';
-  document.getElementById('adminPanel').style.display = 'none';
+var backBtn = document.getElementById('backToPublicBtn');
+if (backBtn) backBtn.addEventListener('click', function() {
+  var ac = document.getElementById('adminCategories');
+  if (ac) ac.style.display = 'none';
+  var ap = document.getElementById('adminPanel');
+  if (ap) ap.style.display = 'none';
   adminSearchVal = '';
   adminFilterGroup = 'all';
   adminFilterType = 'all';
   adminFilterBrand = 'all';
-  if (typeof MAINTENANCE_MODE !== 'undefined' && MAINTENANCE_MODE) {
-    document.getElementById('maintenancePublic').style.display = 'block';
-  } else {
-    document.getElementById('maintenanceOverlay').classList.remove('active');
-  }
+  renderAdminList();
+  renderFilters();
+  renderProducts();
 });
 
 var selectedSubcategoryGroup = '';
@@ -1858,12 +1900,14 @@ function renderGroupImagePreview() {
 
 var groupTargetSelect = document.getElementById('groupImageTarget');
 
-document.getElementById('uploadGroupImageBtn').addEventListener('click', function() {
+var ugiBtn = document.getElementById('uploadGroupImageBtn');
+if (ugiBtn) ugiBtn.addEventListener('click', function() {
   if (!groupTargetSelect || !groupTargetSelect.value) { alert('Select a group first.'); return; }
   document.getElementById('groupImageInput').click();
 });
 
-document.getElementById('groupImageInput').addEventListener('change', function(e) {
+var giInput = document.getElementById('groupImageInput');
+if (giInput) giInput.addEventListener('change', function(e) {
   var file = e.target.files[0];
   if (!file || !groupTargetSelect || !groupTargetSelect.value) return;
   var targetGroup = groupTargetSelect.value;
@@ -1877,7 +1921,8 @@ document.getElementById('groupImageInput').addEventListener('change', function(e
   e.target.value = '';
 });
 
-document.getElementById('groupImageUrl').addEventListener('input', function() {
+var giUrl = document.getElementById('groupImageUrl');
+if (giUrl) giUrl.addEventListener('change', function() {
   if (!groupTargetSelect || !groupTargetSelect.value) return;
   var url = this.value.trim();
   if (url) {
@@ -1921,13 +1966,15 @@ function renderBrandLogoPreview() {
   });
 }
 
-document.getElementById('uploadBrandLogoBtn').addEventListener('click', function() {
+var uploadBrandLogoBtn = document.getElementById('uploadBrandLogoBtn');
+if (uploadBrandLogoBtn) uploadBrandLogoBtn.addEventListener('click', function() {
   var picker = document.getElementById('brandLogoPicker');
   if (!picker || !picker.value) { alert('Select a brand first.'); return; }
   document.getElementById('brandLogoInput').click();
 });
 
-document.getElementById('brandLogoInput').addEventListener('change', function(e) {
+var bli = document.getElementById('brandLogoInput');
+if (bli) bli.addEventListener('change', function(e) {
   var file = e.target.files[0];
   var picker = document.getElementById('brandLogoPicker');
   if (!file || !picker || !picker.value) return;
@@ -1937,11 +1984,13 @@ document.getElementById('brandLogoInput').addEventListener('change', function(e)
     categoriesConfig.brandLogos[targetBrand] = dataUrl;
     saveCategoriesConfig();
     renderBrandLogoPreview();
+    renderFilters();
   });
   e.target.value = '';
 });
 
-document.getElementById('brandLogoUrl').addEventListener('input', function() {
+var blu = document.getElementById('brandLogoUrl');
+if (blu) blu.addEventListener('change', function() {
   var picker = document.getElementById('brandLogoPicker');
   if (!picker || !picker.value) return;
   var url = this.value.trim();
@@ -1951,11 +2000,13 @@ document.getElementById('brandLogoUrl').addEventListener('input', function() {
     categoriesConfig.brandLogos[targetBrand] = url;
     saveCategoriesConfig();
     renderBrandLogoPreview();
+    renderFilters();
   }
 });
 
 // ---- CATEGORY MANAGEMENT ADD HANDLERS ----
-document.getElementById('addGroupBtn').addEventListener('click', function() {
+var agb = document.getElementById('addGroupBtn');
+if (agb) agb.addEventListener('click', function() {
   var input = document.getElementById('newGroupInput');
   var val = input.value.trim();
   if (!val) return;
@@ -1969,9 +2020,11 @@ document.getElementById('addGroupBtn').addEventListener('click', function() {
   renderAdminFilterDropdowns();
   renderFilters();
 });
-document.getElementById('newGroupInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addGroupBtn').click(); } });
+var ngi = document.getElementById('newGroupInput');
+if (ngi) ngi.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); var btn = document.getElementById('addGroupBtn'); if (btn) btn.click(); } });
 
-document.getElementById('addSubcategoryBtn').addEventListener('click', function() {
+var asb = document.getElementById('addSubcategoryBtn');
+if (asb) asb.addEventListener('click', function() {
   var input = document.getElementById('newSubcategoryInput');
   var val = input.value.trim();
   if (!val) return;
@@ -1988,9 +2041,11 @@ document.getElementById('addSubcategoryBtn').addEventListener('click', function(
   renderAdminFilterDropdowns();
   renderFilters();
 });
-document.getElementById('newSubcategoryInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addSubcategoryBtn').click(); } });
+var nsi2 = document.getElementById('newSubcategoryInput');
+if (nsi2) nsi2.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); var btn = document.getElementById('addSubcategoryBtn'); if (btn) btn.click(); } });
 
-document.getElementById('addBrandBtn').addEventListener('click', function() {
+var abb = document.getElementById('addBrandBtn');
+if (abb) abb.addEventListener('click', function() {
   var input = document.getElementById('newBrandInput');
   var val = input.value.trim();
   if (!val) return;
@@ -2002,9 +2057,11 @@ document.getElementById('addBrandBtn').addEventListener('click', function() {
   renderCategoryDropdowns();
   renderAdminFilterDropdowns();
 });
-document.getElementById('newBrandInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addBrandBtn').click(); } });
+var nbi = document.getElementById('newBrandInput');
+if (nbi) nbi.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); var btn = document.getElementById('addBrandBtn'); if (btn) btn.click(); } });
 
-document.getElementById('addSizeCatBtn').addEventListener('click', function() {
+var ascb = document.getElementById('addSizeCatBtn');
+if (ascb) ascb.addEventListener('click', function() {
   var input = document.getElementById('newSizeCatInput');
   var val = input.value.trim();
   if (!val) return;
@@ -2014,14 +2071,17 @@ document.getElementById('addSizeCatBtn').addEventListener('click', function() {
   saveCategoriesConfig();
   renderCategoryManagement();
 });
-document.getElementById('newSizeCatInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addSizeCatBtn').click(); } });
+var nsci = document.getElementById('newSizeCatInput');
+if (nsci) nsci.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); var btn = document.getElementById('addSizeCatBtn'); if (btn) btn.click(); } });
 
 // ---- BRAND MAP UI ----
-document.getElementById('brandMapSubcategoryPicker').addEventListener('change', function() {
+var bmsp = document.getElementById('brandMapSubcategoryPicker');
+if (bmsp) bmsp.addEventListener('change', function() {
   renderBrandMapCheckboxes(this.value);
 });
 
-document.getElementById('brandMapCheckboxes').addEventListener('change', function(e) {
+var bmc = document.getElementById('brandMapCheckboxes');
+if (bmc) bmc.addEventListener('change', function(e) {
   var cb = e.target.closest('.brand-map-cb');
   if (!cb) return;
   var sub = cb.dataset.subcategory;
