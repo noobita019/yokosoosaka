@@ -1400,6 +1400,30 @@ body {
   }
 }
 
+/* Catalog View */
+.catalog-mode .hero,
+.catalog-mode .how-to-order,
+.catalog-mode .about,
+.catalog-mode .footer { display: none; }
+
+.catalog-mode .search-filter { padding-top: 1rem; }
+
+.catalog-back {
+  display: inline-block;
+  font-size: 0.9rem;
+  color: #e94560;
+  text-decoration: none;
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+}
+.catalog-back:hover { text-decoration: underline; }
+
+.catalog-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #1a1a2e;
+}
+
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
