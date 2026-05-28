@@ -282,24 +282,34 @@ function loadCategories() {
       categoriesConfig = migrateCategoriesConfig(categoriesConfig);
     })
     .finally(function() {
-      // Stage 2: Overlay with savedConfig (preserves user's images/edits from before fetch)
+      // Stage 2: Overlay with savedConfig (preserves user's edits from before fetch)
       if (savedConfig) {
         try {
           var parsed = JSON.parse(savedConfig);
-          // Merge: API data is authoritative — use localStorage image only as fallback if API has none
-          var fileGroups = categoriesConfig.groups || [];
+          var fetched = categoriesConfig;
+          // Merge: API/file data is authoritative for groups, but localStorage edits take priority
+          var fileGroups = fetched.groups || [];
           var userGroups = parsed.groups || [];
           userGroups.forEach(function(ug) {
             var fg = fileGroups.find(function(g) { return g.name === ug.name; });
             if (fg && !fg.image && ug.image) fg.image = ug.image;
           });
-          if (parsed.brandLogos) {
-            if (!categoriesConfig.brandLogos) categoriesConfig.brandLogos = {};
-            Object.keys(parsed.brandLogos).forEach(function(b) {
-              if (!categoriesConfig.brandLogos[b]) categoriesConfig.brandLogos[b] = parsed.brandLogos[b];
+          // Merge subcategoryMap from localStorage (user may have added new subcategories)
+          if (parsed.subcategoryMap) {
+            Object.keys(parsed.subcategoryMap).forEach(function(g) {
+              if (!fetched.subcategoryMap[g]) fetched.subcategoryMap[g] = [];
+              parsed.subcategoryMap[g].forEach(function(s) {
+                if (fetched.subcategoryMap[g].indexOf(s) === -1) fetched.subcategoryMap[g].push(s);
+              });
             });
           }
-          categoriesConfig = migrateCategoriesConfig(categoriesConfig);
+          if (parsed.brandLogos) {
+            if (!fetched.brandLogos) fetched.brandLogos = {};
+            Object.keys(parsed.brandLogos).forEach(function(b) {
+              if (!fetched.brandLogos[b]) fetched.brandLogos[b] = parsed.brandLogos[b];
+            });
+          }
+          categoriesConfig = migrateCategoriesConfig(fetched);
         } catch(e) {}
       }
       localStorage.setItem('yokoso_categories', JSON.stringify(categoriesConfig));
