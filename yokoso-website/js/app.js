@@ -312,6 +312,10 @@ function loadCategories() {
       });
       localStorage.setItem('yokoso_products', JSON.stringify(products));
 
+      // Re-render now that categories are loaded
+      renderFilters();
+      renderProducts();
+
       // Stage 3: Firebase sync (if available)
       if (fbDB) {
         var catDone = false;
@@ -328,13 +332,17 @@ function loadCategories() {
               }
               renderCategoryDropdowns();
               renderCategoryManagement();
+              renderFilters();
+              renderProducts();
             }
           })
-          .catch(function() { if (!catDone) { catDone = true; renderCategoryDropdowns(); renderCategoryManagement(); } });
-        setTimeout(function() { if (!catDone) { catDone = true; renderCategoryDropdowns(); renderCategoryManagement(); } }, 3000);
+          .catch(function() { if (!catDone) { catDone = true; renderCategoryDropdowns(); renderCategoryManagement(); renderFilters(); renderProducts(); } });
+        setTimeout(function() { if (!catDone) { catDone = true; renderCategoryDropdowns(); renderCategoryManagement(); renderFilters(); renderProducts(); } }, 3000);
       } else {
         renderCategoryDropdowns();
         renderCategoryManagement();
+        renderFilters();
+        renderProducts();
       }
     });
 }
