@@ -558,12 +558,16 @@ function openFullscreen() {
   counter.textContent = (currentImageIndex + 1) + ' / ' + currentModalImages.length;
   ov.appendChild(counter);
   ov.addEventListener('click', function(e) { if (e.target === this) closeFullscreen(); });
+  document.documentElement.style.touchAction = 'none';
+  document.body.style.overscrollBehavior = 'none';
   lockBody();
 }
 
 function closeFullscreen() {
   var ov = document.getElementById('liveFullscreen');
   if (ov) ov.remove();
+  document.documentElement.style.touchAction = '';
+  document.body.style.overscrollBehavior = '';
   var modal = document.getElementById('productModal');
   var live = document.getElementById('liveModal');
   if ((!modal || !modal.classList.contains('active')) && !live) unlockBody();
