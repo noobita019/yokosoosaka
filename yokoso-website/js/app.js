@@ -673,7 +673,6 @@ let categoriesConfig = migrateCategoriesConfig({
 });
 
 let currentGroup = 'all';
-let currentColor = 'all';
 let currentBrand = 'all';
 var adminSearchVal = '';
 var adminFilterGroup = 'all';
@@ -1176,22 +1175,6 @@ function getBrands() {
   return merged.filter(function(v, i, a) { return a.indexOf(v) === i; });
 }
 
-function getColors() {
-  var fromConfig = categoriesConfig.colors || [];
-  var fromProducts = [];
-  products.filter(function(p) {
-    if (currentGroup !== 'all' && p.category0 !== currentGroup) return false;
-    if (currentCategory !== 'all' && p.category1 !== currentCategory) return false;
-    if (currentBrand !== 'all' && p.category2 !== currentBrand) return false;
-    return true;
-  }).forEach(function(p) {
-    var vc = getVariantColors(p);
-    vc.forEach(function(c) { if (c !== 'Default' && fromProducts.indexOf(c) === -1) fromProducts.push(c); });
-  });
-  var merged = fromConfig.concat(fromProducts);
-  return merged.filter(function(v, i, a) { return a.indexOf(v) === i; });
-}
-
 function getBrandsForSubcategory(sub) {
   if (!sub || sub === 'all') return [];
   if (categoriesConfig.subcategoryBrands && categoriesConfig.subcategoryBrands[sub] && categoriesConfig.subcategoryBrands[sub].length) {
@@ -1206,7 +1189,6 @@ function renderFilters() {
   renderCarousel();
   renderSubcategoryFilter();
   renderBrandFilter();
-  renderColorFilter();
 }
 
 function renderSubcategoryFilter() {
@@ -1254,23 +1236,7 @@ function renderBrandFilter() {
   container.innerHTML = html;
 }
 
-function renderColorFilter() {
-  var container = document.getElementById('colorFilterContainer');
-  if (!container) return;
-  if (currentGroup === 'all' || currentCategory === 'all' || currentBrand === 'all') {
-    container.innerHTML = '';
-    return;
-  }
-  var colors = getColors();
-  if (!colors.length) { container.innerHTML = ''; return; }
-  var html = '<div class="color-filter-section">';
-  colors.forEach(function(c) {
-    var active = currentColor === c ? ' active' : '';
-    html += '<button class="filter-btn' + active + '" data-color="' + c + '">' + c + '</button>';
-  });
-  html += '</div>';
-  container.innerHTML = html;
-}
+
 
 var cc = document.getElementById('categoryCarousel');
 if (cc) {
@@ -1291,11 +1257,9 @@ document.addEventListener('click', function(e) {
     var brand = brandCard.dataset.brand;
     currentCategory = sub;
     currentBrand = brand;
-    currentColor = 'all';
     openSubcats = {};
     renderSubcategoryFilter();
     document.getElementById('brandFilterContainer').innerHTML = '';
-    renderColorFilter();
     renderProducts();
     return;
   }
@@ -1305,25 +1269,12 @@ document.addEventListener('click', function(e) {
     if (sub === 'all') {
       currentCategory = 'all';
       currentBrand = 'all';
-      currentColor = 'all';
       openSubcats = {};
     } else {
-      currentCategory = sub;
-      currentBrand = 'all';
-      currentColor = 'all';
       openSubcats = {};
     }
     renderSubcategoryFilter();
     renderBrandFilter();
-    renderColorFilter();
-    renderProducts();
-    return;
-  }
-  var colorBtn = e.target.closest('#colorFilterContainer .filter-btn');
-  if (colorBtn) {
-    var color = colorBtn.dataset.color;
-    currentColor = currentColor === color ? 'all' : color;
-    renderColorFilter();
     renderProducts();
     return;
   }
@@ -1347,9 +1298,7 @@ function renderProducts() {
   if (currentBrand !== 'all') {
     filtered = filtered.filter(function(p) { return p.category2 === currentBrand; });
   }
-  if (currentColor !== 'all') {
-    filtered = filtered.filter(function(p) { return (p.color || '') === currentColor; });
-  }
+
   if (currentSearch) {
     var q = currentSearch.toLowerCase();
     filtered = filtered.filter(function(p) {

@@ -480,30 +480,6 @@ body {
   line-height: 1.15;
 }
 
-.color-filter-section {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  justify-content: center;
-  margin-bottom: 1rem;
-}
-
-.color-filter-section .filter-btn {
-  padding: 0.3rem 1rem;
-  border-radius: 20px;
-  border: 1px solid #ddd;
-  background: #fff;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.color-filter-section .filter-btn.active {
-  background: #e94560;
-  color: #fff;
-  border-color: #e94560;
-}
-
 /* Products */
 .products {
   padding: 3rem 0;
@@ -1650,10 +1626,6 @@ body {
   }
   .brand-filter-section .brand-card {
     padding: 0.3rem;
-  }
-  .color-filter-section .filter-btn {
-    padding: 0.25rem 0.8rem;
-    font-size: 0.7rem;
   }
   .brand-grid {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
