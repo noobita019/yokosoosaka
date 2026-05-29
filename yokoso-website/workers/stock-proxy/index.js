@@ -401,7 +401,15 @@ async function handleRequest(request, env) {
       const data = await firestoreGet('orders').catch(() => null);
       const docs = (data && data.documents) ? data.documents.map(parseOrderDoc).filter(Boolean) : [];
       docs.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-      return new Response(JSON.stringify(docs), { headers: corsHeaders(origin) });
+      return new Response(JSON.stringify({ count: docs.length, docs: docs }), { headers: corsHeaders(origin) });
+    }
+
+    // GET /orders/:poNumber — get single order by PO number
+    if (request.method === 'GET' && parts.length === 2 && parts[0] === 'orders') {
+      const data = await firestoreGet(`orders/${encodeURIComponent(parts[1])}`).catch(() => null);
+      if (!data || !data.fields) return new Response(JSON.stringify({ error: 'not found' }), { status: 404, headers: corsHeaders(origin) });
+      const order = parseOrderDoc(data);
+      return new Response(JSON.stringify(order), { headers: corsHeaders(origin) });
     }
 
     // GET /cart/test-email — send a test email to verify email config
