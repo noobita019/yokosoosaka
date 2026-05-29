@@ -8,3 +8,8 @@ triggers = { crons = ["0 * * * *"] }
 # After first deploy, set STOCK_PROXY_URL in Cloudflare dashboard:
 # Workers > yokoso-stock-proxy > Settings > Variables
 # Value: https://yokoso-stock-proxy.<your-subdomain>.workers.dev
+
+# KV Namespace binding (required for orders):
+# 1. Go to Workers > KV > Create Namespace "YOKOSO_ORDERS"
+# 2. Go to Workers > yokoso-stock-proxy > Settings > Variables > KV Namespace Bindings
+# 3. Variable name: ORDERS_KV, Namespace: YOKOSO_ORDERS

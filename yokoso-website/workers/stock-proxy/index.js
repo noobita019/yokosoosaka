@@ -204,6 +204,30 @@ function corsHeaders(origin) {
   };
 }
 
+// KV helpers for orders (bypasses Firestore read quota limits)
+async function kvGetOrders(env) {
+  if (!env || !env.ORDERS_KV) return null;
+  const val = await env.ORDERS_KV.get('orders', { type: 'json' }).catch(() => null);
+  return val || {};
+}
+
+async function kvPutOrders(env, orders) {
+  if (!env || !env.ORDERS_KV) return false;
+  await env.ORDERS_KV.put('orders', JSON.stringify(orders)).catch(() => {});
+  return true;
+}
+
+async function kvGetOrder(env, poNumber) {
+  const orders = await kvGetOrders(env);
+  return orders ? (orders[poNumber] || null) : null;
+}
+
+async function kvSaveOrder(env, order) {
+  const orders = await kvGetOrders(env);
+  orders[order.poNumber || order.id] = order;
+  await kvPutOrders(env, orders);
+}
+
 async function handleRequest(request, env) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/^\/+/, '');
@@ -322,13 +346,30 @@ async function handleRequest(request, env) {
       if (!body.poNumber || !body.items) {
         return new Response(JSON.stringify({ error: 'poNumber and items required' }), { status: 400, headers: corsHeaders(origin) });
       }
-      const docId = encodeURIComponent(body.poNumber);
       const now = new Date().toISOString();
+      const order = {
+        id: body.poNumber,
+        poNumber: body.poNumber,
+        status: 'pending',
+        createdAt: now,
+        items: typeof body.items === 'string' ? body.items : JSON.stringify(body.items),
+        customerName: body.customerName || '',
+        customerEmail: body.customerEmail || '',
+        customerContact: body.customerContact || '',
+        total: body.total || '',
+        deposit: body.deposit || ''
+      };
+      if (env && env.ORDERS_KV) {
+        await kvSaveOrder(env, order);
+        return new Response(JSON.stringify({ ok: true, poNumber: body.poNumber, storage: 'kv' }), { headers: corsHeaders(origin) });
+      }
+      // Fallback to Firestore
+      const docId = encodeURIComponent(body.poNumber);
       const fields = {
         poNumber: body.poNumber,
         status: 'pending',
         createdAt: now,
-        items: JSON.stringify(body.items),
+        items: order.items,
         customerName: body.customerName || '',
         customerEmail: body.customerEmail || '',
         customerContact: body.customerContact || '',
@@ -350,7 +391,7 @@ async function handleRequest(request, env) {
       if (!resp.ok) {
         throw new Error(`Firestore create order: HTTP ${resp.status} ${respBody}`);
       }
-      return new Response(JSON.stringify({ ok: true, poNumber: body.poNumber, firestoreResponse: respBody }), { headers: corsHeaders(origin) });
+      return new Response(JSON.stringify({ ok: true, poNumber: body.poNumber, storage: 'firestore', firestoreResponse: respBody }), { headers: corsHeaders(origin) });
     }
 
     // POST /orders/release-expired — find orders older than 24h, restore stock, mark cancelled
@@ -361,14 +402,72 @@ async function handleRequest(request, env) {
 
     // POST /orders/:poNumber/confirm — mark order as confirmed (keep stock)
     if (request.method === 'POST' && parts.length === 3 && parts[0] === 'orders' && parts[2] === 'confirm') {
-      const docId = encodeURIComponent(parts[1]);
+      const po = parts[1];
+      if (env && env.ORDERS_KV) {
+        const order = await kvGetOrder(env, po);
+        if (!order) return new Response(JSON.stringify({ error: 'Order not found' }), { status: 404, headers: corsHeaders(origin) });
+        order.status = 'confirmed';
+        await kvSaveOrder(env, order);
+        return new Response(JSON.stringify({ ok: true, poNumber: po, status: 'confirmed', storage: 'kv' }), { headers: corsHeaders(origin) });
+      }
+      const docId = encodeURIComponent(po);
       const resp = await fetch(`${FIRESTORE_BASE}/orders/${docId}?key=${API_KEY}&updateMask.fieldPaths=status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fields: { status: { stringValue: 'confirmed' } } })
       });
       if (!resp.ok) throw new Error(`Confirm order: HTTP ${resp.status}`);
-      return new Response(JSON.stringify({ ok: true, poNumber: parts[1], status: 'confirmed' }), { headers: corsHeaders(origin) });
+      return new Response(JSON.stringify({ ok: true, poNumber: po, status: 'confirmed', storage: 'firestore' }), { headers: corsHeaders(origin) });
+    }
+
+    // POST /orders/:poNumber/deposit-paid — mark deposit as paid
+    if (request.method === 'POST' && parts.length === 3 && parts[0] === 'orders' && parts[2] === 'deposit-paid') {
+      const po = parts[1];
+      if (env && env.ORDERS_KV) {
+        const order = await kvGetOrder(env, po);
+        if (!order) return new Response(JSON.stringify({ error: 'Order not found' }), { status: 404, headers: corsHeaders(origin) });
+        order.status = 'deposit_paid';
+        await kvSaveOrder(env, order);
+        return new Response(JSON.stringify({ ok: true, poNumber: po, status: 'deposit_paid', storage: 'kv' }), { headers: corsHeaders(origin) });
+      }
+      const docId = encodeURIComponent(po);
+      const resp = await fetch(`${FIRESTORE_BASE}/orders/${docId}?key=${API_KEY}&updateMask.fieldPaths=status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: { status: { stringValue: 'deposit_paid' } } })
+      });
+      if (!resp.ok) throw new Error(`Deposit paid order: HTTP ${resp.status}`);
+      return new Response(JSON.stringify({ ok: true, poNumber: po, status: 'deposit_paid', storage: 'firestore' }), { headers: corsHeaders(origin) });
+    }
+
+    // POST /orders/:poNumber/cancel — cancel order and restore stock
+    if (request.method === 'POST' && parts.length === 3 && parts[0] === 'orders' && parts[2] === 'cancel') {
+      const po = parts[1];
+      let orderData = null;
+      if (env && env.ORDERS_KV) {
+        orderData = await kvGetOrder(env, po);
+      } else {
+        const data = await firestoreGet(`orders/${encodeURIComponent(po)}`).catch(() => null);
+        orderData = parseOrderDoc(data);
+      }
+      if (!orderData) return new Response(JSON.stringify({ error: 'Order not found' }), { status: 404, headers: corsHeaders(origin) });
+      let items = [];
+      try { items = JSON.parse(orderData.items || '[]'); } catch(e) {}
+      for (const item of items) {
+        try { await restoreItemStock(item.productId || item.id, item.size || '', parseInt(item.qty, 10) || 1); } catch(e) {}
+      }
+      if (env && env.ORDERS_KV) {
+        orderData.status = 'cancelled';
+        await kvSaveOrder(env, orderData);
+        return new Response(JSON.stringify({ ok: true, poNumber: po, status: 'cancelled', storage: 'kv' }), { headers: corsHeaders(origin) });
+      }
+      const docId = encodeURIComponent(po);
+      await fetch(`${FIRESTORE_BASE}/orders/${docId}?key=${API_KEY}&updateMask.fieldPaths=status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: { status: { stringValue: 'cancelled' } } })
+      });
+      return new Response(JSON.stringify({ ok: true, poNumber: po, status: 'cancelled', storage: 'firestore' }), { headers: corsHeaders(origin) });
     }
 
     // POST /orders/:poNumber/deposit-paid — mark deposit as paid
@@ -402,56 +501,51 @@ async function handleRequest(request, env) {
       return new Response(JSON.stringify({ ok: true, poNumber: parts[1], status: 'cancelled' }), { headers: corsHeaders(origin) });
     }
 
-    // GET /debug/list-orders — try three different Firestone read methods
+    // GET /debug/list-orders — diagnostic, shows KV status or Firestore fallback
     if (request.method === 'GET' && parts.length === 2 && parts[0] === 'debug' && parts[1] === 'list-orders') {
-      const results = {};
-      // Method 1: GET /documents/{collection}
-      const m1 = await fetch(`${FIRESTORE_BASE}/orders?key=${API_KEY}`).catch(() => null);
-      results.GET_status = m1 ? m1.status : 'no_resp';
-      results.GET_body = m1 ? (await m1.text().catch(() => 'no_body')).substring(0, 300) : 'no_resp';
-      // Method 2: POST :runQuery
-      const m2 = await fetch(`${FIRESTORE_BASE}:runQuery?key=${API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ structuredQuery: { from: [{ collectionId: 'orders' }], limit: 10 } }) }).catch(() => null);
-      results.RUNQUERY_status = m2 ? m2.status : 'no_resp';
-      results.RUNQUERY_body = m2 ? (await m2.text().catch(() => 'no_body')).substring(0, 300) : 'no_resp';
-      // Method 3: POST :commit (read via transaction)
-      const m3 = await fetch(`${FIRESTORE_BASE}:commit?key=${API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ writes: [] }) }).catch(() => null);
-      results.COMMIT_status = m3 ? m3.status : 'no_resp';
-      results.COMMIT_body = m3 ? (await m3.text().catch(() => 'no_body')).substring(0, 300) : 'no_resp';
+      const results = { hasKV: !!(env && env.ORDERS_KV) };
+      if (env && env.ORDERS_KV) {
+        const orders = await kvGetOrders(env);
+        results.KV_orderCount = Object.keys(orders).length;
+        results.KV_keys = Object.keys(orders);
+        results.KV_sample = orders[Object.keys(orders)[0]] || null;
+      } else {
+        results.note = 'KV not configured; falling back to Firestore';
+        const m1 = await fetch(`${FIRESTORE_BASE}/orders?key=${API_KEY}`).catch(() => null);
+        results.GET_status = m1 ? m1.status : 'no_resp';
+        if (m1) results.GET_body = (await m1.text().catch(() => 'no_body')).substring(0, 300);
+      }
       return new Response(JSON.stringify(results), { headers: corsHeaders(origin) });
     }
 
-    // GET /orders — list all orders (same pattern as stocks)
+    // GET /orders — list all orders (KV first, then Firestore fallback)
     if (request.method === 'GET' && parts.length === 1 && parts[0] === 'orders') {
-      const getResp = await fetch(`${FIRESTORE_BASE}/orders?key=${API_KEY}`).catch(() => null);
-      const getStatus = getResp ? getResp.status : 'no_resp';
-      const getBody = getResp ? await getResp.text().catch(() => 'no_body') : 'no_resp';
-      let data = null, docs = [];
-      if (getResp && getResp.ok) {
-        try { data = JSON.parse(getBody); } catch(e) { data = null; }
+      let docs = [];
+      if (env && env.ORDERS_KV) {
+        const orders = await kvGetOrders(env);
+        docs = Object.values(orders);
+      } else {
+        // Fallback: try Firestore GET
+        const data = await firestoreGet('orders').catch(() => null);
         docs = (data && data.documents) ? data.documents.map(parseOrderDoc).filter(Boolean) : [];
       }
       docs.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-      return new Response(JSON.stringify({ count: docs.length, docs: docs, _debug: { status: getStatus, bodyLength: getBody.length, hasDocuments: data ? !!data.documents : false, responsePreview: getBody.substring(0, 500) } }), { headers: corsHeaders(origin) });
+      return new Response(JSON.stringify({ count: docs.length, docs }), { headers: corsHeaders(origin) });
     }
 
     // GET /orders/:poNumber — get single order by PO number
     if (request.method === 'GET' && parts.length === 2 && parts[0] === 'orders') {
       const po = parts[1];
       let found = null;
-      for (let attempt = 0; attempt < 3; attempt++) {
-        const directResp = await fetch(`${FIRESTORE_BASE}/orders/${encodeURIComponent(po)}?key=${API_KEY}`).catch(() => null);
-        if (directResp && directResp.ok) {
-          const directData = await directResp.json();
-          if (directData && directData.fields) { found = parseOrderDoc(directData); break; }
-        }
-        if (directResp && directResp.status === 429) {
-          await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
-          continue;
-        }
-        break;
+      if (env && env.ORDERS_KV) {
+        found = await kvGetOrder(env, po);
+      } else {
+        // Fallback: Firestore
+        const data = await firestoreGet(`orders/${encodeURIComponent(po)}`).catch(() => null);
+        found = (data && data.fields) ? parseOrderDoc(data) : null;
       }
       if (found) return new Response(JSON.stringify(found), { headers: corsHeaders(origin) });
-      return new Response(JSON.stringify({ error: 'not_found', po: po }), { status: 404, headers: corsHeaders(origin) });
+      return new Response(JSON.stringify({ error: 'not_found', po }), { status: 404, headers: corsHeaders(origin) });
     }
 
     // GET /cart/test-email — send a test email to verify email config
@@ -559,31 +653,39 @@ async function handleRequest(request, env) {
 }
 
 async function releaseExpiredOrders(env) {
-  const listResp = await fetch(`${FIRESTORE_BASE}/orders?key=${API_KEY}`).catch(() => null);
-  const listData = listResp && listResp.ok ? await listResp.json().catch(() => null) : null;
-  const docs = (listData && listData.documents) ? listData.documents : [];
+  let ordersList = [];
+  if (env && env.ORDERS_KV) {
+    const orders = await kvGetOrders(env);
+    ordersList = Object.values(orders);
+  } else {
+    const listResp = await fetch(`${FIRESTORE_BASE}/orders?key=${API_KEY}`).catch(() => null);
+    const listData = listResp && listResp.ok ? await listResp.json().catch(() => null) : null;
+    ordersList = (listData && listData.documents) ? listData.documents.map(parseOrderDoc).filter(Boolean) : [];
+  }
   const released = [];
   const now = Date.now();
   const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-  for (const doc of docs) {
-    const order = parseOrderDoc(doc);
-    if (!order || order.status !== 'pending') continue;
+  for (const order of ordersList) {
+    if (order.status !== 'pending') continue;
     const created = new Date(order.createdAt).getTime();
     if (isNaN(created) || (now - created) < TWENTY_FOUR_HOURS) continue;
     let items = [];
     try { items = JSON.parse(order.items || '[]'); } catch(e) {}
     for (const item of items) {
-      try {
-        await restoreItemStock(item.productId || item.id, item.size || '', parseInt(item.qty, 10) || 1);
-      } catch(e) {}
+      try { await restoreItemStock(item.productId || item.id, item.size || '', parseInt(item.qty, 10) || 1); } catch(e) {}
     }
-    const docId = encodeURIComponent(order.id);
-    await fetch(`${FIRESTORE_BASE}/orders/${docId}?key=${API_KEY}&updateMask.fieldPaths=status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fields: { status: { stringValue: 'cancelled' } } })
-    }).catch(() => {});
-    released.push(order.id);
+    if (env && env.ORDERS_KV) {
+      order.status = 'cancelled';
+      await kvSaveOrder(env, order);
+    } else {
+      const docId = encodeURIComponent(order.id || order.poNumber);
+      await fetch(`${FIRESTORE_BASE}/orders/${docId}?key=${API_KEY}&updateMask.fieldPaths=status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: { status: { stringValue: 'cancelled' } } })
+      }).catch(() => {});
+    }
+    released.push(order.id || order.poNumber);
   }
   return released;
 }

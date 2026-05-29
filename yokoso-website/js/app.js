@@ -446,11 +446,7 @@ function loadOrders() {
   fetch(url)
     .then(function(r) { return r.json(); })
     .then(function(j) {
-      console.log('[Orders] response:', j);
       var orders = Array.isArray(j) ? j : (j.docs || []);
-      if (j._debug) {
-        document.getElementById('ordersCount').innerHTML = 'debug: status=' + j._debug.status + ' bodyLen=' + j._debug.bodyLength + ' hasDocs=' + j._debug.hasDocuments;
-      }
       renderOrders(orders);
     })
     .catch(function(e) { el.innerHTML = 'Error loading orders: ' + (e.message || ''); });
