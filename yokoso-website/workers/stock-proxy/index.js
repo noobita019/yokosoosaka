@@ -402,23 +402,10 @@ async function handleRequest(request, env) {
       return new Response(JSON.stringify({ ok: true, poNumber: parts[1], status: 'cancelled' }), { headers: corsHeaders(origin) });
     }
 
-    // GET /orders — list all orders
+    // GET /orders — list all orders (same pattern as stocks)
     if (request.method === 'GET' && parts.length === 1 && parts[0] === 'orders') {
-      // Retry up to 3 times with delay for 429 rate limits
-      let docs = [];
-      for (let attempt = 0; attempt < 3; attempt++) {
-        const listResp = await fetch(`${FIRESTORE_BASE}:listDocuments?key=${API_KEY}&collectionId=orders`, { method: 'POST' }).catch(() => null);
-        if (!listResp || !listResp.ok) {
-          if (listResp && listResp.status === 429) {
-            await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
-            continue;
-          }
-          break;
-        }
-        const data = await listResp.json().catch(() => null);
-        docs = (data && data.documents) ? data.documents.map(parseOrderDoc).filter(Boolean) : [];
-        break;
-      }
+      const data = await firestoreGet('orders').catch(() => null);
+      const docs = (data && data.documents) ? data.documents.map(parseOrderDoc).filter(Boolean) : [];
       docs.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
       return new Response(JSON.stringify({ count: docs.length, docs: docs }), { headers: corsHeaders(origin) });
     }
@@ -548,20 +535,9 @@ async function handleRequest(request, env) {
 }
 
 async function releaseExpiredOrders(env) {
-  let docs = [];
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const listResp = await fetch(`${FIRESTORE_BASE}:listDocuments?key=${API_KEY}&collectionId=orders`, { method: 'POST' }).catch(() => null);
-    if (!listResp || !listResp.ok) {
-      if (listResp && listResp.status === 429) {
-        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
-        continue;
-      }
-      break;
-    }
-    const data = await listResp.json().catch(() => null);
-    docs = (data && data.documents) ? data.documents : [];
-    break;
-  }
+  const listResp = await fetch(`${FIRESTORE_BASE}/orders?key=${API_KEY}`).catch(() => null);
+  const listData = listResp && listResp.ok ? await listResp.json().catch(() => null) : null;
+  const docs = (listData && listData.documents) ? listData.documents : [];
   const released = [];
   const now = Date.now();
   const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
