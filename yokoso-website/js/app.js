@@ -1404,7 +1404,7 @@ function subscribeStockUpdates() {
         if (changed) renderProducts();
       })
       .catch(function() {});
-  }, 60000);
+  }, 120000);
 }
 
 function firestoreAddToCart(productId, size) {
