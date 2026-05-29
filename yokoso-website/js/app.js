@@ -2422,9 +2422,9 @@ function renderVariantsEditor() {
     if (sizesDiv) {
       var currentSizes = {};
       sizesDiv.querySelectorAll('.vs-row').forEach(function(sr) {
-        var sizeInput = sr.querySelector('.vs-size');
+        var cb = sr.querySelector('.vs-size');
         var stockInput = sr.querySelector('.vs-stock');
-        if (sizeInput && stockInput) currentSizes[sizeInput.value] = stockInput.value;
+        if (cb && cb.checked && stockInput) currentSizes[cb.value] = stockInput.value;
       });
       var allSizes = categoriesConfig.sizes.slice();
       sizesDiv.innerHTML = allSizes.map(function(s) {
