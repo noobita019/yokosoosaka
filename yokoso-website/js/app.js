@@ -335,13 +335,13 @@ function showCheckoutReview() {
   if (headerEl) headerEl.innerHTML = '<h3 style="margin:0">Review Your Order</h3>';
   if (noteEl) noteEl.textContent = 'Customer: ' + (currentUser ? currentUser.name : 'N/A') + ' | Contact: ' + (currentUser ? currentUser.contact : 'N/A');
   if (actionsEl) {
-    actionsEl.innerHTML = '<button class="checkout-btn checkout-btn-confirm" onclick="confirmOrder()" style="background:#2e7d32;color:#fff;border:none;padding:0.7rem 1.5rem;border-radius:8px;font-size:1rem;cursor:pointer;width:100%">Place Order</button>';
+    actionsEl.innerHTML = '<button class="checkout-btn checkout-btn-confirm" onclick="placeOrder()" style="background:#2e7d32;color:#fff;border:none;padding:0.7rem 1.5rem;border-radius:8px;font-size:1rem;cursor:pointer;width:100%">Place Order</button>';
   }
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
 
-function confirmOrder() {
+function placeOrder() {
   sendOrderEmail();
   saveOrder();
   cart = [];
