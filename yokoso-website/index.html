@@ -479,9 +479,8 @@
   <div class="checkout-modal-overlay" id="checkoutModal" style="display:none" onclick="if(event.target===this)closeCheckoutModal()">
     <div class="checkout-modal">
       <button class="checkout-modal-close" onclick="closeCheckoutModal()">&times;</button>
-      <div class="checkout-header">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="#2e7d32" stroke="none"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-        <h3>Order Submitted!</h3>
+      <div class="checkout-header" id="checkoutHeader">
+        <h3>Review Your Order</h3>
       </div>
       <div class="checkout-po" id="checkoutPONumber"></div>
       <div class="checkout-items" id="checkoutItems"></div>
@@ -489,11 +488,9 @@
         <div class="checkout-total-row"><span>Total</span><span id="checkoutTotal"></span></div>
         <div class="checkout-total-row checkout-deposit-row"><span>Deposit</span><span id="checkoutDeposit" class="checkout-deposit-amt"></span></div>
       </div>
-      <div class="checkout-note">Please pay the deposit amount to proceed with your order.</div>
-      <div class="checkout-actions">
-        <button class="checkout-btn checkout-btn-copy" onclick="copyOrderDetails()">📋 Copy Order Details</button>
-        <button class="checkout-btn checkout-btn-email" onclick="emailOrderDetails()">✉️ Email Order</button>
-        <button class="checkout-btn checkout-btn-msg" onclick="messageOrderDetails()">💬 Message Us on Messenger</button>
+      <div class="checkout-note" id="checkoutNote">Please pay the deposit amount to proceed with your order.</div>
+      <div class="checkout-actions" id="checkoutActions">
+        <button class="checkout-btn checkout-btn-confirm" onclick="confirmOrder()" style="background:#2e7d32;color:#fff;border:none;padding:0.7rem 1.5rem;border-radius:8px;font-size:1rem;cursor:pointer;width:100%">Place Order</button>
       </div>
       <div class="checkout-copied" id="checkoutCopied">Copied!</div>
     </div>

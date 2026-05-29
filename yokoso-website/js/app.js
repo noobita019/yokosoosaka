@@ -305,10 +305,21 @@ function handleCheckout() {
   }
   if (!cart || cart.length === 0) return;
   _checkoutPO = generatePO();
+  // Close cart, show review modal
+  toggleCart();
+  showCheckoutReview();
+}
+
+function showCheckoutReview() {
+  var modal = document.getElementById('checkoutModal');
+  if (!modal) return;
   var itemsEl = document.getElementById('checkoutItems');
   var totalEl = document.getElementById('checkoutTotal');
   var depositEl = document.getElementById('checkoutDeposit');
   var poEl = document.getElementById('checkoutPONumber');
+  var headerEl = document.getElementById('checkoutHeader');
+  var actionsEl = document.getElementById('checkoutActions');
+  var noteEl = document.getElementById('checkoutNote');
   if (itemsEl) {
     itemsEl.innerHTML = cart.map(function(item) {
       var price = parseFloat(item.price.replace(/[^0-9.]/g, ''));
@@ -321,19 +332,33 @@ function handleCheckout() {
   if (totalEl) totalEl.textContent = '₱' + total.toFixed(2);
   if (depositEl) depositEl.textContent = '₱' + deposit.toFixed(2);
   if (poEl) poEl.textContent = _checkoutPO;
-  // Try to send email via worker
-  sendOrderEmail();
-  // Save order to Firestore via worker
-  saveOrder();
-  var modal = document.getElementById('checkoutModal');
-  if (modal) {
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    toggleCart();
+  if (headerEl) headerEl.innerHTML = '<h3 style="margin:0">Review Your Order</h3>';
+  if (noteEl) noteEl.textContent = 'Customer: ' + (currentUser ? currentUser.name : 'N/A') + ' | Contact: ' + (currentUser ? currentUser.contact : 'N/A');
+  if (actionsEl) {
+    actionsEl.innerHTML = '<button class="checkout-btn checkout-btn-confirm" onclick="confirmOrder()" style="background:#2e7d32;color:#fff;border:none;padding:0.7rem 1.5rem;border-radius:8px;font-size:1rem;cursor:pointer;width:100%">Place Order</button>';
   }
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function confirmOrder() {
+  sendOrderEmail();
+  saveOrder();
   cart = [];
   saveCart();
   renderCart();
+  // Switch to success view
+  var headerEl = document.getElementById('checkoutHeader');
+  var actionsEl = document.getElementById('checkoutActions');
+  var noteEl = document.getElementById('checkoutNote');
+  if (headerEl) headerEl.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="#2e7d32" stroke="none"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg><h3 style="margin:0">Order Submitted!</h3>';
+  if (noteEl) noteEl.textContent = 'Please pay the deposit amount to proceed with your order.';
+  if (actionsEl) {
+    actionsEl.innerHTML =
+      '<button class="checkout-btn checkout-btn-copy" onclick="copyOrderDetails()">📋 Copy Order Details</button>' +
+      '<button class="checkout-btn checkout-btn-email" onclick="emailOrderDetails()">✉️ Email Order</button>' +
+      '<button class="checkout-btn checkout-btn-msg" onclick="messageOrderDetails()">💬 Message Us on Messenger</button>';
+  }
 }
 
 function closeCheckoutModal() {
