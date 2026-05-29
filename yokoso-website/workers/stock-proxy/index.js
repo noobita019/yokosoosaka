@@ -123,9 +123,10 @@ function parseAccountDoc(doc) {
   return fields.contact ? { name: fields.name || '', address: fields.address || '', contact: fields.contact, email: fields.email || '' } : null;
 }
 
-async function sendEmail(env, to, subject, text) {
+async function sendEmail(env, to, subject, text, fromAddr) {
+  fromAddr = fromAddr || to;
   if (env && env.EMAIL) {
-    const msg = new SendEmailMessage({ to, from: 'noreply@yokosoosaka.com', subject, text });
+    const msg = new SendEmailMessage({ to, from: fromAddr, subject, text });
     await msg.send();
     return 'email_binding';
   }
@@ -133,7 +134,7 @@ async function sendEmail(env, to, subject, text) {
     const resp = await fetch('https://api.sendgrid.com/v3/mail/send', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + env.SENDGRID_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ personalizations: [{ to: [{ email: to }] }], from: { email: 'noreply@yokosoosaka.com' }, subject, content: [{ type: 'text/plain', value: text }] })
+      body: JSON.stringify({ personalizations: [{ to: [{ email: to }] }], from: { email: fromAddr }, subject, content: [{ type: 'text/plain', value: text }] })
     });
     if (!resp.ok) throw new Error('SendGrid: HTTP ' + resp.status);
     return 'sendgrid';
@@ -142,7 +143,7 @@ async function sendEmail(env, to, subject, text) {
     const resp = await fetch(`https://api.mailgun.net/v3/${env.MAILGUN_DOMAIN}/messages`, {
       method: 'POST',
       headers: { 'Authorization': 'Basic ' + btoa('api:' + env.MAILGUN_API_KEY), 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ from: 'noreply@yokosoosaka.com', to, subject, text })
+      body: new URLSearchParams({ from: fromAddr, to, subject, text })
     });
     if (!resp.ok) throw new Error('Mailgun: HTTP ' + resp.status);
     return 'mailgun';
@@ -276,7 +277,7 @@ async function handleRequest(request, env) {
         return new Response(JSON.stringify({ error: 'Query param "to" is required' }), { status: 400, headers: corsHeaders(origin) });
       }
       try {
-        const method = await sendEmail(env, to, 'Test Email from Yokoso Osaka', 'This is a test email to verify your email configuration is working correctly.\n\nIf you received this, SendGrid/Mailgun is properly configured!');
+        const method = await sendEmail(env, to, 'Test Email from Yokoso Osaka', 'This is a test email to verify your email configuration is working correctly.\n\nIf you received this, SendGrid/Mailgun is properly configured!', to);
         return new Response(JSON.stringify({ ok: true, method: method, message: 'Test email sent to ' + to + ' via ' + method }), { headers: corsHeaders(origin) });
       } catch (e) {
         return new Response(JSON.stringify({ ok: false, error: e.message }), { status: 500, headers: corsHeaders(origin) });
@@ -293,14 +294,14 @@ async function handleRequest(request, env) {
       const sendPromises = [];
       // Send to admin
       sendPromises.push(
-        sendEmail(env, body.adminEmail, body.subject, body.text)
+        sendEmail(env, body.adminEmail, body.subject, body.text, body.adminEmail)
           .then(function(m) { results.push({ to: 'admin', method: m }); })
           .catch(function(e) { results.push({ to: 'admin', error: e.message }); })
       );
       // Send to customer if email provided
       if (body.customerEmail) {
         sendPromises.push(
-          sendEmail(env, body.customerEmail, 'Your Purchase Order: ' + body.subject, body.text)
+          sendEmail(env, body.customerEmail, 'Your Purchase Order: ' + body.subject, body.text, body.adminEmail)
             .then(function(m) { results.push({ to: 'customer', method: m }); })
             .catch(function(e) { results.push({ to: 'customer', error: e.message }); })
         );
