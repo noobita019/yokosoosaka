@@ -402,12 +402,22 @@ async function handleRequest(request, env) {
       return new Response(JSON.stringify({ ok: true, poNumber: parts[1], status: 'cancelled' }), { headers: corsHeaders(origin) });
     }
 
-    // GET /debug/list-orders — raw Firestore response for debugging
+    // GET /debug/list-orders — try three different Firestone read methods
     if (request.method === 'GET' && parts.length === 2 && parts[0] === 'debug' && parts[1] === 'list-orders') {
-      const getResp = await fetch(`${FIRESTORE_BASE}/orders?key=${API_KEY}`).catch(() => null);
-      const getStatus = getResp ? getResp.status : 'no_resp';
-      const getBody = getResp ? await getResp.text().catch(() => 'no_body') : 'no_resp';
-      return new Response(JSON.stringify({ status: getStatus, body: getBody.length > 2000 ? getBody.substring(0, 2000) + '...' : getBody, bodyLength: getBody.length }), { headers: corsHeaders(origin) });
+      const results = {};
+      // Method 1: GET /documents/{collection}
+      const m1 = await fetch(`${FIRESTORE_BASE}/orders?key=${API_KEY}`).catch(() => null);
+      results.GET_status = m1 ? m1.status : 'no_resp';
+      results.GET_body = m1 ? (await m1.text().catch(() => 'no_body')).substring(0, 300) : 'no_resp';
+      // Method 2: POST :runQuery
+      const m2 = await fetch(`${FIRESTORE_BASE}:runQuery?key=${API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ structuredQuery: { from: [{ collectionId: 'orders' }], limit: 10 } }) }).catch(() => null);
+      results.RUNQUERY_status = m2 ? m2.status : 'no_resp';
+      results.RUNQUERY_body = m2 ? (await m2.text().catch(() => 'no_body')).substring(0, 300) : 'no_resp';
+      // Method 3: POST :commit (read via transaction)
+      const m3 = await fetch(`${FIRESTORE_BASE}:commit?key=${API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ writes: [] }) }).catch(() => null);
+      results.COMMIT_status = m3 ? m3.status : 'no_resp';
+      results.COMMIT_body = m3 ? (await m3.text().catch(() => 'no_body')).substring(0, 300) : 'no_resp';
+      return new Response(JSON.stringify(results), { headers: corsHeaders(origin) });
     }
 
     // GET /orders — list all orders (same pattern as stocks)
