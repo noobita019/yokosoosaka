@@ -325,7 +325,12 @@ function closeCheckoutModal() {
 }
 
 function getOrderText() {
-  var lines = ['🛍 PURCHASE ORDER', '━━━━━━━━━━━━━━━━━━', 'PO Number: ' + _checkoutPO, 'Date: ' + new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'}), '', 'ITEMS:'];
+  var lines = ['🛍 PURCHASE ORDER', '━━━━━━━━━━━━━━━━━━', 'PO Number: ' + _checkoutPO, 'Date: ' + new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'}), '', 'CUSTOMER:'];
+  lines.push('Name: ' + ((currentUser && currentUser.name) || 'N/A'));
+  lines.push('Contact: ' + ((currentUser && currentUser.contact) || 'N/A'));
+  if (currentUser && currentUser.email) lines.push('Email: ' + currentUser.email);
+  if (currentUser && currentUser.address) lines.push('Address: ' + currentUser.address);
+  lines.push('', 'ITEMS:');
   cart.forEach(function(item, i) {
     var price = parseFloat(item.price.replace(/[^0-9.]/g, ''));
     var sub = isNaN(price) ? item.price : '₱' + (price * item.qty).toFixed(2);
