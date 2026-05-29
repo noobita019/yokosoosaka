@@ -2,7 +2,7 @@
   {
     "description": "Authentic Nike Air Force 1 Low from Japan. Limited Japan-exclusive colorway. Leather upper with Air-Sole cushioning. Sizes 7-12 US.",
     "deposit": "500",
-    "stock": 16,
+    "stock": 21,
     "name": "Nike Air Force 1 Low (Japan Exclusive)",
     "sizes": [
       "6",
@@ -29,7 +29,7 @@
   },
   {
     "description": "Classic Nike Dunk Low in premium leather. Japan release. Available in multiple colors. Sizes 7-11 US.",
-    "stock": 16,
+    "stock": 14,
     "name": "Nike Dunk Low Retro",
     "sizes": [
       "6",
@@ -57,14 +57,14 @@
     "category0": "MENS",
     "category2": "",
     "sizes": [],
-    "stock": 5,
+    "stock": 9,
     "name": "Nike Air Max 90 (Japan Pack)",
     "description": "Nike Air Max 90 from the Japan-exclusive pack. Visible Air cushioning. Iconic silhouette. Sizes 7-12 US."
   },
   {
     "sizes": [],
     "name": "GU Fluffy Knit Sweater",
-    "stock": 5,
+    "stock": 10,
     "description": "Soft fluffy knit sweater from GU. Available in multiple colors. Perfect for cold season. Oversized relaxed fit.",
     "price": "₱850",
     "available": true,
@@ -89,7 +89,7 @@
     "description": "Authentic Uniqlo Airism oversized t-shirt. Ultra-lightweight and breathable. Moisture-wicking fabric. Perfect for everyday use.",
     "sizes": [],
     "name": "Uniqlo Airism Oversized T-Shirt",
-    "stock": 5
+    "stock": 10
   },
   {
     "available": true,
@@ -102,7 +102,7 @@
     "id": 6,
     "category2": "",
     "sizes": [],
-    "stock": 5,
+    "stock": 10,
     "name": "GU Wide Leg Pants",
     "description": "GU wide-leg pants. Comfortable and stylish. Premium cotton blend. Available in black, beige, and navy."
   },
@@ -118,14 +118,14 @@
     "category0": "MENS",
     "sizes": [],
     "name": "Uniqlo Light Down Jacket",
-    "stock": 5,
+    "stock": 10,
     "description": "Lightweight Uniqlo down jacket. Packable design. 750 fill power. Warm without being bulky. Water-repellent."
   },
   {
     "description": "Biore UV Aqua Rich watery essence sunscreen. SPF50+ PA++++. Lightweight, non-sticky, refreshing finish. 80g.",
     "sizes": [],
     "name": "Japanese Biore UV Aqua Rich SPF50+",
-    "stock": 5,
+    "stock": 10,
     "category1": "Cosmetics",
     "category2": "",
     "category0": "WOMENS",
@@ -147,12 +147,12 @@
     "id": 9,
     "category2": "",
     "sizes": [],
-    "stock": 5,
+    "stock": 10,
     "name": "Japanese Sheet Mask Variety Pack (10pcs)",
     "description": "Assorted Japanese facial sheet masks. Infused with collagen, hyaluronic acid, and vitamin C. 10-piece pack."
   },
   {
-    "stock": 5,
+    "stock": 10,
     "name": "Heroine Make Waterproof Eyeliner",
     "sizes": [],
     "description": "Japanese Heroine Make waterproof liquid eyeliner. Ultra-fine 0.1mm tip. Smudge-proof and long-lasting. Black.",
@@ -179,12 +179,12 @@
     "description": "Classic Onitsuka Tiger Mexico 66 sneakers. Japan-exclusive colorway. Iconic design. Comfortable sole. Sizes 6-10 US.",
     "sizes": [],
     "name": "Onitsuka Tiger Mexico 66",
-    "stock": 5
+    "stock": 10
   },
   {
     "description": "GU open-front knit cardigan. Soft acrylic blend. Oversized fit. Perfect layering piece for any outfit.",
     "name": "GU Knit Cardigan",
-    "stock": 5,
+    "stock": 10,
     "sizes": [],
     "category2": "",
     "id": 12,
@@ -199,7 +199,7 @@
   {
     "sizes": [],
     "name": "TES",
-    "stock": 5,
+    "stock": 10,
     "description": "testing",
     "price": "₱5,200",
     "available": true,
@@ -223,12 +223,12 @@
     "available": true,
     "description": "test",
     "name": "uniqlo",
-    "stock": 5,
+    "stock": 10,
     "sizes": []
   },
   {
     "name": "chocolate",
-    "stock": 5,
+    "stock": 10,
     "sizes": [],
     "description": "chocolate",
     "images": [
