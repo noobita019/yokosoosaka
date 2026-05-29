@@ -338,7 +338,7 @@ function showCheckoutReview() {
     actionsEl.innerHTML = '<button class="checkout-btn checkout-btn-confirm" onclick="placeOrder()" style="background:#2e7d32;color:#fff;border:none;padding:0.7rem 1.5rem;border-radius:8px;font-size:1rem;cursor:pointer;width:100%">Place Order</button>';
   }
   modal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
+  lockBody();
 }
 
 function placeOrder() {
@@ -362,7 +362,7 @@ function placeOrder() {
 
 function closeCheckoutModal() {
   var modal = document.getElementById('checkoutModal');
-  if (modal) { modal.style.display = 'none'; document.body.style.overflow = ''; }
+  if (modal) { modal.style.display = 'none'; unlockBody(); }
 }
 
 function getOrderText() {
@@ -1787,9 +1787,15 @@ function toggleCart() {
   var el = document.getElementById('cartSlideout');
   var ov = document.getElementById('cartOverlay');
   if (!el) return;
+  var opening = !el.classList.contains('active');
   el.classList.toggle('active');
   if (ov) ov.classList.toggle('active');
-  if (el.classList.contains('active')) renderCart();
+  if (opening) {
+    renderCart();
+    lockBody();
+  } else {
+    unlockBody();
+  }
 }
 
 function renderCart() {
