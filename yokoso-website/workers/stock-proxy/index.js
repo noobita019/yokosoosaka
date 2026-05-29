@@ -514,7 +514,13 @@ async function handleRequest(request, env) {
       let items = [];
       try { items = JSON.parse(orderData.items || '[]'); } catch(e) {}
       for (const item of items) {
-        try { await restoreItemStock(item.productId || item.id, item.size || '', parseInt(item.qty, 10) || 1); } catch(e) {}
+        try {
+          await restoreItemStock(item.productId || item.id, item.size || '', parseInt(item.qty, 10) || 1);
+          if (env && env.ORDERS_KV) {
+            const field = orderField(item.size || '');
+            await kvUpdateStockInCache(env, String(item.productId || item.id), field, parseInt(item.qty, 10) || 1).catch(() => {});
+          }
+        } catch(e) {}
       }
       if (env && env.ORDERS_KV) {
         orderData.status = 'cancelled';
@@ -550,7 +556,13 @@ async function handleRequest(request, env) {
       let items = [];
       try { items = JSON.parse(order.items || '[]'); } catch(e) {}
       for (const item of items) {
-        try { await restoreItemStock(item.productId || item.id, item.size || '', parseInt(item.qty, 10) || 1); } catch(e) {}
+        try {
+          await restoreItemStock(item.productId || item.id, item.size || '', parseInt(item.qty, 10) || 1);
+          if (env && env.ORDERS_KV) {
+            const field = orderField(item.size || '');
+            await kvUpdateStockInCache(env, String(item.productId || item.id), field, parseInt(item.qty, 10) || 1).catch(() => {});
+          }
+        } catch(e) {}
       }
       const docId = encodeURIComponent(parts[1]);
       await fetch(`${FIRESTORE_BASE}/orders/${docId}?key=${API_KEY}&updateMask.fieldPaths=status`, {
@@ -740,7 +752,13 @@ async function releaseExpiredOrders(env) {
     let items = [];
     try { items = JSON.parse(order.items || '[]'); } catch(e) {}
     for (const item of items) {
-      try { await restoreItemStock(item.productId || item.id, item.size || '', parseInt(item.qty, 10) || 1); } catch(e) {}
+      try {
+        await restoreItemStock(item.productId || item.id, item.size || '', parseInt(item.qty, 10) || 1);
+        if (env && env.ORDERS_KV) {
+          const field = orderField(item.size || '');
+          await kvUpdateStockInCache(env, String(item.productId || item.id), field, parseInt(item.qty, 10) || 1).catch(() => {});
+        }
+      } catch(e) {}
     }
     if (env && env.ORDERS_KV) {
       order.status = 'cancelled';
