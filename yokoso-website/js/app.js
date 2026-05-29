@@ -1397,12 +1397,15 @@ function syncStockToFirestore(productId) {
   var p = products.find(function(x) { return x.id === productId; });
   if (!p) return;
   var body = {};
-  if (hasSizes(p)) {
+  if (p.variants) {
+    var total = getTotalStock(productId);
+    body = { q: total };
+  } else if (hasSizes(p)) {
     var m = stockMap[productId];
     if (m) {
       body = m;
     } else {
-      var perSize = Math.max(1, Math.floor((p.stock !== undefined ? p.stock : 5) / p.sizes.length));
+      var perSize = Math.max(1, Math.floor((p.stock !== undefined ? p.stock : 5) / (p.sizes.length || 1)));
       p.sizes.forEach(function(s) { body[stockField(s)] = perSize; });
       body.q = 0;
     }
@@ -1446,8 +1449,10 @@ function loadStockFromFirestore(callback) {
             var id = parseInt(doc.id);
             var p = products.find(function(x) { return x.id === id; });
             if (p && doc.fields) {
-              // If product has sizes but doc has only 'q' (or old 'default'), migrate to per-size fields
-              if (hasSizes(p) && Object.keys(doc.fields).length === 1 && (doc.fields.q !== undefined || doc.fields.default !== undefined)) {
+              // If product has variants, use total q directly
+              if (p.variants) {
+                stockMap[id] = { q: doc.fields.q !== undefined ? doc.fields.q : getTotalStock(id) };
+              } else if (hasSizes(p) && Object.keys(doc.fields).length === 1 && (doc.fields.q !== undefined || doc.fields.default !== undefined)) {
                 var total = doc.fields.q !== undefined ? doc.fields.q : doc.fields.default;
                 stockMap[id] = {};
                 var perSize = Math.max(1, Math.floor(total / p.sizes.length));
@@ -1465,9 +1470,11 @@ function loadStockFromFirestore(callback) {
       // Initialize stockMap for products not in Firestore yet
       products.forEach(function(p) {
         if (!stockMap[p.id]) {
-          if (hasSizes(p)) {
+          if (p.variants) {
+            stockMap[p.id] = { q: getTotalStock(p.id) };
+          } else if (hasSizes(p)) {
             stockMap[p.id] = {};
-            var perSize = Math.max(1, Math.floor((p.stock !== undefined ? p.stock : 5) / p.sizes.length));
+            var perSize = Math.max(1, Math.floor((p.stock !== undefined ? p.stock : 5) / (p.sizes.length || 1)));
             p.sizes.forEach(function(s) { stockMap[p.id][stockField(s)] = perSize; });
             stockMap[p.id].q = 0;
           } else {
@@ -1504,8 +1511,10 @@ function subscribeStockUpdates() {
             var p = products.find(function(x) { return x.id === id; });
             if (p && doc.fields) {
               var fields = doc.fields;
-              // Migrate old format to per-size
-              if (hasSizes(p) && Object.keys(fields).length === 1 && (fields.q !== undefined || fields.default !== undefined)) {
+              // If product has variants, use total q directly
+              if (p.variants) {
+                fields = { q: doc.fields.q !== undefined ? doc.fields.q : getTotalStock(id) };
+              } else if (hasSizes(p) && Object.keys(fields).length === 1 && (fields.q !== undefined || fields.default !== undefined)) {
                 var total = fields.q !== undefined ? fields.q : fields.default;
                 fields = {};
                 var perSize = Math.max(1, Math.floor(total / p.sizes.length));
@@ -2300,8 +2309,10 @@ function renderAdminList() {
     if (p.category0) catStr = p.category0 + ' / ' + catStr;
     if (p.category2) catStr += ' · ' + p.category2;
     if (p.color) catStr += ' · ' + p.color;
-    var sizesStr = p.sizes && p.sizes.length > 0 ? ' · Sizes: ' + p.sizes.join(', ') : '';
-    var stockStr = ' · Stock: ' + (p.stock !== undefined ? p.stock : 5);
+    var allSizes = [];
+    if (p.variants) { for (var c in p.variants) { (p.variants[c].sizes || []).forEach(function(s) { if (allSizes.indexOf(s) === -1) allSizes.push(s); }); } }
+    var sizesStr = allSizes.length > 0 ? ' · Sizes: ' + allSizes.join(', ') : '';
+    var stockStr = ' · Stock: ' + getTotalStock(p.id);
     return '<div class="admin-product-item" data-id="' + p.id + '">' +
       '<img src="' + (p.images?.[0] || 'images/products/placeholder.svg') + '" alt="' + p.name + '" onerror="if(this.dataset.retry)this.style.display=\'none\';else{this.dataset.retry=\'1\';this.src=\'images/products/placeholder.svg\'}">' +
       '<div class="admin-product-item-info">' +
