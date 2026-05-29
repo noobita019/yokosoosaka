@@ -414,10 +414,21 @@ async function handleRequest(request, env) {
     // GET /orders/:poNumber — get single order by PO number
     if (request.method === 'GET' && parts.length === 2 && parts[0] === 'orders') {
       const po = parts[1];
-      const data = await firestoreGet(`orders/${encodeURIComponent(po)}`).catch(() => null);
-      if (!data || !data.fields) return new Response(JSON.stringify({ error: 'order_not_found_in_firestore', po: po }), { status: 404, headers: corsHeaders(origin) });
-      const order = parseOrderDoc(data);
-      return new Response(JSON.stringify(order), { headers: corsHeaders(origin) });
+      // Try direct read first
+      const directResp = await fetch(`${FIRESTORE_BASE}/orders/${encodeURIComponent(po)}?key=${API_KEY}`).catch(() => null);
+      if (directResp && directResp.ok) {
+        const directData = await directResp.json();
+        if (directData && directData.fields) {
+          return new Response(JSON.stringify(parseOrderDoc(directData)), { headers: corsHeaders(origin) });
+        }
+      }
+      // Fallback: list all and filter
+      const listResp = await fetch(`${FIRESTORE_BASE}:listDocuments?key=${API_KEY}&collectionId=orders`, { method: 'POST' }).catch(() => null);
+      const listData = listResp && listResp.ok ? await listResp.json().catch(() => null) : null;
+      const docs = (listData && listData.documents) ? listData.documents.map(parseOrderDoc).filter(Boolean) : [];
+      const found = docs.find(function(d) { return d.id === po || d.poNumber === po; });
+      if (found) return new Response(JSON.stringify(found), { headers: corsHeaders(origin) });
+      return new Response(JSON.stringify({ error: 'order_not_found_in_firestore', po: po, directStatus: directResp ? directResp.status : 'no_resp' }), { status: 404, headers: corsHeaders(origin) });
     }
 
     // GET /cart/test-email — send a test email to verify email config
