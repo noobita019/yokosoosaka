@@ -803,6 +803,10 @@ document.addEventListener('touchmove', function(e) {
   if (document.getElementById('liveFullscreen')) {
     e.preventDefault();
   }
+  var cartOv = document.getElementById('cartOverlay');
+  if (cartOv && cartOv.classList.contains('active') && !e.target.closest('#cartSlideout')) {
+    e.preventDefault();
+  }
 }, { passive: false });
 
 // Back button closes overlay via hashchange
