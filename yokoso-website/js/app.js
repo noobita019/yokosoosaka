@@ -444,10 +444,12 @@ function loadOrders() {
   if (!el) return;
   el.innerHTML = 'Loading...';
   var base = STOCK_PROXY_URL.replace(/\/+$/, '');
-  fetch(base + '/orders')
-    .then(function(r) { return r.json(); })
-    .then(function(orders) { renderOrders(orders); })
-    .catch(function(e) { el.innerHTML = 'Error loading orders: ' + (e.message || ''); });
+  var url = base + '/orders';
+  console.log('[Orders] fetching:', url);
+  fetch(url)
+    .then(function(r) { console.log('[Orders] response status:', r.status); return r.text(); })
+    .then(function(body) { console.log('[Orders] raw body:', body); renderOrders(JSON.parse(body)); })
+    .catch(function(e) { console.log('[Orders] error:', e); el.innerHTML = 'Error loading orders: ' + (e.message || ''); });
 }
 
 function renderOrders(orders) {
