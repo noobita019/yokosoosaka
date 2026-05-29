@@ -2628,13 +2628,17 @@ if (pf) pf.addEventListener('submit', function(e) {
     if (editingId) {
       var idx = products.findIndex(function(p) { return p.id === editingId; });
       if (idx !== -1) {
-        products[idx] = Object.assign({}, products[idx], { name: name, category0: category0, category1: category1, category2: category2, variants: variants, price: price, description: description, images: images, available: document.getElementById('formAvailable').checked, deposit: deposit || undefined });
+        var upd = { name: name, category0: category0, category1: category1, category2: category2, variants: variants, price: price, description: description, images: images, available: document.getElementById('formAvailable').checked };
+        if (deposit) upd.deposit = deposit;
+        products[idx] = Object.assign({}, products[idx], upd);
       }
       savedId = editingId;
     } else {
       var maxId = products.length > 0 ? Math.max.apply(null, products.map(function(p) { return p.id; })) : 0;
       var newId = maxId + 1;
-      products.push({ id: newId, name: name, category0: category0, category1: category1, category2: category2, variants: variants, price: price, description: description, images: images, available: document.getElementById('formAvailable').checked, deposit: deposit || undefined });
+      var newProd = { id: newId, name: name, category0: category0, category1: category1, category2: category2, variants: variants, price: price, description: description, images: images, available: document.getElementById('formAvailable').checked };
+      if (deposit) newProd.deposit = deposit;
+      products.push(newProd);
       savedId = newId;
     }
     // Update stockMap so the admin list shows the new total immediately
