@@ -413,8 +413,9 @@ async function handleRequest(request, env) {
 
     // GET /orders/:poNumber — get single order by PO number
     if (request.method === 'GET' && parts.length === 2 && parts[0] === 'orders') {
-      const data = await firestoreGet(`orders/${encodeURIComponent(parts[1])}`).catch(() => null);
-      if (!data || !data.fields) return new Response(JSON.stringify({ error: 'not found' }), { status: 404, headers: corsHeaders(origin) });
+      const po = parts[1];
+      const data = await firestoreGet(`orders/${encodeURIComponent(po)}`).catch(() => null);
+      if (!data || !data.fields) return new Response(JSON.stringify({ error: 'order_not_found_in_firestore', po: po }), { status: 404, headers: corsHeaders(origin) });
       const order = parseOrderDoc(data);
       return new Response(JSON.stringify(order), { headers: corsHeaders(origin) });
     }
@@ -517,7 +518,7 @@ async function handleRequest(request, env) {
       throw new Error(`Decrement failed: ${JSON.stringify(r)}`);
     }
 
-    return new Response(JSON.stringify({ error: 'not found' }), { status: 404, headers: corsHeaders(origin) });
+    return new Response(JSON.stringify({ error: 'route_not_found' }), { status: 404, headers: corsHeaders(origin) });
   } catch (e) {
     return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: corsHeaders(origin) });
   }
