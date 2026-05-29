@@ -751,17 +751,6 @@ async function releaseExpiredOrders(env) {
     if (order.status !== 'pending') continue;
     const created = new Date(order.createdAt).getTime();
     if (isNaN(created) || (now - created) < TWENTY_FOUR_HOURS) continue;
-    let items = [];
-    try { items = JSON.parse(order.items || '[]'); } catch(e) {}
-    for (const item of items) {
-      try {
-        await restoreItemStock(item.productId || item.id, item.size || '', parseInt(item.qty, 10) || 1);
-        if (env && env.ORDERS_KV) {
-          const field = orderField(item.size || '');
-          await updateStockInMemoryCache(String(item.productId || item.id), field, parseInt(item.qty, 10) || 1).catch(() => {});
-        }
-      } catch(e) {}
-    }
     if (env && env.ORDERS_KV) {
       order.status = 'cancelled';
       await kvSaveOrder(env, order);

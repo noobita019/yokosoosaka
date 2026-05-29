@@ -442,7 +442,7 @@ function saveOrder() {
   if (!cart || cart.length === 0) return;
   var base = STOCK_PROXY_URL.replace(/\/+$/, '');
   var items = cart.map(function(item) {
-    return { id: item.id, name: item.name, size: item.size || '', qty: item.qty, price: item.price };
+    return { id: item.id, name: item.name, color: item.color || '', size: item.size || '', qty: item.qty, price: item.price };
   });
   var total = getCartTotal();
   var deposit = getDepositAmount();
@@ -566,11 +566,31 @@ function renderOrders(orders) {
 
 function depositPaidOrder(poNumber) {
   var base = STOCK_PROXY_URL.replace(/\/+$/, '');
-  fetch(base + '/orders/' + encodeURIComponent(poNumber) + '/deposit-paid', { method: 'POST' })
+  fetch(base + '/orders/' + encodeURIComponent(poNumber))
     .then(function(r) { return r.json(); })
-    .then(function(j) {
-      if (j.ok) { showCartNotification('Deposit marked paid: ' + poNumber); loadOrders(); }
-      else showCartNotification('Failed: ' + (j.error || ''));
+    .then(function(order) {
+      if (!order || order.error) { showCartNotification('Order not found'); return; }
+      return fetch(base + '/orders/' + encodeURIComponent(poNumber) + '/deposit-paid', { method: 'POST' })
+        .then(function(r) { return r.json(); })
+        .then(function(j) {
+          if (!j.ok) { showCartNotification('Failed: ' + (j.error || '')); return; }
+          var items = [];
+          try { items = JSON.parse(order.items || '[]'); } catch(e) {}
+          items.forEach(function(item) {
+            var p = products.find(function(x) { return x.id === parseInt(item.id || item.productId || 0); });
+            if (!p) return;
+            var color = item.color || '';
+            if (!color) { var colors = getVariantColors(p); color = colors.length ? colors[0] : 'Default'; }
+            var size = item.size || 'q';
+            deductVariantStock(p, color, size, parseInt(item.qty, 10) || 1);
+            stockMap[p.id] = { q: getTotalStock(p.id) };
+          });
+          saveProducts();
+          syncAllStockToFirestore();
+          renderProducts();
+          showCartNotification('Deposit marked paid: ' + poNumber);
+          loadOrders();
+        });
     })
     .catch(function(e) { showCartNotification('Error: ' + (e.message || '')); });
 }
@@ -589,11 +609,34 @@ function confirmOrder(poNumber) {
 function cancelOrder(poNumber) {
   if (!confirm('Cancel order ' + poNumber + '? Stock will be restored.')) return;
   var base = STOCK_PROXY_URL.replace(/\/+$/, '');
-  fetch(base + '/orders/' + encodeURIComponent(poNumber) + '/cancel', { method: 'POST' })
+  fetch(base + '/orders/' + encodeURIComponent(poNumber))
     .then(function(r) { return r.json(); })
-    .then(function(j) {
-      if (j.ok) { showCartNotification('Order cancelled: ' + poNumber); loadOrders(); }
-      else showCartNotification('Cancel failed: ' + (j.error || ''));
+    .then(function(order) {
+      if (!order || order.error) { showCartNotification('Order not found'); return; }
+      return fetch(base + '/orders/' + encodeURIComponent(poNumber) + '/cancel', { method: 'POST' })
+        .then(function(r) { return r.json(); })
+        .then(function(j) {
+          if (!j.ok) { showCartNotification('Cancel failed: ' + (j.error || '')); return; }
+          // Only restore stock if deposit was paid (pending orders never deducted stock persistently)
+          if (order.status === 'deposit_paid') {
+            var items = [];
+            try { items = JSON.parse(order.items || '[]'); } catch(e) {}
+            items.forEach(function(item) {
+              var p = products.find(function(x) { return x.id === parseInt(item.id || item.productId || 0); });
+              if (!p) return;
+              var color = item.color || '';
+              if (!color) { var colors = getVariantColors(p); color = colors.length ? colors[0] : 'Default'; }
+              var size = item.size || 'q';
+              restoreVariantStock(p, color, size, parseInt(item.qty, 10) || 1);
+              stockMap[p.id] = { q: getTotalStock(p.id) };
+            });
+            saveProducts();
+            syncAllStockToFirestore();
+            renderProducts();
+          }
+          showCartNotification('Order cancelled: ' + poNumber);
+          loadOrders();
+        });
     })
     .catch(function(e) { showCartNotification('Cancel error: ' + (e.message || '')); });
 }
