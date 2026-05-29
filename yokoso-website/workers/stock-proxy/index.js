@@ -404,9 +404,21 @@ async function handleRequest(request, env) {
 
     // GET /orders — list all orders
     if (request.method === 'GET' && parts.length === 1 && parts[0] === 'orders') {
-      const listResp = await fetch(`${FIRESTORE_BASE}:listDocuments?key=${API_KEY}&collectionId=orders`, { method: 'POST' }).catch(() => null);
-      const data = listResp && listResp.ok ? await listResp.json().catch(() => null) : null;
-      const docs = (data && data.documents) ? data.documents.map(parseOrderDoc).filter(Boolean) : [];
+      // Retry up to 3 times with delay for 429 rate limits
+      let docs = [];
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const listResp = await fetch(`${FIRESTORE_BASE}:listDocuments?key=${API_KEY}&collectionId=orders`, { method: 'POST' }).catch(() => null);
+        if (!listResp || !listResp.ok) {
+          if (listResp && listResp.status === 429) {
+            await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+            continue;
+          }
+          break;
+        }
+        const data = await listResp.json().catch(() => null);
+        docs = (data && data.documents) ? data.documents.map(parseOrderDoc).filter(Boolean) : [];
+        break;
+      }
       docs.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
       return new Response(JSON.stringify({ count: docs.length, docs: docs }), { headers: corsHeaders(origin) });
     }
@@ -414,21 +426,21 @@ async function handleRequest(request, env) {
     // GET /orders/:poNumber — get single order by PO number
     if (request.method === 'GET' && parts.length === 2 && parts[0] === 'orders') {
       const po = parts[1];
-      // Try direct read first
-      const directResp = await fetch(`${FIRESTORE_BASE}/orders/${encodeURIComponent(po)}?key=${API_KEY}`).catch(() => null);
-      if (directResp && directResp.ok) {
-        const directData = await directResp.json();
-        if (directData && directData.fields) {
-          return new Response(JSON.stringify(parseOrderDoc(directData)), { headers: corsHeaders(origin) });
+      let found = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const directResp = await fetch(`${FIRESTORE_BASE}/orders/${encodeURIComponent(po)}?key=${API_KEY}`).catch(() => null);
+        if (directResp && directResp.ok) {
+          const directData = await directResp.json();
+          if (directData && directData.fields) { found = parseOrderDoc(directData); break; }
         }
+        if (directResp && directResp.status === 429) {
+          await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+          continue;
+        }
+        break;
       }
-      // Fallback: list all and filter
-      const listResp = await fetch(`${FIRESTORE_BASE}:listDocuments?key=${API_KEY}&collectionId=orders`, { method: 'POST' }).catch(() => null);
-      const listData = listResp && listResp.ok ? await listResp.json().catch(() => null) : null;
-      const docs = (listData && listData.documents) ? listData.documents.map(parseOrderDoc).filter(Boolean) : [];
-      const found = docs.find(function(d) { return d.id === po || d.poNumber === po; });
       if (found) return new Response(JSON.stringify(found), { headers: corsHeaders(origin) });
-      return new Response(JSON.stringify({ error: 'order_not_found_in_firestore', po: po, directStatus: directResp ? directResp.status : 'no_resp' }), { status: 404, headers: corsHeaders(origin) });
+      return new Response(JSON.stringify({ error: 'not_found', po: po }), { status: 404, headers: corsHeaders(origin) });
     }
 
     // GET /cart/test-email — send a test email to verify email config
@@ -536,9 +548,20 @@ async function handleRequest(request, env) {
 }
 
 async function releaseExpiredOrders(env) {
-  const listResp = await fetch(`${FIRESTORE_BASE}:listDocuments?key=${API_KEY}&collectionId=orders`, { method: 'POST' }).catch(() => null);
-  const data = listResp && listResp.ok ? await listResp.json().catch(() => null) : null;
-  const docs = (data && data.documents) ? data.documents : [];
+  let docs = [];
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const listResp = await fetch(`${FIRESTORE_BASE}:listDocuments?key=${API_KEY}&collectionId=orders`, { method: 'POST' }).catch(() => null);
+    if (!listResp || !listResp.ok) {
+      if (listResp && listResp.status === 429) {
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+        continue;
+      }
+      break;
+    }
+    const data = await listResp.json().catch(() => null);
+    docs = (data && data.documents) ? data.documents : [];
+    break;
+  }
   const released = [];
   const now = Date.now();
   const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;

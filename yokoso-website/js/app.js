@@ -276,7 +276,6 @@ function handleCheckout() {
   }
   if (!cart || cart.length === 0) return;
   _checkoutPO = generatePO();
-  console.log('[Checkout] PO:', _checkoutPO, 'cart:', cart.length);
   var itemsEl = document.getElementById('checkoutItems');
   var totalEl = document.getElementById('checkoutTotal');
   var depositEl = document.getElementById('checkoutDeposit');
@@ -384,15 +383,13 @@ function sendOrderEmail() {
 }
 
 function saveOrder() {
-  console.log('[Order] saveOrder called');
-  if (!cart || cart.length === 0) { console.log('[Order] cart empty, skipping'); return; }
+  if (!cart || cart.length === 0) return;
   var base = STOCK_PROXY_URL.replace(/\/+$/, '');
   var items = cart.map(function(item) {
     return { id: item.id, name: item.name, size: item.size || '', qty: item.qty, price: item.price };
   });
   var total = getCartTotal();
   var deposit = getDepositAmount();
-  console.log('[Order] saving PO:', _checkoutPO, 'items:', items.length, 'url:', base + '/orders/create');
   fetch(base + '/orders/create', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -407,18 +404,11 @@ function saveOrder() {
     })
   }).then(function(r) {
     r.text().then(function(body) {
-      console.log('[Order] response status:', r.status, 'body:', body);
       if (!r.ok) {
+        console.log('[Order] save failed:', r.status, body);
         showCartNotification('Order save failed (HTTP ' + r.status + ')');
       } else {
         showCartNotification('Order saved!');
-        var j = JSON.parse(body);
-        console.log('[Order] firestore response:', j.firestoreResponse);
-        // Verify order exists via direct fetch
-        fetch(base + '/orders/' + encodeURIComponent(_checkoutPO))
-          .then(function(r2) { console.log('[Order] verify status:', r2.status); return r2.text(); })
-          .then(function(body2) { console.log('[Order] verify body:', body2); })
-          .catch(function(e) { console.log('[Order] verify error:', e); });
       }
     });
   }).catch(function(e) {
