@@ -1922,7 +1922,7 @@ function openModal(product) {
         '<div style="position:relative">' +
           (_modalImages.length > 1 ? '<button onclick="modalNav(-1)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);z-index:5;background:rgba(255,255,255,0.8);border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#333">‹</button>' : '') +
           (_modalImages.length > 1 ? '<button onclick="modalNav(1)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);z-index:5;background:rgba(255,255,255,0.8);border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#333">›</button>' : '') +
-          '<img id="modalMainImg" src="' + (_modalImages[0] || 'images/products/placeholder.svg') + '" style="width:100%;height:500px;object-fit:contain;background:#f0f0f0;cursor:pointer" onerror="if(this.dataset.retry){this.src=\'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\';this.style.background=\'#eee\'}else{this.dataset.retry=\'1\';this.src=\'images/products/placeholder.svg\'}">' +
+          '<img id="modalMainImg" src="' + (_modalImages[0] || 'images/products/placeholder.svg') + '" style="width:100%;height:500px;object-fit:contain;background:#fff;cursor:pointer" onerror="if(this.dataset.retry){this.src=\'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\';this.style.background=\'#eee\'}else{this.dataset.retry=\'1\';this.src=\'images/products/placeholder.svg\'}">' +
           dotsHtml +
         '</div>' +
         '<div style="padding:24px 32px 32px">' +
