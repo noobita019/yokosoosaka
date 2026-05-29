@@ -404,9 +404,9 @@ function saveOrder() {
       deposit: '₱' + deposit.toFixed(2)
     })
   }).then(function(r) {
-    if (!r.ok) console.log('[Order] Save failed:', r.status);
+    if (!r.ok) { console.log('[Order] Save failed:', r.status); showCartNotification('Order save failed (HTTP ' + r.status + ')'); }
   }).catch(function(e) {
-    console.log('[Order] Save error:', e);
+    console.log('[Order] Save error:', e); showCartNotification('Order save error: ' + (e.message || ''));
   });
 }
 
