@@ -276,6 +276,7 @@ function handleCheckout() {
   }
   if (!cart || cart.length === 0) return;
   _checkoutPO = generatePO();
+  console.log('[Checkout] PO:', _checkoutPO, 'cart:', cart.length);
   var itemsEl = document.getElementById('checkoutItems');
   var totalEl = document.getElementById('checkoutTotal');
   var depositEl = document.getElementById('checkoutDeposit');
@@ -383,13 +384,15 @@ function sendOrderEmail() {
 }
 
 function saveOrder() {
-  if (!cart || cart.length === 0) return;
+  console.log('[Order] saveOrder called');
+  if (!cart || cart.length === 0) { console.log('[Order] cart empty, skipping'); return; }
   var base = STOCK_PROXY_URL.replace(/\/+$/, '');
   var items = cart.map(function(item) {
     return { id: item.id, name: item.name, size: item.size || '', qty: item.qty, price: item.price };
   });
   var total = getCartTotal();
   var deposit = getDepositAmount();
+  console.log('[Order] saving PO:', _checkoutPO, 'items:', items.length, 'url:', base + '/orders/create');
   fetch(base + '/orders/create', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -403,9 +406,15 @@ function saveOrder() {
       deposit: '₱' + deposit.toFixed(2)
     })
   }).then(function(r) {
-    if (!r.ok) { console.log('[Order] Save failed:', r.status); showCartNotification('Order save failed (HTTP ' + r.status + ')'); }
+    console.log('[Order] response status:', r.status);
+    if (!r.ok) { 
+      r.text().then(function(t) { console.log('[Order] error body:', t); });
+      showCartNotification('Order save failed (HTTP ' + r.status + ')'); 
+    } else {
+      showCartNotification('Order saved!');
+    }
   }).catch(function(e) {
-    console.log('[Order] Save error:', e); showCartNotification('Order save error: ' + (e.message || ''));
+    console.log('[Order] fetch error:', e); showCartNotification('Order save error: ' + (e.message || ''));
   });
 }
 
