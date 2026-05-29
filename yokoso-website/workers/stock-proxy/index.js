@@ -104,6 +104,46 @@ function parseStockDoc(doc) {
   return { id, fields, total };
 }
 
+function orderField(size) {
+  if (!size || size === 'default' || size === 'quantity') return 'q';
+  return 's' + size.replace(/[^a-zA-Z0-9]/g, '');
+}
+
+async function restoreItemStock(productId, size, qty) {
+  const field = orderField(size);
+  const docName = `projects/japan-goodies/databases/(default)/documents/stocks/${productId}`;
+  const resp = await fetch(`${FIRESTORE_BASE}:commit?key=${API_KEY}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      writes: [{
+        transform: {
+          document: docName,
+          fieldTransforms: [{
+            fieldPath: field,
+            increment: { integerValue: String(qty) }
+          }]
+        }
+      }]
+    })
+  });
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    throw new Error(`Restore stock ${productId}/${field}: HTTP ${resp.status} ${text}`);
+  }
+}
+
+function parseOrderDoc(doc) {
+  if (!doc || !doc.fields) return null;
+  const match = doc.name.match(/\/orders\/([^/]+)$/);
+  const id = match ? match[1] : null;
+  const fields = {};
+  for (const [key, val] of Object.entries(doc.fields)) {
+    fields[key] = val.stringValue || val.integerValue || '';
+  }
+  return { id, ...fields };
+}
+
 async function hashPassword(password) {
   const encoder = new TextEncoder();
   const data = encoder.encode(password + 'y0k0s0_salt');
@@ -270,6 +310,53 @@ async function handleRequest(request, env) {
       return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders(origin) });
     }
 
+    // ---- ORDERS ----
+
+    // POST /orders/create — save a pending order with timestamp
+    if (request.method === 'POST' && parts.length === 2 && parts[0] === 'orders' && parts[1] === 'create') {
+      const body = await request.json();
+      if (!body.poNumber || !body.items) {
+        return new Response(JSON.stringify({ error: 'poNumber and items required' }), { status: 400, headers: corsHeaders(origin) });
+      }
+      const docId = encodeURIComponent(body.poNumber);
+      const now = new Date().toISOString();
+      const fields = {
+        poNumber: { stringValue: body.poNumber },
+        status: { stringValue: 'pending' },
+        createdAt: { stringValue: now },
+        items: { stringValue: JSON.stringify(body.items) },
+        customerName: { stringValue: body.customerName || '' },
+        customerEmail: { stringValue: body.customerEmail || '' },
+        customerContact: { stringValue: body.customerContact || '' },
+        total: { stringValue: body.total || '' },
+        deposit: { stringValue: body.deposit || '' }
+      };
+      const resp = await fetch(`${FIRESTORE_BASE}/orders?key=${API_KEY}&documentId=${docId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields })
+      });
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => '');
+        throw new Error(`Firestore create order: HTTP ${resp.status} ${text}`);
+      }
+      return new Response(JSON.stringify({ ok: true, poNumber: body.poNumber }), { headers: corsHeaders(origin) });
+    }
+
+    // POST /orders/release-expired — find orders older than 24h, restore stock, mark cancelled
+    if (request.method === 'POST' && parts.length === 2 && parts[0] === 'orders' && parts[1] === 'release-expired') {
+      const released = await releaseExpiredOrders(env);
+      return new Response(JSON.stringify({ ok: true, released }), { headers: corsHeaders(origin) });
+    }
+
+    // GET /orders — list all orders
+    if (request.method === 'GET' && parts.length === 1 && parts[0] === 'orders') {
+      const data = await firestoreGet('orders').catch(() => null);
+      const docs = (data && data.documents) ? data.documents.map(parseOrderDoc).filter(Boolean) : [];
+      docs.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+      return new Response(JSON.stringify(docs), { headers: corsHeaders(origin) });
+    }
+
     // GET /cart/test-email — send a test email to verify email config
     if (request.method === 'GET' && parts.length === 2 && parts[0] === 'cart' && parts[1] === 'test-email') {
       const to = url.searchParams.get('to');
@@ -382,8 +469,40 @@ async function handleRequest(request, env) {
   }
 }
 
+async function releaseExpiredOrders(env) {
+  const data = await firestoreGet('orders').catch(() => null);
+  const docs = (data && data.documents) ? data.documents : [];
+  const released = [];
+  const now = Date.now();
+  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+  for (const doc of docs) {
+    const order = parseOrderDoc(doc);
+    if (!order || order.status !== 'pending') continue;
+    const created = new Date(order.createdAt).getTime();
+    if (isNaN(created) || (now - created) < TWENTY_FOUR_HOURS) continue;
+    let items = [];
+    try { items = JSON.parse(order.items || '[]'); } catch(e) {}
+    for (const item of items) {
+      try {
+        await restoreItemStock(item.productId || item.id, item.size || '', parseInt(item.qty, 10) || 1);
+      } catch(e) {}
+    }
+    const docId = encodeURIComponent(order.id);
+    await fetch(`${FIRESTORE_BASE}/orders/${docId}?key=${API_KEY}&updateMask.fieldPaths=status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: { status: { stringValue: 'cancelled' } } })
+    }).catch(() => {});
+    released.push(order.id);
+  }
+  return released;
+}
+
 export default {
   async fetch(request, env, ctx) {
     return handleRequest(request, env);
+  },
+  async scheduled(event, env, ctx) {
+    await releaseExpiredOrders(env);
   }
 };

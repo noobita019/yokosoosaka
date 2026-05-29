@@ -2,6 +2,8 @@ name = "yokoso-stock-proxy"
 main = "index.js"
 compatibility_date = "2025-04-01"
 
+triggers = { crons = ["0 * * * *"] }
+
 [env.production]
 # After first deploy, set STOCK_PROXY_URL in Cloudflare dashboard:
 # Workers > yokoso-stock-proxy > Settings > Variables

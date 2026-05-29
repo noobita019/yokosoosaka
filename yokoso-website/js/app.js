@@ -296,6 +296,8 @@ function handleCheckout() {
   if (poEl) poEl.textContent = _checkoutPO;
   // Try to send email via worker
   sendOrderEmail();
+  // Save order to Firestore via worker
+  saveOrder();
   var modal = document.getElementById('checkoutModal');
   if (modal) {
     modal.style.display = 'flex';
@@ -379,6 +381,47 @@ function sendOrderEmail() {
       }
     })
     .catch(function(e) { console.log('[Checkout] Email send error:', e); });
+}
+
+function saveOrder() {
+  if (!cart || cart.length === 0) return;
+  var base = STOCK_PROXY_URL.replace(/\/+$/, '');
+  var items = cart.map(function(item) {
+    return { id: item.id, name: item.name, size: item.size || '', qty: item.qty, price: item.price };
+  });
+  var total = getCartTotal();
+  var deposit = getDepositAmount();
+  fetch(base + '/orders/create', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      poNumber: _checkoutPO,
+      items: items,
+      customerName: (currentUser && currentUser.name) || '',
+      customerEmail: (currentUser && currentUser.email) || '',
+      customerContact: (currentUser && currentUser.contact) || '',
+      total: '₱' + total.toFixed(2),
+      deposit: '₱' + deposit.toFixed(2)
+    })
+  }).then(function(r) {
+    if (!r.ok) console.log('[Order] Save failed:', r.status);
+  }).catch(function(e) {
+    console.log('[Order] Save error:', e);
+  });
+}
+
+function releaseExpiredOrders() {
+  var base = STOCK_PROXY_URL.replace(/\/+$/, '');
+  fetch(base + '/orders/release-expired', { method: 'POST' })
+    .then(function(r) { return r.json(); })
+    .then(function(j) {
+      if (j.ok && j.released && j.released.length > 0) {
+        console.log('[Orders] Released expired:', j.released);
+      }
+    })
+    .catch(function(e) {
+      console.log('[Orders] Release expired error:', e);
+    });
 }
 // ---- END DEPOSIT & CHECKOUT ----
 
@@ -2468,6 +2511,8 @@ const ADMIN_PASSWORD = 'amped2016';
 
 function showAdminPanel() {
   if (prompt('Enter admin password:') !== ADMIN_PASSWORD) return;
+  // Release expired orders (older than 24h)
+  releaseExpiredOrders();
   // Migrate localStorage data if not yet synced
   if (localStorage.getItem('yokoso_pending_sync') !== 'true') {
     var saved = localStorage.getItem('yokoso_products');
