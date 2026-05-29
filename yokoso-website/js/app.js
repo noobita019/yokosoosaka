@@ -745,6 +745,13 @@ function getSizeStock(productId, size, color) {
 
 function getTotalStock(productId) {
   var p = products.find(function(x) { return x.id === productId; });
+  // Use proxy stock if available (cross-device sync)
+  if (stockInitialized && stockMap[productId]) {
+    var m = stockMap[productId];
+    var t = 0;
+    for (var k in m) t += m[k];
+    return t;
+  }
   if (p && p.variants) {
     var t = 0;
     for (var c in p.variants) {
