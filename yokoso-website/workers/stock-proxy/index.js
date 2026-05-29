@@ -349,6 +349,37 @@ async function handleRequest(request, env) {
       return new Response(JSON.stringify({ ok: true, released }), { headers: corsHeaders(origin) });
     }
 
+    // POST /orders/:poNumber/confirm — mark order as confirmed (keep stock)
+    if (request.method === 'POST' && parts.length === 3 && parts[0] === 'orders' && parts[2] === 'confirm') {
+      const docId = encodeURIComponent(parts[1]);
+      const resp = await fetch(`${FIRESTORE_BASE}/orders/${docId}?key=${API_KEY}&updateMask.fieldPaths=status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: { status: { stringValue: 'confirmed' } } })
+      });
+      if (!resp.ok) throw new Error(`Confirm order: HTTP ${resp.status}`);
+      return new Response(JSON.stringify({ ok: true, poNumber: parts[1], status: 'confirmed' }), { headers: corsHeaders(origin) });
+    }
+
+    // POST /orders/:poNumber/cancel — cancel order and restore stock
+    if (request.method === 'POST' && parts.length === 3 && parts[0] === 'orders' && parts[2] === 'cancel') {
+      const data = await firestoreGet(`orders/${encodeURIComponent(parts[1])}`).catch(() => null);
+      const order = parseOrderDoc(data);
+      if (!order) return new Response(JSON.stringify({ error: 'Order not found' }), { status: 404, headers: corsHeaders(origin) });
+      let items = [];
+      try { items = JSON.parse(order.items || '[]'); } catch(e) {}
+      for (const item of items) {
+        try { await restoreItemStock(item.productId || item.id, item.size || '', parseInt(item.qty, 10) || 1); } catch(e) {}
+      }
+      const docId = encodeURIComponent(parts[1]);
+      await fetch(`${FIRESTORE_BASE}/orders/${docId}?key=${API_KEY}&updateMask.fieldPaths=status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: { status: { stringValue: 'cancelled' } } })
+      });
+      return new Response(JSON.stringify({ ok: true, poNumber: parts[1], status: 'cancelled' }), { headers: corsHeaders(origin) });
+    }
+
     // GET /orders — list all orders
     if (request.method === 'GET' && parts.length === 1 && parts[0] === 'orders') {
       const data = await firestoreGet('orders').catch(() => null);

@@ -423,6 +423,77 @@ function releaseExpiredOrders() {
       console.log('[Orders] Release expired error:', e);
     });
 }
+
+function loadOrders() {
+  var el = document.getElementById('ordersList');
+  if (!el) return;
+  el.innerHTML = 'Loading...';
+  var base = STOCK_PROXY_URL.replace(/\/+$/, '');
+  fetch(base + '/orders')
+    .then(function(r) { return r.json(); })
+    .then(function(orders) { renderOrders(orders); })
+    .catch(function(e) { el.innerHTML = 'Error loading orders: ' + (e.message || ''); });
+}
+
+function renderOrders(orders) {
+  var el = document.getElementById('ordersList');
+  if (!el) return;
+  if (!orders || orders.length === 0) { el.innerHTML = 'No orders yet.'; return; }
+  var html = '<table style="width:100%;border-collapse:collapse;font-size:12px">';
+  html += '<thead><tr style="background:#eee;text-align:left">' +
+    '<th style="padding:6px 8px">PO#</th>' +
+    '<th style="padding:6px 8px">Date</th>' +
+    '<th style="padding:6px 8px">Customer</th>' +
+    '<th style="padding:6px 8px">Items</th>' +
+    '<th style="padding:6px 8px">Total</th>' +
+    '<th style="padding:6px 8px">Status</th>' +
+    '<th style="padding:6px 8px">Action</th></tr></thead><tbody>';
+  orders.forEach(function(o) {
+    var items = [];
+    try { items = JSON.parse(o.items || '[]'); } catch(e) {}
+    var itemSummary = items.map(function(i) { return (i.name || '') + ' x' + (i.qty || 1); }).join(', ');
+    var created = o.createdAt ? new Date(o.createdAt).toLocaleDateString() : '—';
+    var statusColor = o.status === 'confirmed' ? '#2e7d32' : o.status === 'cancelled' ? '#c62828' : '#f57f17';
+    html += '<tr style="border-bottom:1px solid #ddd">';
+    html += '<td style="padding:6px 8px">' + (o.id || o.poNumber || '—') + '</td>';
+    html += '<td style="padding:6px 8px">' + created + '</td>';
+    html += '<td style="padding:6px 8px">' + (o.customerName || '—') + '</td>';
+    html += '<td style="padding:6px 8px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + itemSummary.replace(/"/g, '&quot;') + '">' + itemSummary + '</td>';
+    html += '<td style="padding:6px 8px">' + (o.total || '—') + '</td>';
+    html += '<td style="padding:6px 8px;color:' + statusColor + ';font-weight:600">' + (o.status || '—') + '</td>';
+    html += '<td style="padding:6px 8px">';
+    if (o.status === 'pending') {
+      html += '<button onclick="confirmOrder(\'' + o.id.replace(/'/g, "\\'") + '\')" style="padding:3px 8px;background:#2e7d32;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px;margin-right:4px">Confirm</button>';
+      html += '<button onclick="cancelOrder(\'' + o.id.replace(/'/g, "\\'") + '\')" style="padding:3px 8px;background:#c62828;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px">Cancel</button>';
+    }
+    html += '</td></tr>';
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+function confirmOrder(poNumber) {
+  var base = STOCK_PROXY_URL.replace(/\/+$/, '');
+  fetch(base + '/orders/' + encodeURIComponent(poNumber) + '/confirm', { method: 'POST' })
+    .then(function(r) { return r.json(); })
+    .then(function(j) {
+      if (j.ok) { showCartNotification('Order confirmed: ' + poNumber); loadOrders(); }
+      else showCartNotification('Confirm failed: ' + (j.error || ''));
+    })
+    .catch(function(e) { showCartNotification('Confirm error: ' + (e.message || '')); });
+}
+
+function cancelOrder(poNumber) {
+  if (!confirm('Cancel order ' + poNumber + '? Stock will be restored.')) return;
+  var base = STOCK_PROXY_URL.replace(/\/+$/, '');
+  fetch(base + '/orders/' + encodeURIComponent(poNumber) + '/cancel', { method: 'POST' })
+    .then(function(r) { return r.json(); })
+    .then(function(j) {
+      if (j.ok) { showCartNotification('Order cancelled: ' + poNumber); loadOrders(); }
+      else showCartNotification('Cancel failed: ' + (j.error || ''));
+    })
+    .catch(function(e) { showCartNotification('Cancel error: ' + (e.message || '')); });
+}
 // ---- END DEPOSIT & CHECKOUT ----
 
 function migrateCategoriesConfig(cfg) {
@@ -2536,6 +2607,9 @@ function showAdminPanel() {
   if (emailSection) emailSection.style.display = 'block';
   var emailInput = document.getElementById('adminEmailInput');
   if (emailInput) emailInput.value = adminEmail;
+  var ordersSection = document.getElementById('adminOrdersSection');
+  if (ordersSection) ordersSection.style.display = 'block';
+  loadOrders();
   var syncSection = document.getElementById('adminSyncSettings');
   if (syncSection) syncSection.style.display = 'block';
   renderAdminFilterDropdowns();
