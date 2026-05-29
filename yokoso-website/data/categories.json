@@ -79,6 +79,7 @@
   "proxyUrl": "https://yokoso-stock-proxy.shayera019.workers.dev",
   "colors": [
     "Red",
-    "Blue"
+    "Blue",
+    "Green"
   ]
 }
