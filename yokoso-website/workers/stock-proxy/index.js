@@ -740,6 +740,36 @@ async function handleRequest(request, env) {
       throw new Error(`Decrement failed: ${JSON.stringify(r)}`);
     }
 
+    // GET /orders/clear-all — delete all orders from KV (call once to wipe test data)
+    if (request.method === 'GET' && parts.length === 2 && parts[0] === 'orders' && parts[1] === 'clear-all') {
+      let deleted = 0;
+      if (env && env.ORDERS_KV) {
+        let cursor;
+        do {
+          const list = await env.ORDERS_KV.list({ prefix: 'order:', cursor });
+          for (const key of list.keys) {
+            await env.ORDERS_KV.delete(key.name);
+            deleted++;
+          }
+          cursor = list.cursor;
+        } while (cursor);
+      }
+      // Also clear from Firestore
+      try {
+        const data = await firestoreGet('orders').catch(() => null);
+        if (data && data.documents) {
+          for (const doc of data.documents) {
+            const match = doc.name.match(/\/orders\/([^/]+)$/);
+            if (match) {
+              await fetch(`${FIRESTORE_BASE}/orders/${encodeURIComponent(match[1])}?key=${API_KEY}`, { method: 'DELETE' }).catch(() => {});
+              deleted++;
+            }
+          }
+        }
+      } catch(e) {}
+      return new Response(JSON.stringify({ ok: true, deleted }), { headers: corsHeaders(origin) });
+    }
+
     return new Response(JSON.stringify({ error: 'route_not_found' }), { status: 404, headers: corsHeaders(origin) });
   } catch (e) {
     return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: corsHeaders(origin) });
