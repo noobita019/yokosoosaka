@@ -376,7 +376,7 @@ function sendOrderEmail() {
           showCartNotification('Order confirmation sent to ' + (customerEmail ? 'your email and ' : '') + 'admin.');
         } else if (failed.length > 0) {
           showCartNotification('Auto-email not configured. Use Copy/Email/Messenger buttons below to send manually.');
-          console.log('[Checkout] Email send not configured (set EMAIL binding, SENDGRID_API_KEY, or MAILGUN_API_KEY in worker)');
+          console.log('[Checkout] Email send not configured (set RESEND_API_KEY, EMAIL binding, or MAILGUN_API_KEY in worker)');
         }
       }
     })

@@ -170,14 +170,17 @@ async function sendEmail(env, to, subject, text, fromAddr) {
     await msg.send();
     return 'email_binding';
   }
-  if (env && env.SENDGRID_API_KEY) {
-    const resp = await fetch('https://api.sendgrid.com/v3/mail/send', {
+  if (env && env.RESEND_API_KEY) {
+    const resp = await fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + env.SENDGRID_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ personalizations: [{ to: [{ email: to }] }], from: { email: fromAddr }, subject, content: [{ type: 'text/plain', value: text }] })
+      headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: fromAddr, to: [to], subject, text })
     });
-    if (!resp.ok) throw new Error('SendGrid: HTTP ' + resp.status);
-    return 'sendgrid';
+    if (!resp.ok) {
+      const errText = await resp.text().catch(() => '');
+      throw new Error('Resend: HTTP ' + resp.status + ' ' + errText);
+    }
+    return 'resend';
   }
   if (env && env.MAILGUN_API_KEY && env.MAILGUN_DOMAIN) {
     const resp = await fetch(`https://api.mailgun.net/v3/${env.MAILGUN_DOMAIN}/messages`, {
@@ -188,7 +191,7 @@ async function sendEmail(env, to, subject, text, fromAddr) {
     if (!resp.ok) throw new Error('Mailgun: HTTP ' + resp.status);
     return 'mailgun';
   }
-  throw new Error('No email method configured. Set EMAIL binding, SENDGRID_API_KEY, or MAILGUN_API_KEY+MAILGUN_DOMAIN.');
+  throw new Error('No email method configured. Set RESEND_API_KEY, EMAIL binding, or MAILGUN_API_KEY+MAILGUN_DOMAIN.');
 }
 
 function corsHeaders(origin) {
