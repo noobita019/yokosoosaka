@@ -62,6 +62,10 @@ function updateAccountUI() {
 function openAccountModal() {
   var m = document.getElementById('accountModal');
   if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; switchAccountTab('login'); }
+  setTimeout(function() {
+    var el = document.getElementById('loginContact');
+    if (el) el.focus();
+  }, 100);
 }
 function closeAccountModal() {
   var m = document.getElementById('accountModal');
@@ -78,9 +82,11 @@ function switchAccountTab(tab) {
   if (tab === 'login') {
     if (lf) lf.style.display = 'block'; if (rf) rf.style.display = 'none';
     if (lt) lt.classList.add('active'); if (rt) rt.classList.remove('active');
+    setTimeout(function() { var el = document.getElementById('loginContact'); if (el) el.focus(); }, 50);
   } else {
     if (lf) lf.style.display = 'none'; if (rf) rf.style.display = 'block';
     if (lt) lt.classList.remove('active'); if (rt) rt.classList.add('active');
+    setTimeout(function() { var el = document.getElementById('registerName'); if (el) el.focus(); }, 50);
   }
 }
 function handleCreateAccount() {
