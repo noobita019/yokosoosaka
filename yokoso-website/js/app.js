@@ -254,7 +254,19 @@ function testAdminEmail() {
 }
 
 function getDepositAmount() {
-  return getCartTotal() * depositPercent / 100;
+  var total = 0;
+  for (var i = 0; i < cart.length; i++) {
+    var item = cart[i];
+    var price = parseFloat(item.price.replace(/[^0-9.]/g, ''));
+    if (isNaN(price)) continue;
+    var product = products.find(function(p) { return p.id === item.id; });
+    if (product && product.deposit !== undefined && product.deposit !== '') {
+      var d = parseFloat(String(product.deposit).replace(/[^0-9.]/g, ''));
+      if (!isNaN(d)) { total += d * item.qty; continue; }
+    }
+    total += price * item.qty * depositPercent / 100;
+  }
+  return total;
 }
 
 var _checkoutPO = '';
@@ -279,7 +291,6 @@ function handleCheckout() {
   var itemsEl = document.getElementById('checkoutItems');
   var totalEl = document.getElementById('checkoutTotal');
   var depositEl = document.getElementById('checkoutDeposit');
-  var depositPctEl = document.getElementById('checkoutDepositPct');
   var poEl = document.getElementById('checkoutPONumber');
   if (itemsEl) {
     itemsEl.innerHTML = cart.map(function(item) {
@@ -291,7 +302,6 @@ function handleCheckout() {
   var total = getCartTotal();
   var deposit = getDepositAmount();
   if (totalEl) totalEl.textContent = '₱' + total.toFixed(2);
-  if (depositPctEl) depositPctEl.textContent = depositPercent + '%';
   if (depositEl) depositEl.textContent = '₱' + deposit.toFixed(2);
   if (poEl) poEl.textContent = _checkoutPO;
   // Try to send email via worker
@@ -323,7 +333,7 @@ function getOrderText() {
   });
   var total = getCartTotal();
   var deposit = getDepositAmount();
-  lines.push('', 'Total: ₱' + total.toFixed(2), 'Deposit (' + depositPercent + '%): ₱' + deposit.toFixed(2), '', 'Please pay the deposit amount to proceed with your order.');
+  lines.push('', 'Total: ₱' + total.toFixed(2), 'Deposit: ₱' + deposit.toFixed(2), '', 'Please pay the deposit amount to proceed with your order.');
   return lines.join('\n');
 }
 
@@ -1633,7 +1643,7 @@ function renderCart() {
   if (totalEl) {
     var total = getCartTotal();
     var deposit = getDepositAmount();
-    totalEl.innerHTML = total > 0 ? '<div class="cart-total-row">Total: ₱' + total.toFixed(2) + '</div><div class="cart-deposit-row">Deposit (' + depositPercent + '%): <strong>₱' + deposit.toFixed(2) + '</strong></div>' : '';
+    totalEl.innerHTML = total > 0 ? '<div class="cart-total-row">Total: ₱' + total.toFixed(2) + '</div><div class="cart-deposit-row">Deposit: <strong>₱' + deposit.toFixed(2) + '</strong></div>' : '';
   }
 }
 
@@ -2264,6 +2274,8 @@ function resetForm() {
   document.getElementById('formCancelBtn').style.display = 'none';
   document.getElementById('productForm').reset();
   document.getElementById('formStock').value = 5;
+  var depEl = document.getElementById('formDeposit');
+  if (depEl) depEl.value = '';
   selectedImagesData = [];
   renderImagePreview();
   selectedSizes = [];
@@ -2286,6 +2298,8 @@ function populateForm(product) {
   updateBrandDropdown();
   document.getElementById('formCategory2').value = product.category2 || '';
   document.getElementById('formPrice').value = product.price;
+  var depEl = document.getElementById('formDeposit');
+  if (depEl) depEl.value = product.deposit !== undefined ? product.deposit : '';
   document.getElementById('formDesc').value = product.description;
   document.getElementById('formAvailable').checked = product.available !== false;
   document.getElementById('formStock').value = product.stock !== undefined ? product.stock : 5;
@@ -2341,10 +2355,11 @@ if (pf) pf.addEventListener('submit', function(e) {
 
   function finish(images) {
     var stock = parseInt(document.getElementById('formStock').value) || 0;
+    var deposit = document.getElementById('formDeposit') ? document.getElementById('formDeposit').value.trim() : '';
     if (editingId) {
       var idx = products.findIndex(function(p) { return p.id === editingId; });
       if (idx !== -1) {
-        products[idx] = Object.assign({}, products[idx], { name: name, category0: category0, category1: category1, category2: category2, price: price, description: description, images: images, sizes: selectedSizes.slice(), available: document.getElementById('formAvailable').checked, stock: stock });
+        products[idx] = Object.assign({}, products[idx], { name: name, category0: category0, category1: category1, category2: category2, price: price, description: description, images: images, sizes: selectedSizes.slice(), available: document.getElementById('formAvailable').checked, stock: stock, deposit: deposit || undefined });
         // Update stockMap from per-size inputs if product has sizes
         if (selectedSizes.length > 0) {
           if (!stockMap[products[idx].id]) stockMap[products[idx].id] = {};
@@ -2359,7 +2374,7 @@ if (pf) pf.addEventListener('submit', function(e) {
     } else {
       var maxId = products.length > 0 ? Math.max.apply(null, products.map(function(p) { return p.id; })) : 0;
       var newId = maxId + 1;
-      products.push({ id: newId, name: name, category0: category0, category1: category1, category2: category2, price: price, description: description, images: images, sizes: selectedSizes.slice(), available: document.getElementById('formAvailable').checked, stock: stock });
+      products.push({ id: newId, name: name, category0: category0, category1: category1, category2: category2, price: price, description: description, images: images, sizes: selectedSizes.slice(), available: document.getElementById('formAvailable').checked, stock: stock, deposit: deposit || undefined });
       // Initialize stockMap for new product with sizes
       if (selectedSizes.length > 0) {
         stockMap[newId] = {};

@@ -227,6 +227,10 @@
                 <label>Price</label>
                 <input type="text" id="formPrice" required placeholder="₱850">
               </div>
+              <div class="form-group">
+                <label>Deposit</label>
+                <input type="text" id="formDeposit" placeholder="₱425 (leave blank = 50% of price)">
+              </div>
             </div>
             <div class="form-group">
               <label>Description</label>
@@ -483,7 +487,7 @@
       <div class="checkout-items" id="checkoutItems"></div>
       <div class="checkout-totals">
         <div class="checkout-total-row"><span>Total</span><span id="checkoutTotal"></span></div>
-        <div class="checkout-total-row checkout-deposit-row"><span>Deposit (<span id="checkoutDepositPct"></span>)</span><span id="checkoutDeposit" class="checkout-deposit-amt"></span></div>
+        <div class="checkout-total-row checkout-deposit-row"><span>Deposit</span><span id="checkoutDeposit" class="checkout-deposit-amt"></span></div>
       </div>
       <div class="checkout-note">Please pay the deposit amount to proceed with your order.</div>
       <div class="checkout-actions">
