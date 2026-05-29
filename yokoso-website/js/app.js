@@ -2307,11 +2307,6 @@ if (si) si.addEventListener('keydown', function(e) {
   }
 });
 
-var mt = document.getElementById('menuToggle');
-if (mt) mt.addEventListener('click', () => {
-  document.querySelector('.nav').classList.toggle('open');
-});
-
 // ---- ADMIN PANEL ----
 
 function renderAdminList() {

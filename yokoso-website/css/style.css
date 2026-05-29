@@ -86,15 +86,6 @@ body {
   color: #fff;
 }
 
-.menu-toggle {
-  display: none;
-  background: none;
-  border: none;
-  color: #1a1a2e;
-  font-size: 1.5rem;
-  cursor: pointer;
-}
-
 /* Header search */
 .header-search {
   flex: 1;
@@ -1504,24 +1495,9 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .menu-toggle {
-    display: block;
-  }
-
   .nav {
     display: none;
-    flex-direction: column;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: #fff;
-    padding: 1rem;
-    gap: 1rem;
-    border-bottom: 1px solid #e8e8ed;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   }
-
   .nav.open {
     display: flex;
   }
