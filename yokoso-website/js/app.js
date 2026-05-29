@@ -324,7 +324,7 @@ function showCheckoutReview() {
     itemsEl.innerHTML = cart.map(function(item) {
       var price = parseFloat(item.price.replace(/[^0-9.]/g, ''));
       var sub = isNaN(price) ? item.price : '₱' + (price * item.qty).toFixed(2);
-      return '<div class="checkout-item"><span class="checkout-item-name">' + item.name + (item.size ? ' (' + item.size + ')' : '') + '</span><span class="checkout-item-qty">x' + item.qty + '</span><span class="checkout-item-price">' + sub + '</span></div>';
+      return '<div class="checkout-item"><span class="checkout-item-name">' + item.name + (item.color ? ' (' + item.color + ')' : '') + (item.size ? ' · ' + item.size : '') + '</span><span class="checkout-item-qty">x' + item.qty + '</span><span class="checkout-item-price">' + sub + '</span></div>';
     }).join('');
   }
   var total = getCartTotal();
@@ -376,7 +376,7 @@ function getOrderText() {
   cart.forEach(function(item, i) {
     var price = parseFloat(item.price.replace(/[^0-9.]/g, ''));
     var sub = isNaN(price) ? item.price : '₱' + (price * item.qty).toFixed(2);
-    lines.push((i + 1) + '. ' + item.name + (item.size ? ' (Size ' + item.size + ')' : '') + ' x' + item.qty + ' = ' + sub);
+    lines.push((i + 1) + '. ' + item.name + (item.color ? ' (' + item.color + ')' : '') + (item.size ? ' Size ' + item.size : '') + ' x' + item.qty + ' = ' + sub);
   });
   var total = getCartTotal();
   var deposit = getDepositAmount();
@@ -687,8 +687,6 @@ let editingId = null;
 let currentCategory = 'all';
 let currentSearch = '';
 let selectedImagesData = [];
-let selectedSizes = [];
-let _editSizeStock = {};
 let currentModalImages = [];
 let currentImageIndex = 0;
 var scrollPos = 0, bodyLocked = false;
@@ -697,11 +695,50 @@ var scrollPos = 0, bodyLocked = false;
 var stockMap = {};
 
 function stockField(size) {
-  if (!size || size === 'default' || size === 'quantity') return 'q';
+  if (!size || size === 'default' || size === 'quantity' || size === 'q') return 'q';
   return 's' + size.replace(/[^a-zA-Z0-9]/g, '');
 }
 
-function getSizeStock(productId, size) {
+function getVariant(product, color) {
+  return (product.variants || {})[color || ''] || null;
+}
+
+function getVariantColors(product) {
+  return Object.keys(product.variants || {});
+}
+
+function getVariantSizes(product, color) {
+  var v = getVariant(product, color);
+  return v ? (v.sizes || []) : [];
+}
+
+function getVariantStock(product, color, size) {
+  var v = getVariant(product, color);
+  if (!v) return 0;
+  var s = v.stock || {};
+  return s[size] !== undefined ? s[size] : 0;
+}
+
+function getTotalVariantStock(product, color) {
+  var v = getVariant(product, color);
+  if (!v) return 0;
+  var s = v.stock || {};
+  var t = 0;
+  for (var k in s) t += s[k];
+  return t;
+}
+
+function getSizeStock(productId, size, color) {
+  var p = products.find(function(x) { return x.id === productId; });
+  if (p && p.variants) {
+    if (!color) {
+      var colors = getVariantColors(p);
+      if (colors.length) color = colors[0];
+      else return 0;
+    }
+    return getVariantStock(p, color, size);
+  }
+  // fallback to old stockMap
   var m = stockMap[productId];
   if (!m) return 5;
   var qty = m[stockField(size)];
@@ -709,6 +746,16 @@ function getSizeStock(productId, size) {
 }
 
 function getTotalStock(productId) {
+  var p = products.find(function(x) { return x.id === productId; });
+  if (p && p.variants) {
+    var t = 0;
+    for (var c in p.variants) {
+      var s = p.variants[c].stock || {};
+      for (var k in s) t += s[k];
+    }
+    return t;
+  }
+  // fallback to old stockMap
   var m = stockMap[productId];
   if (!m) return 5;
   var t = 0;
@@ -717,6 +764,12 @@ function getTotalStock(productId) {
 }
 
 function hasSizes(product) {
+  if (product.variants) {
+    for (var c in product.variants) {
+      if (product.variants[c].sizes && product.variants[c].sizes.length > 0) return true;
+    }
+    return false;
+  }
   return Array.isArray(product.sizes) && product.sizes.length > 0;
 }
 
@@ -811,6 +864,23 @@ function migrateProducts() {
     }
     if (!p.sizes) {
       p.sizes = [];
+      migrated = true;
+    }
+    // Migrate old fields to variants
+    if (!p.variants) {
+      p.variants = {};
+      var colorKey = p.color || "Default";
+      if (p.sizes.length > 0) {
+        var stockObj = {};
+        p.sizes.forEach(function(s) {
+          var fid = stockField(s);
+          var qty = (stockMap && stockMap[p.id] && stockMap[p.id][fid] !== undefined) ? stockMap[p.id][fid] : 5;
+          stockObj[s] = qty;
+        });
+        p.variants[colorKey] = { sizes: p.sizes.slice(), stock: stockObj };
+      } else {
+        p.variants[colorKey] = { stock: { q: p.stock !== undefined ? p.stock : 5 } };
+      }
       migrated = true;
     }
     if (p.images) {
@@ -1105,12 +1175,16 @@ function getBrands() {
 
 function getColors() {
   var fromConfig = categoriesConfig.colors || [];
-  var fromProducts = products.filter(function(p) {
+  var fromProducts = [];
+  products.filter(function(p) {
     if (currentGroup !== 'all' && p.category0 !== currentGroup) return false;
     if (currentCategory !== 'all' && p.category1 !== currentCategory) return false;
     if (currentBrand !== 'all' && p.category2 !== currentBrand) return false;
     return true;
-  }).map(function(p) { return p.color; }).filter(Boolean);
+  }).forEach(function(p) {
+    var vc = getVariantColors(p);
+    vc.forEach(function(c) { if (c !== 'Default' && fromProducts.indexOf(c) === -1) fromProducts.push(c); });
+  });
   var merged = fromConfig.concat(fromProducts);
   return merged.filter(function(v, i, a) { return a.indexOf(v) === i; });
 }
@@ -1290,15 +1364,25 @@ function renderProducts() {
   empty.style.display = 'none';
   grid.innerHTML = filtered.map(function(p) {
     var brandHtml = p.category2 ? '<span class="product-brand">' + p.category2 + '</span>' : '';
+    var variantColors = getVariantColors(p);
+    var firstColor = variantColors.length ? variantColors[0] : 'Default';
     var sizesHtml = '';
-    if (hasSizes(p)) {
-      sizesHtml = '<div class="product-sizes">' + p.sizes.map(function(s) {
-        var sStock = getSizeStock(p.id, s);
+    var firstSizes = getVariantSizes(p, firstColor);
+    if (firstSizes.length > 0) {
+      sizesHtml = '<div class="product-sizes">' + firstSizes.map(function(s) {
+        var sStock = getVariantStock(p, firstColor, s);
         var sClass = sStock > 0 ? '' : ' size-oos';
-        return '<span class="product-size-tag' + sClass + '" onclick="event.stopPropagation();addToCart(' + p.id + ',\'' + s + '\')">' + s + (sStock > 0 && sStock <= 3 ? ' (' + sStock + ')' : '') + '</span>';
+        return '<span class="product-size-tag' + sClass + '" onclick="event.stopPropagation();addToCart(' + p.id + ',\'' + firstColor.replace(/'/g, "\\'") + '\',\'' + s + '\')">' + s + (sStock > 0 && sStock <= 3 ? ' (' + sStock + ')' : '') + '</span>';
       }).join('') + '</div>';
     }
-    var stock = p.stock !== undefined ? p.stock : 5;
+    var colorChips = '';
+    if (variantColors.length > 1) {
+      colorChips = '<div class="product-color-chips">' + variantColors.map(function(c) {
+        return '<span class="color-chip" title="' + c + '">' + c + '</span>';
+      }).join('') + '</div>';
+    } else if (variantColors.length === 1 && variantColors[0] !== 'Default') {
+      colorChips = '<div class="product-color-chips"><span class="color-chip">' + variantColors[0] + '</span></div>';
+    }
     var totalAvail = getTotalStock(p.id);
     var stockLabel = totalAvail > 3 ? 'In Stock' : totalAvail > 0 ? 'Only ' + totalAvail + ' left' : 'Out of Stock';
     var stockClass = totalAvail > 0 ? 'in-stock' : 'out-of-stock';
@@ -1308,12 +1392,12 @@ function renderProducts() {
       (p.category0 ? '<div class="product-group">' + p.category0 + '</div>' : '') +
       '<div class="product-category">' + p.category1 + '</div>' +
       brandHtml +
-      (p.color ? '<div class="product-color">' + p.color + '</div>' : '') +
+      colorChips +
       '<div class="product-name" onclick="openProduct(' + p.id + ')">' + p.name + '</div>' +
       sizesHtml +
       '<div class="product-price">' + p.price + '</div>' +
       '<div class="product-stock ' + stockClass + '">' + stockLabel + '</div>' +
-      (!hasSizes(p) && totalAvail > 0 ? '<button class="btn-add-cart" data-id="' + p.id + '">Add to Cart</button>' : '') +
+      (!hasSizes(p) && totalAvail > 0 ? '<button class="btn-add-cart" data-id="' + p.id + '" data-color="' + firstColor.replace(/'/g, "\\'") + '">Add to Cart</button>' : '') +
       '</div></div>';
   }).join('');
 
@@ -1328,7 +1412,8 @@ function renderProducts() {
     btn.addEventListener('click', function(e) {
       e.stopPropagation();
       var id = parseInt(this.dataset.id);
-      if (!isNaN(id)) addToCart(id);
+      var color = this.dataset.color || '';
+      if (!isNaN(id)) addToCart(id, color);
     });
   });
 }
@@ -1491,44 +1576,6 @@ function subscribeStockUpdates() {
   }, 120000);
 }
 
-function firestoreAddToCart(productId, size) {
-  if (!isProxyReady()) { console.warn('[Stock] Proxy not ready'); return; }
-  var field = stockField(size);
-  var url = proxyUrl('stocks/' + productId + '/decrement');
-  console.log('[Stock] Decrement fetch to', url, 'field:', field);
-  fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount: 1, field: field })
-  }).then(function(r) {
-    console.log('[Stock] Decrement response', r.status);
-    if (r.ok) setProxyStatus('Stock updated via proxy');
-    else setProxyStatus('Proxy write failed (HTTP ' + r.status + ')', true);
-  }).catch(function(err) {
-    console.warn('[Stock] Decrement error', err.message);
-    setProxyStatus('Proxy write error: ' + (err.message || 'connection failed'), true);
-  });
-}
-
-function firestoreRestoreStock(productId, amount, size) {
-  if (!isProxyReady() || amount <= 0) return;
-  var field = stockField(size);
-  var url = proxyUrl('stocks/' + productId + '/increment');
-  console.log('[Stock] Increment fetch to', url, 'field:', field, 'amount:', amount);
-  fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount: amount, field: field })
-  }).then(function(r) {
-    console.log('[Stock] Increment response', r.status);
-    if (r.ok) setProxyStatus('Stock restored via proxy');
-    else setProxyStatus('Proxy restore failed (HTTP ' + r.status + ')', true);
-  }).catch(function(err) {
-    console.warn('[Stock] Increment error', err.message);
-    setProxyStatus('Proxy restore error: ' + (err.message || 'connection failed'), true);
-  });
-}
-
 function testProxyConnection() {
   var statusEl = document.getElementById('proxyStatus');
   if (!statusEl) return;
@@ -1604,87 +1651,120 @@ function updateCartBadge() {
   badge.style.display = count > 0 ? 'flex' : 'none';
 }
 
-function cartKey(id, size) {
-  return id + '_' + (size || '');
+function cartKey(id, color, size) {
+  return id + '|' + (color || '') + '|' + (size || '');
 }
 
-function addToCart(productId, size) {
+function addToCart(productId, color, size) {
   var p = products.find(function(x) { return x.id === productId; });
-  if (!p) return;
-  var field = stockField(size);
-  var avail = getSizeStock(productId, size);
-  if (avail <= 0) { alert('Size ' + size + ' is out of stock.'); return; }
-  var key = cartKey(productId, size);
-  var existing = cart.find(function(item) { return cartKey(item.id, item.size) === key; });
+  if (!p) { return; }
+  // If color not provided, use first/only variant
+  if (!color) {
+    var colors = getVariantColors(p);
+    if (colors.length) color = colors[0];
+    else { return; }
+  }
+  if (!size) {
+    // non-sized product
+    var avail = getVariantStock(p, color, 'q');
+    if (avail <= 0) { alert('This item is out of stock.'); return; }
+    var key = cartKey(productId, color, null);
+    var existing = cart.find(function(item) { return cartKey(item.id, item.color, item.size) === key; });
+    if (existing) {
+      existing.qty++;
+    } else {
+      cart.push({
+        id: productId,
+        color: color,
+        size: null,
+        qty: 1,
+        name: p.name,
+        price: p.price,
+        image: p.images?.[0] || 'images/products/placeholder.svg'
+      });
+    }
+    deductVariantStock(p, color, 'q', 1);
+    saveCart();
+    renderProducts();
+    showCartNotification(p.name);
+    return;
+  }
+  var avail = getVariantStock(p, color, size);
+  if (avail <= 0) { alert('Color ' + color + ', size ' + size + ' is out of stock.'); return; }
+  var key = cartKey(productId, color, size);
+  var existing = cart.find(function(item) { return cartKey(item.id, item.color, item.size) === key; });
   if (existing) {
     existing.qty++;
   } else {
     cart.push({
       id: productId,
-      size: size || null,
+      color: color,
+      size: size,
       qty: 1,
       name: p.name,
       price: p.price,
       image: p.images?.[0] || 'images/products/placeholder.svg'
     });
   }
-  if (!stockMap[productId]) stockMap[productId] = {};
-  stockMap[productId][field] = Math.max(0, (stockMap[productId][field] || 0) - 1);
-  p.stock = getTotalStock(productId);
-  p._stockLock = Date.now() + 10000; // prevent poll overwrite for 10s
+  deductVariantStock(p, color, size, 1);
+  p._stockLock = Date.now() + 10000;
   saveCart();
-  console.log('[Cart] Added ' + p.name + (size ? ' (' + size + ')' : '') + ', remaining ' + field + ': ' + stockMap[productId][field]);
-  firestoreAddToCart(productId, size);
+  console.log('[Cart] Added ' + p.name + ' (' + color + (size ? '/' + size : '') + ')');
   renderProducts();
-  showCartNotification(p.name + (size ? ' (' + size + ')' : ''));
+  showCartNotification(p.name + (size ? ' (' + color + '/' + size + ')' : ' (' + color + ')'));
 }
 
-function removeFromCart(productId, size) {
-  var key = cartKey(productId, size);
-  var idx = cart.findIndex(function(x) { return cartKey(x.id, x.size) === key; });
+function deductVariantStock(p, color, size, qty) {
+  if (!p.variants) return;
+  var v = p.variants[color];
+  if (!v) return;
+  if (!v.stock) v.stock = {};
+  if (v.stock[size] === undefined) v.stock[size] = 0;
+  v.stock[size] = Math.max(0, v.stock[size] - qty);
+}
+
+function restoreVariantStock(p, color, size, qty) {
+  if (!p.variants) return;
+  var v = p.variants[color];
+  if (!v) return;
+  if (!v.stock) v.stock = {};
+  if (v.stock[size] === undefined) v.stock[size] = 0;
+  v.stock[size] = (v.stock[size] || 0) + qty;
+}
+
+function removeFromCart(productId, color, size) {
+  var key = cartKey(productId, color, size);
+  var idx = cart.findIndex(function(x) { return cartKey(x.id, x.color, x.size) === key; });
   if (idx === -1) return;
   var item = cart[idx];
   var p = products.find(function(x) { return x.id === productId; });
-  var field = stockField(item.size);
   if (p) {
-    if (!stockMap[productId]) stockMap[productId] = {};
-    stockMap[productId][field] = (stockMap[productId][field] || 0) + item.qty;
-    p.stock = getTotalStock(productId);
+    restoreVariantStock(p, item.color, item.size || 'q', item.qty);
     p._stockLock = Date.now() + 10000;
   }
   cart.splice(idx, 1);
   saveCart();
-  if (item) {
-    firestoreRestoreStock(productId, item.qty, item.size);
-    renderProducts();
-  }
+  renderProducts();
   renderCart();
 }
 
-function updateCartQty(productId, delta, size) {
-  var key = cartKey(productId, size);
-  var idx = cart.findIndex(function(x) { return cartKey(x.id, x.size) === key; });
+function updateCartQty(productId, delta, color, size) {
+  var key = cartKey(productId, color, size);
+  var idx = cart.findIndex(function(x) { return cartKey(x.id, x.color, x.size) === key; });
   if (idx === -1) return;
   var item = cart[idx];
   var p = products.find(function(x) { return x.id === productId; });
-  var field = stockField(item.size);
-  var avail = p ? getSizeStock(productId, item.size) : 0;
+  var avail = p ? getVariantStock(p, item.color, item.size || 'q') : 0;
   var newQty = item.qty + delta;
-  if (newQty <= 0) { removeFromCart(productId, item.size); return; }
-  if (delta > 0 && delta > avail) { alert('Not enough stock for size ' + (item.size || 'this item') + '.'); return; }
+  if (newQty <= 0) { removeFromCart(productId, item.color, item.size); return; }
+  if (delta > 0 && delta > avail) { alert('Not enough stock for ' + (item.color || '') + (item.size ? '/' + item.size : '') + '.'); return; }
   if (p) {
-    if (!stockMap[productId]) stockMap[productId] = {};
-    stockMap[productId][field] = Math.max(0, (stockMap[productId][field] || 0) - delta);
-    p.stock = getTotalStock(productId);
+    deductVariantStock(p, item.color, item.size || 'q', delta);
     p._stockLock = Date.now() + 10000;
   }
   item.qty = newQty;
   saveCart();
-  if (p) {
-    if (delta > 0) { firestoreAddToCart(productId, item.size); }
-    else { firestoreRestoreStock(productId, Math.abs(delta), item.size); }
-    renderProducts();
-  }
+  renderProducts();
   renderCart();
 }
 
@@ -1726,17 +1806,18 @@ function renderCart() {
     var price = parseFloat(item.price.replace(/[^0-9.]/g, ''));
     var subtotal = isNaN(price) ? item.price : '₱' + (price * item.qty).toFixed(2);
     var sizeEl = item.size ? '<div class="cart-item-size">Size ' + item.size + '</div>' : '';
+    var colorEl = item.color ? '<div class="cart-item-color">' + item.color + '</div>' : '';
     return '<div class="cart-item">' +
       '<img src="' + item.image + '" class="cart-item-img" onerror="this.src=\'images/products/placeholder.svg\'">' +
       '<div class="cart-item-info">' +
-      '<div class="cart-item-name">' + item.name + '</div>' + sizeEl +
+      '<div class="cart-item-name">' + item.name + '</div>' + colorEl + sizeEl +
       '<div class="cart-item-price">' + item.price + '</div>' +
       '<div class="cart-item-qty">' +
-      '<button class="cart-qty-btn" onclick="updateCartQty(' + item.id + ',-1,\'' + (item.size || '') + '\')">−</button>' +
+      '<button class="cart-qty-btn" onclick="updateCartQty(' + item.id + ',-1,\'' + (item.color || '') + '\',\'' + (item.size || '') + '\')">−</button>' +
       '<span>' + item.qty + '</span>' +
-      '<button class="cart-qty-btn" onclick="updateCartQty(' + item.id + ',1,\'' + (item.size || '') + '\')">+</button>' +
+      '<button class="cart-qty-btn" onclick="updateCartQty(' + item.id + ',1,\'' + (item.color || '') + '\',\'' + (item.size || '') + '\')">+</button>' +
       '</div></div>' +
-      '<button class="cart-item-remove" onclick="removeFromCart(' + item.id + ',\'' + (item.size || '') + '\')">×</button>' +
+      '<button class="cart-item-remove" onclick="removeFromCart(' + item.id + ',\'' + (item.color || '') + '\',\'' + (item.size || '') + '\')">×</button>' +
       '</div>';
   }).join('');
   if (totalEl) {
@@ -1787,15 +1868,31 @@ function openModal(product) {
     
     _modalImages = (Array.isArray(product.images) && product.images.length > 0) ? product.images : [product.image || 'images/products/placeholder.svg'];
     _modalImageIdx = 0;
+    var variantColors = getVariantColors(product);
+    var firstColor = variantColors.length ? variantColors[0] : null;
+    _modalSelectedColor = firstColor;
+    _modalSelectedSize = null;
     var productHasSizes = hasSizes(product);
-    var sizesHtml = '';
-    if (productHasSizes) {
-      sizesHtml = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">' + product.sizes.map(function(s) {
-        var sStock = getSizeStock(product.id, s);
-        var sClass = sStock > 0 ? 'modal-size-btn' : 'modal-size-btn size-oos';
-        var sLabel = sStock > 0 ? s : s + ' (OOS)';
-        return '<button class="' + sClass + '" data-size="' + s + '" onclick="selectModalSize(this,\'' + s + '\')">' + sLabel + '</button>';
+    // Color picker
+    var colorPickerHtml = '';
+    if (variantColors.length > 1 || (variantColors.length === 1 && variantColors[0] !== 'Default')) {
+      colorPickerHtml = '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">' + variantColors.map(function(c) {
+        var active = c === firstColor ? ' style="border:2px solid #e94560;background:#ffe8eb"' : '';
+        return '<button class="modal-color-btn" data-color="' + c + '" onclick="selectModalColor(this,\'' + c.replace(/'/g, "\\'") + '\')"' + active + '>' + c + '</button>';
       }).join('') + '</div>';
+    }
+    // Sizes for selected color
+    var sizesHtml = '';
+    if (firstColor) {
+      var vSizes = getVariantSizes(product, firstColor);
+      if (vSizes.length > 0) {
+        sizesHtml = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px" id="modalSizesContainer">' + vSizes.map(function(s) {
+          var sStock = getVariantStock(product, firstColor, s);
+          var sClass = sStock > 0 ? 'modal-size-btn' : 'modal-size-btn size-oos';
+          var sLabel = sStock > 0 ? s : s + ' (OOS)';
+          return '<button class="' + sClass + '" data-size="' + s + '" onclick="selectModalSize(this,\'' + s + '\')">' + sLabel + '</button>';
+        }).join('') + '</div>';
+      }
     }
     var dotsHtml = _modalImages.length > 1 ? '<div style="display:flex;justify-content:center;gap:6px;padding:8px 0;position:absolute;bottom:0;left:0;right:0">' + _modalImages.map(function(_, i) { return '<span class="modal-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + (i === 0 ? '#e94560' : '#ddd') + ';cursor:pointer" onclick="modalGoTo(' + i + ')"></span>'; }).join('') + '</div>' : '';
     var totalAvail = getTotalStock(product.id);
@@ -1812,7 +1909,8 @@ function openModal(product) {
         '<div style="padding:24px 32px 32px">' +
           '<h2 style="font-size:20px;margin:0 0 4px;line-height:1.3">' + (product.name || '') + '</h2>' +
           '<p style="font-size:18px;font-weight:700;color:#e94560;margin:0 0 4px">' + (product.price || '') + '</p>' +
-          '<p style="font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:#888;font-weight:600;margin:0 0 8px">' + (product.category0 ? product.category0 + ' / ' : '') + (product.category1 || '') + (product.category2 ? ' · ' + product.category2 : '') + (product.color ? ' · ' + product.color : '') + '</p>' +
+          '<p style="font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:#888;font-weight:600;margin:0 0 8px">' + (product.category0 ? product.category0 + ' / ' : '') + (product.category1 || '') + (product.category2 ? ' · ' + product.category2 : '') + '</p>' +
+          colorPickerHtml +
           sizesHtml +
           '<p style="color:#666;margin:0 0 16px;line-height:1.6;font-size:14px">' + (product.description || '') + '</p>' +
           '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
@@ -1834,8 +1932,40 @@ function openModal(product) {
   }
 }
 
-// Modal size selection
+// Modal color + size selection
+var _modalSelectedColor = null;
 var _modalSelectedSize = null;
+
+function selectModalColor(el, color) {
+  document.querySelectorAll('#liveModal .modal-color-btn').forEach(function(b) { b.style.border = '1px solid #ddd'; b.style.background = '#f5f5f7'; });
+  el.style.border = '2px solid #e94560';
+  el.style.background = '#ffe8eb';
+  _modalSelectedColor = color;
+  _modalSelectedSize = null;
+  // Find product from the modal's context
+  var btn = document.getElementById('modalAddToCartBtn');
+  if (btn) btn.textContent = 'Select a size';
+  // Update sizes
+  var p = products.find(function(x) { return getVariantColors(x).indexOf(color) !== -1; });
+  if (!p) return;
+  var vSizes = getVariantSizes(p, color);
+  var container = document.getElementById('modalSizesContainer');
+  if (container) {
+    if (vSizes.length > 0) {
+      container.innerHTML = vSizes.map(function(s) {
+        var sStock = getVariantStock(p, color, s);
+        var sClass = sStock > 0 ? 'modal-size-btn' : 'modal-size-btn size-oos';
+        var sLabel = sStock > 0 ? s : s + ' (OOS)';
+        return '<button class="' + sClass + '" data-size="' + s + '" onclick="selectModalSize(this,\'' + s + '\')">' + sLabel + '</button>';
+      }).join('');
+      container.style.display = 'flex';
+    } else {
+      container.style.display = 'none';
+      var btn2 = document.getElementById('modalAddToCartBtn');
+      if (btn2) btn2.textContent = 'Add to Cart';
+    }
+  }
+}
 
 function selectModalSize(el, size) {
   document.querySelectorAll('#liveModal .modal-size-btn').forEach(function(b) { b.style.borderColor = '#ddd'; b.style.background = '#f5f5f7'; });
@@ -1850,10 +1980,12 @@ function addToCartFromModal(productId) {
   var p = products.find(function(x) { return x.id === productId; });
   if (!p) return;
   if (hasSizes(p)) {
+    if (!_modalSelectedColor) { alert('Please select a color first.'); return; }
     if (!_modalSelectedSize) { alert('Please select a size first.'); return; }
-    addToCart(productId, _modalSelectedSize);
+    addToCart(productId, _modalSelectedColor, _modalSelectedSize);
   } else {
-    addToCart(productId);
+    var color = _modalSelectedColor || getVariantColors(p)[0] || '';
+    addToCart(productId, color);
   }
   closeLiveModal();
 }
@@ -2269,8 +2401,7 @@ function renderCategoryDropdowns() {
 
   updateSubcategoryDropdown();
   updateBrandDropdown();
-  renderColorDropdown();
-  renderSizePresets();
+  renderVariantsEditor();
 }
 
 function updateSubcategoryDropdown() {
@@ -2307,82 +2438,50 @@ function updateBrandDropdown() {
   }).join('');
 }
 
-function renderColorDropdown() {
-  var colorSelect = document.getElementById('formColor');
-  if (!colorSelect) return;
-  var colors = categoriesConfig.colors.slice();
-  var usedColors = [...new Set(products.filter(function(p) { return p.color; }).map(function(p) { return p.color; }))];
-  usedColors.forEach(function(c) { if (colors.indexOf(c) === -1) colors.push(c); });
-  var currentVal = colorSelect.value;
-  colorSelect.innerHTML = '<option value="">Select color...</option>' + colors.map(function(c) {
-    var sel = c === currentVal ? ' selected' : '';
-    return '<option value="' + c + '">' + c + '</option>';
-  }).join('');
-}
-
-function renderSizePresets() {
-  var container = document.getElementById('formSizePresets');
+function renderVariantsEditor() {
+  var container = document.getElementById('formVariantsContainer');
   if (!container) return;
-  var allSizes = categoriesConfig.sizes.slice();
-  getUsedSizes().forEach(function(s) { if (allSizes.indexOf(s) === -1) allSizes.push(s); });
-  container.innerHTML = allSizes.map(function(s) {
-    var active = selectedSizes.indexOf(s) !== -1;
-    return '<button type="button" class="form-size-preset' + (active ? ' active' : '') + '" data-size="' + s + '">' + s + '</button>';
-  }).join('');
-  container.querySelectorAll('.form-size-preset').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var s = this.dataset.size;
-      var idx = selectedSizes.indexOf(s);
-      if (idx === -1) { selectedSizes.push(s); } else { selectedSizes.splice(idx, 1); }
-      renderSizeTags();
-      renderSizePresets();
-    });
+  var rows = container.querySelectorAll('.variant-row');
+  var variantColors = [];
+  rows.forEach(function(r) {
+    var sel = r.querySelector('.form-variant-color');
+    if (sel && sel.value) variantColors.push(sel.value);
   });
-}
-
-function renderSizeTags() {
-  var container = document.getElementById('formSizeTags');
-  if (!container) return;
-  if (selectedSizes.length === 0) { container.innerHTML = ''; renderSizeStockInputs(); return; }
-  container.innerHTML = selectedSizes.map(function(s, i) {
-    return '<span class="form-size-tag">' + s + '<span class="form-size-tag-remove" data-index="' + i + '">×</span></span>';
-  }).join('');
-  container.querySelectorAll('.form-size-tag-remove').forEach(function(el) {
-    el.addEventListener('click', function() {
-      var idx = parseInt(this.dataset.index);
-      selectedSizes.splice(idx, 1);
-      renderSizeTags();
-      renderSizePresets();
-    });
-  });
-  renderSizeStockInputs();
-}
-
-function renderSizeStockInputs() {
-  var container = document.getElementById('formSizeStock');
-  if (!container) return;
-  if (selectedSizes.length === 0) { container.style.display = 'none'; return; }
-  container.style.display = 'block';
-  container.innerHTML = '<label style="font-size:0.8rem;color:#aaa;margin-bottom:4px;display:block">Stock per size</label>' +
-    '<div style="display:flex;flex-wrap:wrap;gap:6px">' +
-    selectedSizes.map(function(s) {
-      var val = _editSizeStock && _editSizeStock[s] !== undefined ? _editSizeStock[s] : 5;
-      return '<div style="display:flex;flex-direction:column;align-items:center;gap:2px"><span style="font-size:11px;color:#888">' + s + '</span><input type="number" class="size-stock-input" data-size="' + s + '" value="' + val + '" min="0" style="width:50px;padding:4px 6px;border:1px solid rgba(255,255,255,0.15);border-radius:4px;background:rgba(255,255,255,0.06);color:#fff;font-size:0.8rem;text-align:center;outline:none"></div>';
-    }).join('') +
-    '</div>';
-  container.querySelectorAll('.size-stock-input').forEach(function(inp) {
-    inp.addEventListener('input', function() {
-      _editSizeStock[this.dataset.size] = parseInt(this.value) || 0;
-    });
-  });
-}
-
-function getUsedSizes() {
-  var all = [];
+  // Populate each row's color dropdown
+  var allColors = (categoriesConfig.colors || []).slice();
   products.forEach(function(p) {
-    if (p.sizes) { p.sizes.forEach(function(s) { if (all.indexOf(s) === -1) all.push(s); }); }
+    var vc = getVariantColors(p);
+    vc.forEach(function(c) { if (allColors.indexOf(c) === -1 && c !== 'Default') allColors.push(c); });
   });
-  return all.sort();
+  rows.forEach(function(r, i) {
+    var sel = r.querySelector('.form-variant-color');
+    if (!sel) return;
+    var currentVal = sel.value;
+    sel.innerHTML = '<option value="">Select color...</option>' + allColors.map(function(c) {
+      var disabled = variantColors.indexOf(c) !== -1 && c !== currentVal ? ' disabled' : '';
+      var selected = c === currentVal ? ' selected' : '';
+      return '<option value="' + c + '"' + selected + disabled + '>' + c + '</option>';
+    }).join('');
+    // Sizes: show checkboxes with stock inputs using size presets
+    var sizesDiv = r.querySelector('.variant-sizes');
+    if (sizesDiv) {
+      var currentSizes = {};
+      sizesDiv.querySelectorAll('.vs-row').forEach(function(sr) {
+        var sizeInput = sr.querySelector('.vs-size');
+        var stockInput = sr.querySelector('.vs-stock');
+        if (sizeInput && stockInput) currentSizes[sizeInput.value] = stockInput.value;
+      });
+      var allSizes = categoriesConfig.sizes.slice();
+      sizesDiv.innerHTML = allSizes.map(function(s) {
+        var checked = currentSizes[s] !== undefined ? ' checked' : '';
+        var stockVal = currentSizes[s] !== undefined ? currentSizes[s] : 5;
+        return '<label class="vs-row" style="display:inline-flex;align-items:center;gap:4px;margin:2px 6px 2px 0;font-size:0.8rem;white-space:nowrap"><input type="checkbox" class="vs-size" value="' + s + '"' + checked + '> ' + s + ' <input type="number" class="vs-stock" value="' + stockVal + '" min="0" style="width:40px;padding:2px 4px;border:1px solid #ddd;border-radius:4px;font-size:0.75rem"></label>';
+      }).join('');
+    }
+    // Remove button
+    var rmBtn = r.querySelector('.variant-remove-btn');
+    if (rmBtn) rmBtn.style.display = rows.length > 1 ? 'inline-block' : 'none';
+  });
 }
 
 function resetForm() {
@@ -2391,18 +2490,20 @@ function resetForm() {
   document.getElementById('formSubmitBtn').textContent = 'Add Product';
   document.getElementById('formCancelBtn').style.display = 'none';
   document.getElementById('productForm').reset();
-  document.getElementById('formStock').value = 5;
   var depEl = document.getElementById('formDeposit');
   if (depEl) depEl.value = '';
   selectedImagesData = [];
   renderImagePreview();
-  selectedSizes = [];
-  _editSizeStock = {};
-  renderSizeTags();
-  renderSizePresets();
-  renderColorDropdown();
-  var ss = document.getElementById('formSizeStock');
-  if (ss) ss.style.display = 'none';
+  // Reset variant editor to one empty row
+  var container = document.getElementById('formVariantsContainer');
+  if (container) {
+    var allSizes = categoriesConfig.sizes || [];
+    var sizesHtml = allSizes.map(function(s) {
+      return '<label class="vs-row" style="display:inline-flex;align-items:center;gap:4px;margin:2px 6px 2px 0;font-size:0.8rem;white-space:nowrap"><input type="checkbox" class="vs-size" value="' + s + '"> ' + s + ' <input type="number" class="vs-stock" value="5" min="0" style="width:40px;padding:2px 4px;border:1px solid #ddd;border-radius:4px;font-size:0.75rem"></label>';
+    }).join('');
+    container.innerHTML = '<div class="variant-row" data-vi="0"><select class="form-variant-color" required><option value="">Select color...</option></select><button type="button" class="btn btn-danger btn-sm variant-remove-btn" style="display:none">×</button><div class="variant-sizes" style="margin-top:6px">' + sizesHtml + '</div></div>';
+  }
+  renderVariantsEditor();
 }
 
 function populateForm(product) {
@@ -2416,26 +2517,34 @@ function populateForm(product) {
   document.getElementById('formCategory1').value = product.category1 || '';
   updateBrandDropdown();
   document.getElementById('formCategory2').value = product.category2 || '';
-  renderColorDropdown();
-  document.getElementById('formColor').value = product.color || '';
+  // Build variant rows from product.variants
+  var container = document.getElementById('formVariantsContainer');
+  if (container && product.variants) {
+    var colors = Object.keys(product.variants);
+    if (colors.length === 0) colors = [''];
+    container.innerHTML = colors.map(function(c, i) {
+      var v = product.variants[c] || { sizes: [], stock: {} };
+      var sizesHtml = (categoriesConfig.sizes || []).map(function(s) {
+        var checked = v.sizes.indexOf(s) !== -1 ? ' checked' : '';
+        var stockVal = v.stock && v.stock[s] !== undefined ? v.stock[s] : 5;
+        return '<label class="vs-row" style="display:inline-flex;align-items:center;gap:4px;margin:2px 6px 2px 0;font-size:0.8rem;white-space:nowrap"><input type="checkbox" class="vs-size" value="' + s + '"' + checked + '> ' + s + ' <input type="number" class="vs-stock" value="' + stockVal + '" min="0" style="width:40px;padding:2px 4px;border:1px solid #ddd;border-radius:4px;font-size:0.75rem"></label>';
+      }).join('');
+      return '<div class="variant-row" data-vi="' + i + '"><select class="form-variant-color" required><option value="">Select color...</option></select><button type="button" class="btn btn-danger btn-sm variant-remove-btn" style="display:' + (colors.length > 1 ? 'inline-block' : 'none') + '">×</button><div class="variant-sizes" style="margin-top:6px">' + sizesHtml + '</div></div>';
+    }).join('');
+    renderVariantsEditor();
+    // Now set selected color values
+    container.querySelectorAll('.variant-row').forEach(function(r, i) {
+      if (i < colors.length) {
+        var sel = r.querySelector('.form-variant-color');
+        if (sel) sel.value = colors[i];
+      }
+    });
+  }
   document.getElementById('formPrice').value = product.price;
   var depEl = document.getElementById('formDeposit');
   if (depEl) depEl.value = product.deposit !== undefined ? product.deposit : '';
   document.getElementById('formDesc').value = product.description;
   document.getElementById('formAvailable').checked = product.available !== false;
-  document.getElementById('formStock').value = product.stock !== undefined ? product.stock : 5;
-  selectedSizes = product.sizes ? product.sizes.slice() : [];
-  // Populate per-size stock from stockMap
-  _editSizeStock = {};
-  var sm = stockMap[product.id];
-  if (sm && selectedSizes.length > 0) {
-    selectedSizes.forEach(function(s) {
-      var k = stockField(s);
-      _editSizeStock[s] = sm[k] !== undefined ? sm[k] : 5;
-    });
-  }
-  renderSizeTags();
-  renderSizePresets();
   var imgs = product.images || (product.image ? [product.image] : []);
   selectedImagesData = imgs.filter(function(img) { return img && img.indexOf('placeholder') === -1; });
   renderImagePreview();
@@ -2462,10 +2571,32 @@ if (pf) pf.addEventListener('submit', function(e) {
   var category0 = document.getElementById('formCategory0').value;
   var category1 = document.getElementById('formCategory1').value;
   var category2 = document.getElementById('formCategory2').value;
-  var color = document.getElementById('formColor').value;
   var price = document.getElementById('formPrice').value.trim();
   var description = document.getElementById('formDesc').value.trim();
   if (!name || !category0 || !category1 || !category2 || !price || !description) return;
+
+  // Build variants from editor
+  var variants = {};
+  var container = document.getElementById('formVariantsContainer');
+  if (container) {
+    container.querySelectorAll('.variant-row').forEach(function(r) {
+      var sel = r.querySelector('.form-variant-color');
+      if (!sel || !sel.value) return;
+      var color = sel.value;
+      var stock = {};
+      var sizes = [];
+      r.querySelectorAll('.vs-row').forEach(function(sr) {
+        var cb = sr.querySelector('.vs-size');
+        var st = sr.querySelector('.vs-stock');
+        if (cb && cb.checked) {
+          sizes.push(cb.value);
+          stock[cb.value] = parseInt(st ? st.value : 5) || 0;
+        }
+      });
+      variants[color] = { sizes: sizes, stock: stock };
+    });
+  }
+  if (Object.keys(variants).length === 0) { alert('Please add at least one color variant.'); return; }
 
   var submitBtn = document.getElementById('formSubmitBtn');
   var origText = submitBtn.textContent;
@@ -2476,43 +2607,18 @@ if (pf) pf.addEventListener('submit', function(e) {
   var keep = selectedImagesData.filter(function(s) { return !s.startsWith('data:'); });
 
   function finish(images) {
-    var stock = parseInt(document.getElementById('formStock').value) || 0;
     var deposit = document.getElementById('formDeposit') ? document.getElementById('formDeposit').value.trim() : '';
     if (editingId) {
       var idx = products.findIndex(function(p) { return p.id === editingId; });
       if (idx !== -1) {
-        products[idx] = Object.assign({}, products[idx], { name: name, category0: category0, category1: category1, category2: category2, color: color, price: price, description: description, images: images, sizes: selectedSizes.slice(), available: document.getElementById('formAvailable').checked, stock: stock, deposit: deposit || undefined });
-        // Update stockMap from per-size inputs if product has sizes
-        if (selectedSizes.length > 0) {
-          if (!stockMap[products[idx].id]) stockMap[products[idx].id] = {};
-          selectedSizes.forEach(function(s) {
-            var val = _editSizeStock[s] !== undefined ? _editSizeStock[s] : 0;
-            stockMap[products[idx].id][stockField(s)] = val;
-          });
-          stockMap[products[idx].id].q = 0;
-          products[idx].stock = getTotalStock(products[idx].id);
-        }
+        products[idx] = Object.assign({}, products[idx], { name: name, category0: category0, category1: category1, category2: category2, variants: variants, price: price, description: description, images: images, available: document.getElementById('formAvailable').checked, deposit: deposit || undefined });
       }
     } else {
       var maxId = products.length > 0 ? Math.max.apply(null, products.map(function(p) { return p.id; })) : 0;
       var newId = maxId + 1;
-      products.push({ id: newId, name: name, category0: category0, category1: category1, category2: category2, color: color, price: price, description: description, images: images, sizes: selectedSizes.slice(), available: document.getElementById('formAvailable').checked, stock: stock, deposit: deposit || undefined });
-      // Initialize stockMap for new product with sizes
-      if (selectedSizes.length > 0) {
-        stockMap[newId] = {};
-        selectedSizes.forEach(function(s) {
-          var val = _editSizeStock[s] !== undefined ? _editSizeStock[s] : 5;
-          stockMap[newId][stockField(s)] = val;
-        });
-        stockMap[newId].q = 0;
-        products[products.length - 1].stock = getTotalStock(newId);
-      }
+      products.push({ id: newId, name: name, category0: category0, category1: category1, category2: category2, variants: variants, price: price, description: description, images: images, available: document.getElementById('formAvailable').checked, deposit: deposit || undefined });
     }
     saveProducts();
-    if (editingId || selectedSizes.length > 0) {
-      var pid = editingId || (products.length > 0 ? products[products.length - 1].id : null);
-      if (pid) syncStockToFirestore(pid);
-    }
     resetForm();
     renderAdminList();
     renderFilters();
@@ -2537,20 +2643,39 @@ if (pf) pf.addEventListener('submit', function(e) {
 var fcb = document.getElementById('formCancelBtn');
 if (fcb) fcb.addEventListener('click', resetForm);
 
-var nsi = document.getElementById('newSizeInput');
-if (nsi) nsi.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    var val = this.value.trim();
-    if (val && selectedSizes.indexOf(val) === -1) { selectedSizes.push(val); this.value = ''; renderSizeTags(); renderSizePresets(); }
-  }
+// Add variant
+var avb = document.getElementById('addVariantBtn');
+if (avb) avb.addEventListener('click', function() {
+  var container = document.getElementById('formVariantsContainer');
+  if (!container) return;
+  var idx = container.querySelectorAll('.variant-row').length;
+  var allSizes = categoriesConfig.sizes || [];
+  var sizesHtml = allSizes.map(function(s) {
+    return '<label class="vs-row" style="display:inline-flex;align-items:center;gap:4px;margin:2px 6px 2px 0;font-size:0.8rem;white-space:nowrap"><input type="checkbox" class="vs-size" value="' + s + '"> ' + s + ' <input type="number" class="vs-stock" value="5" min="0" style="width:40px;padding:2px 4px;border:1px solid #ddd;border-radius:4px;font-size:0.75rem"></label>';
+  }).join('');
+  var div = document.createElement('div');
+  div.className = 'variant-row';
+  div.dataset.vi = idx;
+  div.innerHTML = '<select class="form-variant-color" required><option value="">Select color...</option></select><button type="button" class="btn btn-danger btn-sm variant-remove-btn">×</button><div class="variant-sizes" style="margin-top:6px">' + sizesHtml + '</div>';
+  container.appendChild(div);
+  renderVariantsEditor();
 });
 
-var asb = document.getElementById('addSizeBtn');
-if (asb) asb.addEventListener('click', function() {
-  var input = document.getElementById('newSizeInput');
-  var val = input.value.trim();
-  if (val && selectedSizes.indexOf(val) === -1) { selectedSizes.push(val); input.value = ''; renderSizeTags(); renderSizePresets(); }
+// Variant remove via delegation
+document.addEventListener('click', function(e) {
+  var rmBtn = e.target.closest('.variant-remove-btn');
+  if (rmBtn) {
+    var row = rmBtn.closest('.variant-row');
+    if (row) {
+      var container = document.getElementById('formVariantsContainer');
+      if (container && container.querySelectorAll('.variant-row').length > 1) {
+        row.remove();
+        renderVariantsEditor();
+      } else {
+        alert('At least one color variant is required.');
+      }
+    }
+  }
 });
 
 var fc0 = document.getElementById('formCategory0');
@@ -3099,7 +3224,7 @@ function renderCategoryManagement() {
         categoriesConfig.sizes = categoriesConfig.sizes.filter(function(x) { return x !== s; });
         saveCategoriesConfig();
         renderCategoryManagement();
-        renderSizePresets();
+        renderVariantsEditor();
       });
     });
     sizeList.querySelectorAll('.admin-tag-label').forEach(function(el) {
@@ -3114,7 +3239,7 @@ function renderCategoryManagement() {
         categoriesConfig.colors = categoriesConfig.colors.filter(function(x) { return x !== c; });
         saveCategoriesConfig();
         renderCategoryManagement();
-        renderColorDropdown();
+        renderVariantsEditor();
       });
     });
     colorList.querySelectorAll('.admin-tag-label').forEach(function(el) {
@@ -3457,7 +3582,7 @@ if (acb) acb.addEventListener('click', function() {
   input.value = '';
   saveCategoriesConfig();
   renderCategoryManagement();
-  renderColorDropdown();
+  renderVariantsEditor();
   renderAdminFilterDropdowns();
 });
 var nci = document.getElementById('newColorInput');

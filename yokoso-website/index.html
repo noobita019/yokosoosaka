@@ -222,12 +222,18 @@
                 <label>Brand</label>
                 <select id="formCategory2" required></select>
               </div>
-              <div class="form-group">
-                <label>Color</label>
-                <select id="formColor" required>
-                  <option value="">Select color...</option>
-                </select>
+            </div>
+            <div class="form-group">
+              <label>Color Variants</label>
+              <div id="formVariantsContainer">
+                <div class="variant-row" data-vi="0">
+                  <select class="form-variant-color" required>
+                    <option value="">Select color...</option>
+                  </select>
+                  <button type="button" class="btn btn-danger btn-sm variant-remove-btn" style="display:none">×</button>
+                </div>
               </div>
+              <button type="button" class="btn btn-secondary btn-sm" id="addVariantBtn" style="margin-top:6px">+ Add Color Variant</button>
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -248,20 +254,6 @@
                 <input type="checkbox" id="formAvailable" checked>
                 <span>Available (show in product grid)</span>
               </label>
-            </div>
-            <div class="form-group">
-              <label>Stock Quantity</label>
-              <input type="number" id="formStock" value="5" min="0" style="width:100%;padding:0.6rem 0.8rem;border:1px solid rgba(255,255,255,0.15);border-radius:8px;background:rgba(255,255,255,0.06);color:#fff;font-size:0.9rem;outline:none">
-              <div id="formSizeStock" style="display:none;margin-top:0.5rem"></div>
-            </div>
-            <div class="form-group">
-              <label>Sizes</label>
-              <div class="form-sizes-area">
-                <input type="text" id="newSizeInput" placeholder="Custom size...">
-                <button type="button" class="btn btn-secondary btn-sm" id="addSizeBtn">Add</button>
-              </div>
-              <div class="form-size-tags" id="formSizeTags"></div>
-              <div class="form-size-presets" id="formSizePresets"></div>
             </div>
             <div class="form-group">
               <label>Product Images</label>
