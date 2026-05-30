@@ -3166,7 +3166,7 @@ function showAdminPanel() {
       } catch(e) {}
     }
   }
-  document.getElementById('maintenanceOverlay').classList.add('active');
+  document.getElementById('maintenanceOverlay').classList.add('active', 'admin-mode');
   document.getElementById('maintenancePublic').style.display = 'none';
   document.getElementById('adminPanel').style.display = 'block';
   var emailInput = document.getElementById('adminEmailInput');
@@ -3259,7 +3259,7 @@ if (sgp) sgp.addEventListener('change', function() {
 
 var backBtn = document.getElementById('backToPublicBtn');
 if (backBtn) backBtn.addEventListener('click', function() {
-  document.getElementById('maintenanceOverlay').classList.remove('active');
+  document.getElementById('maintenanceOverlay').classList.remove('active', 'admin-mode');
   document.getElementById('maintenancePublic').style.display = '';
   document.getElementById('adminPanel').style.display = 'none';
   adminSearchVal = '';
