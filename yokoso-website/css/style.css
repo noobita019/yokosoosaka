@@ -963,13 +963,12 @@ body {
 /* Admin Panel */
 .admin-panel {
   width: 100%;
-  max-width: 100%;
-  height: 100vh;
-  overflow-y: auto;
+  height: 100%;
   color: #fff;
   text-align: left;
   padding: 1.5rem 2rem;
   box-sizing: border-box;
+  overflow-y: auto;
 }
 
 .admin-header {
