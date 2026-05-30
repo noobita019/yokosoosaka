@@ -386,6 +386,18 @@
             Footer "Send us a message" link will point to this URL. Use an m.me link or Facebook page URL.
           </div>
         </div>
+        <div class="admin-cloudinary-config" style="padding:12px 20px;background:#f8f9fa;border-top:1px solid #dee2e6">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <strong style="font-size:14px">Cloudinary Images</strong>
+            <input type="text" id="cloudinaryCloudName" placeholder="Cloud name" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;flex:0 1 160px;min-width:120px;font-size:13px">
+            <input type="text" id="cloudinaryUploadPreset" placeholder="Upload preset" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;flex:0 1 160px;min-width:120px;font-size:13px">
+            <button type="button" onclick="saveCloudinarySettings()" style="padding:6px 14px;background:#2e7d32;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px">Save</button>
+            <span id="cloudinaryStatus" style="font-size:12px;color:#888"></span>
+          </div>
+          <div style="font-size:11px;color:#888;margin-top:6px">
+            Product images upload to Cloudinary instead of being stored as data URLs. Get your <strong>Cloud name</strong> and create an <strong>unsigned Upload preset</strong> (Settings &gt; Upload &gt; Upload presets) in your <a href="https://cloudinary.com" target="_blank" style="color:#007bff">Cloudinary</a> dashboard.
+          </div>
+        </div>
       </div>
     </div>
   </div>

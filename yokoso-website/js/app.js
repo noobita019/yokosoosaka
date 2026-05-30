@@ -187,7 +187,7 @@ function switchAdminTab(tab) {
   if (tab === 'categories') renderCategoryManagement();
   if (tab === 'orders') loadOrders();
   if (tab === 'users') loadUsers();
-  if (tab === 'config') { applyProxyUrl(); var gti = document.getElementById('githubTokenInput'); if (gti) gti.value = localStorage.getItem('github_token') || ''; var ast = document.getElementById('autoSyncToggle'); if (ast) ast.checked = localStorage.getItem('autoSyncEnabled') === 'true'; var mui = document.getElementById('messengerUrlInput'); if (mui) mui.value = categoriesConfig.messengerUrl || ''; }
+  if (tab === 'config') { applyProxyUrl(); var gti = document.getElementById('githubTokenInput'); if (gti) gti.value = localStorage.getItem('github_token') || ''; var ast = document.getElementById('autoSyncToggle'); if (ast) ast.checked = localStorage.getItem('autoSyncEnabled') === 'true'; var mui = document.getElementById('messengerUrlInput'); if (mui) mui.value = categoriesConfig.messengerUrl || ''; var ccn = document.getElementById('cloudinaryCloudName'); if (ccn) ccn.value = categoriesConfig.cloudinaryCloudName || ''; var cup = document.getElementById('cloudinaryUploadPreset'); if (cup) cup.value = categoriesConfig.cloudinaryUploadPreset || ''; }
 }
 function loadUsers() {
   var list = document.getElementById('usersList');
@@ -323,6 +323,19 @@ function renderMessengerLink() {
   if (link && categoriesConfig && categoriesConfig.messengerUrl) {
     link.href = categoriesConfig.messengerUrl;
   }
+}
+
+function saveCloudinarySettings() {
+  var cloudNameInput = document.getElementById('cloudinaryCloudName');
+  var presetInput = document.getElementById('cloudinaryUploadPreset');
+  var status = document.getElementById('cloudinaryStatus');
+  if (!cloudNameInput || !presetInput || !status) return;
+  categoriesConfig.cloudinaryCloudName = cloudNameInput.value.trim();
+  categoriesConfig.cloudinaryUploadPreset = presetInput.value.trim();
+  saveCategoriesConfig();
+  status.textContent = 'Saved!';
+  setTimeout(function() { status.textContent = ''; }, 2000);
+  showCartNotification('Cloudinary settings saved.');
 }
 
 function saveMessengerUrl() {
@@ -1277,8 +1290,22 @@ function saveProducts() {
 }
 
 function uploadImage(dataUrl) {
+  var cloudName = categoriesConfig && categoriesConfig.cloudinaryCloudName;
+  var uploadPreset = categoriesConfig && categoriesConfig.cloudinaryUploadPreset;
+  if (!cloudName || !uploadPreset) {
     return Promise.resolve(dataUrl);
   }
+  var formData = new FormData();
+  formData.append('file', dataUrl);
+  formData.append('upload_preset', uploadPreset);
+  return fetch('https://api.cloudinary.com/v1_1/' + encodeURIComponent(cloudName) + '/image/upload', {
+    method: 'POST',
+    body: formData
+  }).then(function(r) { return r.json(); }).then(function(j) {
+    if (j.secure_url) return j.secure_url;
+    throw new Error(j.error && j.error.message || 'Cloudinary upload failed');
+  });
+}
 
 function getGroups() {
   return categoriesConfig.groups || [];
