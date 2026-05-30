@@ -1605,15 +1605,8 @@ function renderProducts() {
 function goToPage(newPage) {
   mainPage = newPage;
   renderProducts();
-  if (window.innerWidth > 768) {
-    var first = document.querySelector('#productGrid .product-card');
-    if (first) {
-      var headerH = document.querySelector('.header') ? document.querySelector('.header').offsetHeight : 60;
-      var filterH = document.querySelector('.search-filter') ? document.querySelector('.search-filter').offsetHeight : 50;
-      first.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      window.scrollBy(0, -headerH - filterH);
-    }
-  }
+  var first = document.querySelector('#productGrid .product-card');
+  if (first) first.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ---- PROXY-BASED REAL-TIME STOCK ----
