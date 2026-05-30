@@ -195,6 +195,35 @@ async function sendEmail(env, to, subject, text, fromAddr) {
   throw new Error('No email method configured. Set RESEND_API_KEY, EMAIL binding, or MAILGUN_API_KEY+MAILGUN_DOMAIN.');
 }
 
+// WhatsApp Cloud API
+async function sendWhatsApp(env, to, message) {
+  if (!env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_NUMBER_ID) {
+    throw new Error('WhatsApp not configured. Set WHATSAPP_TOKEN and WHATSAPP_PHONE_NUMBER_ID env vars.');
+  }
+  const phone = to.replace(/[^0-9]/g, '');
+  if (phone.length < 10) {
+    throw new Error('Invalid phone number: ' + to);
+  }
+  const resp = await fetch(`https://graph.facebook.com/v22.0/${env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + env.WHATSAPP_TOKEN,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      messaging_product: 'whatsapp',
+      to: phone,
+      type: 'text',
+      text: { body: message }
+    })
+  });
+  const result = await resp.json().catch(() => ({}));
+  if (!resp.ok) {
+    throw new Error('WhatsApp API: ' + (result.error?.message || JSON.stringify(result)));
+  }
+  return result;
+}
+
 function corsHeaders(origin) {
   return {
     'Access-Control-Allow-Origin': origin || '*',
@@ -768,6 +797,34 @@ async function handleRequest(request, env) {
         return new Response(JSON.stringify({ id: parts[1], fields, total: fields[field] }), { headers: corsHeaders(origin) });
       }
       throw new Error(`Decrement failed: ${JSON.stringify(r)}`);
+    }
+
+    // POST /notifications/whatsapp — send WhatsApp message via Meta Cloud API
+    if (request.method === 'POST' && parts.length === 2 && parts[0] === 'notifications' && parts[1] === 'whatsapp') {
+      const body = await request.json();
+      if (!body.to || !body.message) {
+        return new Response(JSON.stringify({ error: 'to and message required' }), { status: 400, headers: corsHeaders(origin) });
+      }
+      try {
+        const result = await sendWhatsApp(env, body.to, body.message);
+        return new Response(JSON.stringify({ ok: true, result }), { headers: corsHeaders(origin) });
+      } catch (e) {
+        return new Response(JSON.stringify({ ok: false, error: e.message }), { status: 500, headers: corsHeaders(origin) });
+      }
+    }
+
+    // GET /notifications/whatsapp/test — send a test WhatsApp message
+    if (request.method === 'GET' && parts.length === 3 && parts[0] === 'notifications' && parts[1] === 'whatsapp' && parts[2] === 'test') {
+      const to = url.searchParams.get('to');
+      if (!to) {
+        return new Response(JSON.stringify({ error: 'Query param "to" required' }), { status: 400, headers: corsHeaders(origin) });
+      }
+      try {
+        const result = await sendWhatsApp(env, to, 'Test message from Yokoso Osaka. If you received this, WhatsApp notifications are working!');
+        return new Response(JSON.stringify({ ok: true, result }), { headers: corsHeaders(origin) });
+      } catch (e) {
+        return new Response(JSON.stringify({ ok: false, error: e.message }), { status: 500, headers: corsHeaders(origin) });
+      }
     }
 
     return new Response(JSON.stringify({ error: 'route_not_found' }), { status: 404, headers: corsHeaders(origin) });
