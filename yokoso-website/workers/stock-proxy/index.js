@@ -300,7 +300,7 @@ function serializeStockDoc(doc) {
 // In-memory stock cache (avoids Firestore reads, consistent within a worker instance)
 let stockMemoryCache = null;
 let stockMemoryCacheTime = 0;
-const STOCK_CACHE_TTL = 120000; // 2 minutes
+const STOCK_CACHE_TTL = 60000; // 1 minute
 
 async function getStocks(env) {
   // Try memory cache first
