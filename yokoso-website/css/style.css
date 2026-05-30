@@ -976,6 +976,20 @@ body {
   gap: 1rem;
 }
 
+.admin-tab-btn {
+  padding: 6px 16px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+.admin-tab-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+.admin-tab-btn.active { background: #e94560; border-color: #e94560; color: #fff; }
+.admin-tab-content { padding: 0; }
 .admin-header h2 {
   font-size: 1.5rem;
 }

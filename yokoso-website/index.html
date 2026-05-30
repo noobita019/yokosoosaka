@@ -130,153 +130,107 @@
 
     <div class="admin-panel" id="adminPanel" style="display:none">
       <div class="admin-header">
-        <h2>Manage Products</h2>
+        <h2>Admin Panel</h2>
         <div class="admin-header-actions">
-          <button class="btn btn-secondary" id="importBtn">Import JSON</button>
-          <button class="btn btn-secondary" id="exportBtn">Export JSON</button>
-          <button class="btn btn-secondary" id="manageCategoriesBtn">Categories</button>
-          <button class="btn btn-secondary" id="syncSettingsBtn">Auto Sync</button>
-          <button class="btn btn-secondary" id="usersBtn" onclick="toggleUsersPanel()">Users</button>
-          <button class="btn btn-secondary" onclick="toggleOrdersPanel()">Orders</button>
+          <button class="admin-tab-btn active" data-tab="products">Products</button>
+          <button class="admin-tab-btn" data-tab="categories">Categories</button>
+          <button class="admin-tab-btn" data-tab="orders">Orders</button>
+          <button class="admin-tab-btn" data-tab="users">Users</button>
+          <button class="admin-tab-btn" data-tab="config">Config</button>
           <button class="btn btn-secondary" id="backToPublicBtn">Back</button>
         </div>
       </div>
-      <input type="file" id="importFileInput" accept=".json" style="display:none">
 
-      <div class="admin-sync-settings" id="adminSyncSettings" style="display:none;padding:12px 20px;background:#f8f9fa;border-bottom:1px solid #dee2e6">
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-          <strong style="font-size:14px">GitHub Auto Sync</strong>
-          <input type="password" id="githubTokenInput" placeholder="GitHub Personal Access Token" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;flex:1;min-width:200px;font-size:13px">
-          <label style="font-size:13px;display:flex;align-items:center;gap:4px;cursor:pointer">
-            <input type="checkbox" id="autoSyncToggle"> Auto-sync on save
-          </label>
-          <span id="syncStatus" style="font-size:12px;color:#666"></span>
+      <div class="admin-tab-content" id="tab-products">
+        <input type="file" id="importFileInput" accept=".json" style="display:none">
+        <div style="padding:8px 20px;display:flex;gap:8px;border-bottom:1px solid rgba(255,255,255,0.08)">
+          <button class="btn btn-secondary" id="importBtn" style="font-size:12px">Import JSON</button>
+          <button class="btn btn-secondary" id="exportBtn" style="font-size:12px">Export JSON</button>
         </div>
-        <div style="font-size:11px;color:#888;margin-top:6px">
-          Token needs <code>repo</code> scope. Create one at 
-          <a href="https://github.com/settings/tokens" target="_blank" style="color:#007bff">github.com/settings/tokens</a>
-        </div>
-      </div>
-
-      <div class="admin-stock-proxy" style="display:none;padding:12px 20px;background:#f8f9fa;border-bottom:1px solid #dee2e6" id="adminStockProxy">
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-          <strong style="font-size:14px">Stock Proxy URL</strong>
-          <input type="url" id="stockProxyUrl" onchange="applyProxyUrl()" placeholder="https://yokoso-stock-proxy.your-name.workers.dev" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;flex:1;min-width:250px;font-size:13px">
-          <button type="button" id="proxySaveBtn" onclick="applyProxyUrl()" style="padding:6px 14px;background:#2e7d32;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px">Save</button>
-          <button type="button" id="proxyTestBtn" onclick="testProxyConnection()" style="padding:6px 14px;background:#1976d2;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px">Test</button>
-          <span id="proxyStatus" style="font-size:12px;color:#888"></span>
-        </div>
-      </div>
-
-      <div class="admin-email-config" style="display:none;padding:12px 20px;background:#f8f9fa;border-bottom:1px solid #dee2e6" id="adminEmailConfig">
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-          <strong style="font-size:14px">Admin Email (for orders)</strong>
-          <input type="email" id="adminEmailInput" placeholder="admin@example.com" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;flex:1;min-width:250px;font-size:13px">
-          <button type="button" onclick="saveAdminEmail()" style="padding:6px 14px;background:#2e7d32;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px">Save</button>
-          <button type="button" onclick="testAdminEmail()" style="padding:6px 14px;background:#1976d2;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px">Test Email</button>
-          <span id="adminEmailStatus" style="font-size:12px;color:#888"></span>
-        </div>
-        <div style="font-size:11px;color:#888;margin-top:6px">
-          Purchase orders will be sent to this email address on checkout.
-        </div>
-      </div>
-
-      <div class="admin-orders" style="display:none;padding:12px 20px;background:#1a1a2e;border-bottom:1px solid #333" id="adminOrdersSection">
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
-          <strong style="font-size:15px;color:#ff6b81">Orders</strong>
-          <select id="ordersFilterStatus" onchange="loadOrders()" style="padding:4px 8px;border:1px solid #555;border-radius:4px;background:rgba(255,255,255,0.06);color:#ccc;font-size:12px">
-            <option value="all">All</option>
-            <option value="pending">Pending</option>
-            <option value="deposit_paid">Deposit Paid</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-          <button type="button" onclick="loadOrders()" style="padding:4px 12px;background:#1976d2;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px">Refresh</button>
-          <button type="button" onclick="exportOrdersCSV()" style="padding:4px 12px;background:#2e7d32;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px">Export CSV</button>
-          <span id="ordersCount" style="font-size:11px;color:#888"></span>
-        </div>
-        <div id="ordersList" style="font-size:12px;color:#ccc;max-height:500px;overflow-y:auto;background:rgba(255,255,255,0.03);border-radius:6px;padding:8px"></div>
-      </div>
-
-      <div class="admin-layout">
-        <div class="admin-form">
-          <h3 id="formTitle">Add Product</h3>
-          <form id="productForm">
-            <div class="form-group">
-              <label>Product Name</label>
-              <input type="text" id="formName" required>
-            </div>
-            <div class="form-row">
+        <div class="admin-layout">
+          <div class="admin-form">
+            <h3 id="formTitle">Add Product</h3>
+            <form id="productForm">
               <div class="form-group">
-                <label>Group</label>
-                <select id="formCategory0" required></select>
+                <label>Product Name</label>
+                <input type="text" id="formName" required>
               </div>
-              <div class="form-group">
-                <label>Subcategory</label>
-                <select id="formCategory1" required></select>
-              </div>
-              <div class="form-group">
-                <label>Brand</label>
-                <select id="formCategory2" required></select>
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Color Variants</label>
-              <div id="formVariantsContainer">
-                <div class="variant-row" data-vi="0">
-                  <select class="form-variant-color" required>
-                    <option value="">Select color...</option>
-                  </select>
-                  <button type="button" class="btn btn-danger btn-sm variant-remove-btn" style="display:none">×</button>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Group</label>
+                  <select id="formCategory0" required></select>
+                </div>
+                <div class="form-group">
+                  <label>Subcategory</label>
+                  <select id="formCategory1" required></select>
+                </div>
+                <div class="form-group">
+                  <label>Brand</label>
+                  <select id="formCategory2" required></select>
                 </div>
               </div>
-              <button type="button" class="btn btn-secondary btn-sm" id="addVariantBtn" style="margin-top:6px">+ Add Color Variant</button>
-            </div>
-            <div class="form-row">
               <div class="form-group">
-                <label>Price</label>
-                <input type="text" id="formPrice" required placeholder="₱850">
+                <label>Color Variants</label>
+                <div id="formVariantsContainer">
+                  <div class="variant-row" data-vi="0">
+                    <select class="form-variant-color" required>
+                      <option value="">Select color...</option>
+                    </select>
+                    <button type="button" class="btn btn-danger btn-sm variant-remove-btn" style="display:none">×</button>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" id="addVariantBtn" style="margin-top:6px">+ Add Color Variant</button>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Price</label>
+                  <input type="text" id="formPrice" required placeholder="₱850">
+                </div>
+                <div class="form-group">
+                  <label>Deposit</label>
+                  <input type="text" id="formDeposit" placeholder="₱425 (leave blank = 50% of price)">
+                </div>
               </div>
               <div class="form-group">
-                <label>Deposit</label>
-                <input type="text" id="formDeposit" placeholder="₱425 (leave blank = 50% of price)">
+                <label>Description</label>
+                <textarea id="formDesc" rows="3" required></textarea>
               </div>
-            </div>
-            <div class="form-group">
-              <label>Description</label>
-              <textarea id="formDesc" rows="3" required></textarea>
-            </div>
-            <div class="form-group">
-              <label class="checkbox-label">
-                <input type="checkbox" id="formAvailable" checked>
-                <span>Available (show in product grid)</span>
-              </label>
-            </div>
-            <div class="form-group">
-              <label>Product Images</label>
-              <div class="form-image-upload-area">
-                <input type="file" id="formImage" accept="image/*">
-                <button type="button" class="btn btn-secondary btn-sm" id="addImageBtn">Add Image</button>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="formAvailable" checked>
+                  <span>Available (show in product grid)</span>
+                </label>
               </div>
-              <div class="form-image-preview" id="formImagePreview"></div>
-            </div>
-            <div class="form-actions">
-              <button type="submit" class="btn btn-primary" id="formSubmitBtn">Add Product</button>
-              <button type="button" class="btn btn-secondary" id="formCancelBtn" style="display:none">Cancel</button>
-            </div>
-          </form>
-        </div>
-        <div class="admin-list">
-          <h3>All Products (<span id="productCount">0</span>)</h3>
-          <div class="admin-list-toolbar">
-            <input type="search" id="adminSearch" placeholder="Search products..." class="admin-search-input">
-            <select id="adminFilterGroup" class="admin-filter-select"><option value="all">All Groups</option></select>
-            <select id="adminFilterType" class="admin-filter-select"><option value="all">All Subcategories</option></select>
-            <select id="adminFilterBrand" class="admin-filter-select"><option value="all">All Brands</option></select>
-            <select id="adminFilterColor" class="admin-filter-select"><option value="all">All Colors</option></select>
+              <div class="form-group">
+                <label>Product Images</label>
+                <div class="form-image-upload-area">
+                  <input type="file" id="formImage" accept="image/*">
+                  <button type="button" class="btn btn-secondary btn-sm" id="addImageBtn">Add Image</button>
+                </div>
+                <div class="form-image-preview" id="formImagePreview"></div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="formSubmitBtn">Add Product</button>
+                <button type="button" class="btn btn-secondary" id="formCancelBtn" style="display:none">Cancel</button>
+              </div>
+            </form>
           </div>
-          <div class="admin-product-list" id="adminProductList"></div>
-        <div class="admin-categories" id="adminCategories" style="display:none">
+          <div class="admin-list">
+            <h3>All Products (<span id="productCount">0</span>)</h3>
+            <div class="admin-list-toolbar">
+              <input type="search" id="adminSearch" placeholder="Search products..." class="admin-search-input">
+              <select id="adminFilterGroup" class="admin-filter-select"><option value="all">All Groups</option></select>
+              <select id="adminFilterType" class="admin-filter-select"><option value="all">All Subcategories</option></select>
+              <select id="adminFilterBrand" class="admin-filter-select"><option value="all">All Brands</option></select>
+              <select id="adminFilterColor" class="admin-filter-select"><option value="all">All Colors</option></select>
+            </div>
+            <div class="admin-product-list" id="adminProductList"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-tab-content" id="tab-categories" style="display:none">
+        <div class="admin-categories">
           <h3>Manage Categories</h3>
           <div class="admin-categories-grid">
             <div class="admin-category-group">
@@ -355,10 +309,70 @@
             </div>
           </div>
         </div>
-        <div class="admin-users" id="adminUsers" style="display:none">
+      </div>
+
+      <div class="admin-tab-content" id="tab-orders" style="display:none">
+        <div class="admin-orders" style="padding:12px 20px;background:#1a1a2e">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+            <strong style="font-size:15px;color:#ff6b81">Orders</strong>
+            <select id="ordersFilterStatus" onchange="loadOrders()" style="padding:4px 8px;border:1px solid #555;border-radius:4px;background:rgba(255,255,255,0.06);color:#ccc;font-size:12px">
+              <option value="all">All</option>
+              <option value="pending">Pending</option>
+              <option value="deposit_paid">Deposit Paid</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <button type="button" onclick="loadOrders()" style="padding:4px 12px;background:#1976d2;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px">Refresh</button>
+            <button type="button" onclick="exportOrdersCSV()" style="padding:4px 12px;background:#2e7d32;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px">Export CSV</button>
+            <span id="ordersCount" style="font-size:11px;color:#888"></span>
+          </div>
+          <div id="ordersList" style="font-size:12px;color:#ccc;max-height:500px;overflow-y:auto;background:rgba(255,255,255,0.03);border-radius:6px;padding:8px"></div>
+        </div>
+      </div>
+
+      <div class="admin-tab-content" id="tab-users" style="display:none">
+        <div class="admin-users" style="padding:12px 20px">
           <h3>Registered Users</h3>
           <div id="usersList" style="font-size:0.85rem;color:#ccc">
             <p style="color:#888">Loading...</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-tab-content" id="tab-config" style="display:none">
+        <div class="admin-sync-settings" style="padding:12px 20px;background:#f8f9fa;border-bottom:1px solid #dee2e6">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <strong style="font-size:14px">GitHub Auto Sync</strong>
+            <input type="password" id="githubTokenInput" placeholder="GitHub Personal Access Token" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;flex:1;min-width:200px;font-size:13px">
+            <label style="font-size:13px;display:flex;align-items:center;gap:4px;cursor:pointer">
+              <input type="checkbox" id="autoSyncToggle"> Auto-sync on save
+            </label>
+            <span id="syncStatus" style="font-size:12px;color:#666"></span>
+          </div>
+          <div style="font-size:11px;color:#888;margin-top:6px">
+            Token needs <code>repo</code> scope. Create one at 
+            <a href="https://github.com/settings/tokens" target="_blank" style="color:#007bff">github.com/settings/tokens</a>
+          </div>
+        </div>
+        <div class="admin-stock-proxy" style="padding:12px 20px;background:#f8f9fa;border-bottom:1px solid #dee2e6">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <strong style="font-size:14px">Stock Proxy URL</strong>
+            <input type="url" id="stockProxyUrl" onchange="applyProxyUrl()" placeholder="https://yokoso-stock-proxy.your-name.workers.dev" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;flex:1;min-width:250px;font-size:13px">
+            <button type="button" id="proxySaveBtn" onclick="applyProxyUrl()" style="padding:6px 14px;background:#2e7d32;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px">Save</button>
+            <button type="button" id="proxyTestBtn" onclick="testProxyConnection()" style="padding:6px 14px;background:#1976d2;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px">Test</button>
+            <span id="proxyStatus" style="font-size:12px;color:#888"></span>
+          </div>
+        </div>
+        <div class="admin-email-config" style="padding:12px 20px;background:#f8f9fa">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <strong style="font-size:14px">Admin Email (for orders)</strong>
+            <input type="email" id="adminEmailInput" placeholder="admin@example.com" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;flex:1;min-width:250px;font-size:13px">
+            <button type="button" onclick="saveAdminEmail()" style="padding:6px 14px;background:#2e7d32;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px">Save</button>
+            <button type="button" onclick="testAdminEmail()" style="padding:6px 14px;background:#1976d2;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px">Test Email</button>
+            <span id="adminEmailStatus" style="font-size:12px;color:#888"></span>
+          </div>
+          <div style="font-size:11px;color:#888;margin-top:6px">
+            Purchase orders will be sent to this email address on checkout.
           </div>
         </div>
       </div>

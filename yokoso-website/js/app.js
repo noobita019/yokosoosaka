@@ -166,11 +166,13 @@ function handleLogout() {
 // ---- END ACCOUNT ----
 
 // ---- ADMIN USERS ----
-function toggleUsersPanel() {
-  var el = document.getElementById('adminUsers');
-  if (!el) return;
-  el.style.display = el.style.display === 'none' ? 'block' : 'none';
-  if (el.style.display === 'block') loadUsers();
+function switchAdminTab(tab) {
+  document.querySelectorAll('.admin-tab-btn').forEach(function(b) { b.classList.toggle('active', b.dataset.tab === tab); });
+  document.querySelectorAll('.admin-tab-content').forEach(function(c) { c.style.display = c.id === 'tab-' + tab ? 'block' : 'none'; });
+  if (tab === 'categories') renderCategoryManagement();
+  if (tab === 'orders') loadOrders();
+  if (tab === 'users') loadUsers();
+  if (tab === 'config') { applyProxyUrl(); var gti = document.getElementById('githubTokenInput'); if (gti) gti.value = localStorage.getItem('github_token') || ''; var ast = document.getElementById('autoSyncToggle'); if (ast) ast.checked = localStorage.getItem('autoSyncEnabled') === 'true'; }
 }
 function loadUsers() {
   var list = document.getElementById('usersList');
@@ -489,12 +491,8 @@ function releaseExpiredOrders() {
     });
 }
 
-function toggleOrdersPanel() {
-  var el = document.getElementById('adminOrdersSection');
-  if (!el) return;
-  el.style.display = el.style.display === 'none' ? 'block' : 'none';
-  if (el.style.display === 'block') loadOrders();
-}
+var tabBtns = document.querySelectorAll('.admin-tab-btn');
+tabBtns.forEach(function(b) { b.addEventListener('click', function() { switchAdminTab(this.dataset.tab); }); });
 
 function loadOrders() {
   var el = document.getElementById('ordersList');
@@ -1176,7 +1174,7 @@ function saveCategoriesConfig() {
     syncCategoriesToGitHub();
   } else {
     if (groupStatusEl) {
-      groupStatusEl.innerHTML = (autoSync ? '' : 'Auto-sync not enabled. ') + (!token ? 'No GitHub token.' : '') + ' <a href="#" onclick="document.getElementById(\'syncSettingsBtn\').click();return false">Open sync settings</a>';
+      groupStatusEl.innerHTML = (autoSync ? '' : 'Auto-sync not enabled. ') + (!token ? 'No GitHub token.' : '') + ' <a href="#" onclick="switchAdminTab(\'config\');return false">Open sync settings</a>';
       groupStatusEl.style.color = '#e67e22';
     }
   }
@@ -2918,15 +2916,7 @@ var GITHUB_PATH = 'yokoso-website/data/products.json';
 var GITHUB_CATEGORIES_PATH = 'yokoso-website/data/categories.json';
 var GITHUB_BRANCH = 'main';
 
-var ssb = document.getElementById('syncSettingsBtn');
-if (ssb) ssb.addEventListener('click', function() {
-  var el = document.getElementById('adminSyncSettings');
-  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
-  var gti = document.getElementById('githubTokenInput');
-  if (gti) gti.value = localStorage.getItem('github_token') || '';
-  var ast = document.getElementById('autoSyncToggle');
-  if (ast) ast.checked = localStorage.getItem('autoSyncEnabled') === 'true';
-});
+
 
 var gti = document.getElementById('githubTokenInput');
 if (gti) gti.addEventListener('input', function() {
@@ -3038,14 +3028,9 @@ function showAdminPanel() {
   document.getElementById('maintenanceOverlay').classList.add('active');
   document.getElementById('maintenancePublic').style.display = 'none';
   document.getElementById('adminPanel').style.display = 'block';
-  var proxySection = document.getElementById('adminStockProxy');
-  if (proxySection) proxySection.style.display = 'block';
-  var emailSection = document.getElementById('adminEmailConfig');
-  if (emailSection) emailSection.style.display = 'block';
   var emailInput = document.getElementById('adminEmailInput');
   if (emailInput) emailInput.value = adminEmail;
-  var syncSection = document.getElementById('adminSyncSettings');
-  if (syncSection) syncSection.style.display = 'block';
+  switchAdminTab('products');
   renderAdminFilterDropdowns();
   renderAdminList();
 }
@@ -3123,11 +3108,7 @@ if (afc) afc.addEventListener('change', function() {
 });
 
 var mcb = document.getElementById('manageCategoriesBtn');
-if (mcb) mcb.addEventListener('click', function() {
-  var el = document.getElementById('adminCategories');
-  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
-  renderCategoryManagement();
-});
+if (mcb) mcb.addEventListener('click', function() { switchAdminTab('categories'); });
 
 var sgp = document.getElementById('subcategoryGroupPicker');
 if (sgp) sgp.addEventListener('change', function() {
@@ -3137,12 +3118,7 @@ if (sgp) sgp.addEventListener('change', function() {
 
 var backBtn = document.getElementById('backToPublicBtn');
 if (backBtn) backBtn.addEventListener('click', function() {
-  var ac = document.getElementById('adminCategories');
-  if (ac) ac.style.display = 'none';
-  var au = document.getElementById('adminUsers');
-  if (au) au.style.display = 'none';
-  var ap = document.getElementById('adminPanel');
-  if (ap) ap.style.display = 'none';
+  document.getElementById('adminPanel').style.display = 'none';
   adminSearchVal = '';
   adminFilterGroup = 'all';
   adminFilterType = 'all';
