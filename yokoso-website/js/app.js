@@ -1613,13 +1613,6 @@ function goToPage(newPage) {
       first.scrollIntoView({ behavior: 'smooth', block: 'start' });
       window.scrollBy(0, -headerH - filterH);
     }
-  } else {
-    var sy = window.scrollY;
-    requestAnimationFrame(function() {
-      requestAnimationFrame(function() {
-        window.scrollTo(0, sy);
-      });
-    });
   }
 }
 
