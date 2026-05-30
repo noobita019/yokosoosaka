@@ -658,7 +658,16 @@ async function handleRequest(request, env) {
         docs = (data && data.documents) ? data.documents.map(parseOrderDoc).filter(Boolean) : [];
       }
       docs.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-      return new Response(JSON.stringify({ count: docs.length, docs }), { headers: corsHeaders(origin) });
+      const url = new URL(request.url);
+      const filterStatus = url.searchParams.get('status') || '';
+      let filtered = docs;
+      if (filterStatus && filterStatus !== 'all') filtered = docs.filter(d => d.status === filterStatus);
+      const page = Math.max(1, parseInt(url.searchParams.get('page')) || 1);
+      const limit = Math.min(200, Math.max(1, parseInt(url.searchParams.get('limit')) || 50));
+      const total = filtered.length;
+      const start = (page - 1) * limit;
+      const sliced = filtered.slice(start, start + limit);
+      return new Response(JSON.stringify({ count: total, page, limit, docs: sliced }), { headers: corsHeaders(origin) });
     }
 
     // GET /orders/clear-all — delete all orders from KV (call once to wipe test data)

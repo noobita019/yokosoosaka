@@ -145,7 +145,7 @@
         <div class="admin-orders" style="padding:12px 20px;background:#1a1a2e">
           <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
             <strong style="font-size:15px;color:#ff6b81">Orders</strong>
-            <select id="ordersFilterStatus" onchange="loadOrders()" style="padding:4px 8px;border:1px solid #555;border-radius:4px;background:rgba(255,255,255,0.06);color:#ccc;font-size:12px">
+            <select id="ordersFilterStatus" onchange="ordersPage=1;loadOrders()" style="padding:4px 8px;border:1px solid #555;border-radius:4px;background:rgba(255,255,255,0.06);color:#ccc;font-size:12px">
               <option value="all">All</option>
               <option value="pending">Pending</option>
               <option value="deposit_paid">Deposit Paid</option>

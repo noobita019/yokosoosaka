@@ -574,17 +574,28 @@ function releaseExpiredOrders() {
 var tabBtns = document.querySelectorAll('.admin-tab-btn');
 tabBtns.forEach(function(b) { b.addEventListener('click', function() { switchAdminTab(this.dataset.tab); }); });
 
+var ordersPage = 1;
+var ordersLimit = 50;
+var ordersTotal = 0;
+
 function loadOrders() {
   var el = document.getElementById('ordersList');
   if (!el) return;
   el.innerHTML = 'Loading...';
   var base = STOCK_PROXY_URL.replace(/\/+$/, '');
-  var url = base + '/orders?_=' + Date.now();
+  var filterEl = document.getElementById('ordersFilterStatus');
+  var filter = filterEl ? filterEl.value : 'all';
+  var url = base + '/orders?_=' + Date.now() + '&page=' + ordersPage + '&limit=' + ordersLimit + '&status=' + encodeURIComponent(filter);
   fetch(url)
     .then(function(r) { return r.json(); })
     .then(function(j) {
-      var orders = Array.isArray(j) ? j : (j.docs || []);
-      renderOrders(orders);
+      ordersTotal = j.count || 0;
+      if (j.docs && j.docs.length === 0 && ordersTotal > 0 && ordersPage > 1) {
+        ordersPage = 1;
+        loadOrders();
+        return;
+      }
+      renderOrders(j.docs || []);
     })
     .catch(function(e) { el.innerHTML = 'Error loading orders: ' + (e.message || ''); });
 }
@@ -592,12 +603,9 @@ function loadOrders() {
 function renderOrders(orders) {
   var el = document.getElementById('ordersList');
   if (!el) return;
-  var filterEl = document.getElementById('ordersFilterStatus');
-  var filter = filterEl ? filterEl.value : 'all';
-  if (filter !== 'all') orders = orders.filter(function(o) { return o.status === filter; });
   var countEl = document.getElementById('ordersCount');
-  if (countEl) countEl.textContent = orders.length + ' order(s)';
-  if (!orders || orders.length === 0) { el.innerHTML = '<div style="color:#888;text-align:center;padding:20px">No orders yet.</div>'; return; }
+  if (countEl) countEl.textContent = ordersTotal + ' order(s) — Page ' + ordersPage + ' of ' + Math.max(1, Math.ceil(ordersTotal / ordersLimit));
+  if (!orders || orders.length === 0) { el.innerHTML = '<div style="color:#888;text-align:center;padding:20px">No orders yet.</div>' + paginationHtml(); return; }
   var html = '<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px">';
   html += '<thead><tr style="background:rgba(255,255,255,0.08);text-align:left;color:#ff6b81">' +
     '<th style="padding:8px 10px">PO#</th>' +
@@ -642,7 +650,27 @@ function renderOrders(orders) {
     html += '</td></tr>';
   });
   html += '</tbody></table>';
+  html += paginationHtml();
   el.innerHTML = html;
+}
+
+function productPaginationHtml(totalPages) {
+  if (totalPages <= 1) return '';
+  return '<div style="display:flex;justify-content:center;align-items:center;gap:12px;padding:12px 0">' +
+    '<button onclick="productsPage=Math.max(1,productsPage-1);renderAdminList()" style="padding:4px 12px;background:#555;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px"' + (productsPage <= 1 ? ' disabled style="opacity:0.4;padding:4px 12px;background:#555;color:#fff;border:none;border-radius:4px;font-size:12px"' : '') + '>‹ Prev</button>' +
+    '<span style="font-size:12px;color:#aaa">' + productsPage + ' / ' + totalPages + '</span>' +
+    '<button onclick="productsPage=Math.min(' + totalPages + ',productsPage+1);renderAdminList()" style="padding:4px 12px;background:#555;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px"' + (productsPage >= totalPages ? ' disabled style="opacity:0.4;padding:4px 12px;background:#555;color:#fff;border:none;border-radius:4px;font-size:12px"' : '') + '>Next ›</button>' +
+    '</div>';
+}
+
+function paginationHtml() {
+  var totalPages = Math.max(1, Math.ceil(ordersTotal / ordersLimit));
+  if (totalPages <= 1) return '';
+  return '<div style="display:flex;justify-content:center;align-items:center;gap:12px;padding:12px 0">' +
+    '<button onclick="ordersPage=Math.max(1,ordersPage-1);loadOrders()" style="padding:4px 12px;background:#555;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px"' + (ordersPage <= 1 ? ' disabled style="opacity:0.4;padding:4px 12px;background:#555;color:#fff;border:none;border-radius:4px;font-size:12px"' : '') + '>‹ Prev</button>' +
+    '<span style="font-size:12px;color:#aaa">' + ordersPage + ' / ' + totalPages + '</span>' +
+    '<button onclick="ordersPage=Math.min(totalPages,ordersPage+1);loadOrders()" style="padding:4px 12px;background:#555;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px"' + (ordersPage >= totalPages ? ' disabled style="opacity:0.4;padding:4px 12px;background:#555;color:#fff;border:none;border-radius:4px;font-size:12px"' : '') + '>Next ›</button>' +
+    '</div>';
 }
 
 function depositPaidOrder(poNumber) {
@@ -740,7 +768,7 @@ function cancelOrder(poNumber) {
 
 function exportOrdersCSV() {
   var base = STOCK_PROXY_URL.replace(/\/+$/, '');
-  fetch(base + '/orders')
+  fetch(base + '/orders?limit=10000')
     .then(function(r) { return r.json(); })
     .then(function(j) {
       var orders = Array.isArray(j) ? j : (j.docs || []);
@@ -2501,6 +2529,9 @@ if (si) si.addEventListener('keydown', function(e) {
 
 // ---- ADMIN PANEL ----
 
+var productsPage = 1;
+var productsLimit = 50;
+
 function renderAdminList() {
   renderAdminFilterDropdowns();
   var container = document.getElementById('adminProductList');
@@ -2527,12 +2558,17 @@ function renderAdminList() {
   if (adminFilterColor !== 'all') {
     filtered = filtered.filter(function(p) { return (p.color || '') === adminFilterColor; });
   }
-  document.getElementById('productCount').textContent = filtered.length;
+  var totalProducts = filtered.length;
+  var totalProductPages = Math.max(1, Math.ceil(totalProducts / productsLimit));
+  if (productsPage > totalProductPages) { productsPage = totalProductPages; renderAdminList(); return; }
+  var start = (productsPage - 1) * productsLimit;
+  var pageItems = filtered.slice(start, start + productsLimit);
+  document.getElementById('productCount').textContent = totalProducts + (totalProducts > productsLimit ? ' (Page ' + productsPage + '/' + totalProductPages + ')' : '');
   if (filtered.length === 0) {
     container.innerHTML = '<p style="color:#888;text-align:center;padding:2rem">' + (products.length === 0 ? 'No products yet. Add your first product!' : 'No products match your filters.') + '</p>';
     return;
   }
-  container.innerHTML = filtered.map(function(p) {
+  container.innerHTML = pageItems.map(function(p) {
     var catStr = p.category1;
     if (p.category0) catStr = p.category0 + ' / ' + catStr;
     if (p.category2) catStr += ' · ' + p.category2;
@@ -2552,7 +2588,7 @@ function renderAdminList() {
       '<button class="btn btn-secondary btn-sm edit-product-btn">Edit</button>' +
       '<button class="btn btn-danger btn-sm delete-product-btn">Delete</button>' +
       '</div></div>';
-  }).join('');
+  }).join('') + productPaginationHtml(totalProductPages);
 
   container.querySelectorAll('.toggle-available-btn').forEach(btn => {
     btn.addEventListener('click', e => {
@@ -3220,6 +3256,7 @@ function renderAdminFilterDropdowns() {
 var admSearch = document.getElementById('adminSearch');
 if (admSearch) admSearch.addEventListener('input', function() {
   adminSearchVal = this.value;
+  productsPage = 1;
   renderAdminList();
 });
 
@@ -3227,6 +3264,7 @@ var afg = document.getElementById('adminFilterGroup');
 if (afg) {
   afg.addEventListener('change', function() {
     adminFilterGroup = this.value;
+    productsPage = 1;
     renderAdminList();
   });
 }
@@ -3234,18 +3272,21 @@ if (afg) {
 var aft = document.getElementById('adminFilterType');
 if (aft) aft.addEventListener('change', function() {
   adminFilterType = this.value;
+  productsPage = 1;
   renderAdminList();
 });
 
 var afb = document.getElementById('adminFilterBrand');
 if (afb) afb.addEventListener('change', function() {
   adminFilterBrand = this.value;
+  productsPage = 1;
   renderAdminList();
 });
 
 var afc = document.getElementById('adminFilterColor');
 if (afc) afc.addEventListener('change', function() {
   adminFilterColor = this.value;
+  productsPage = 1;
   renderAdminList();
 });
 
