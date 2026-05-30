@@ -187,7 +187,7 @@ function switchAdminTab(tab) {
   if (tab === 'categories') renderCategoryManagement();
   if (tab === 'orders') loadOrders();
   if (tab === 'users') loadUsers();
-  if (tab === 'config') { applyProxyUrl(); var gti = document.getElementById('githubTokenInput'); if (gti) gti.value = localStorage.getItem('github_token') || ''; var ast = document.getElementById('autoSyncToggle'); if (ast) ast.checked = localStorage.getItem('autoSyncEnabled') === 'true'; }
+  if (tab === 'config') { applyProxyUrl(); var gti = document.getElementById('githubTokenInput'); if (gti) gti.value = localStorage.getItem('github_token') || ''; var ast = document.getElementById('autoSyncToggle'); if (ast) ast.checked = localStorage.getItem('autoSyncEnabled') === 'true'; var mui = document.getElementById('messengerUrlInput'); if (mui) mui.value = categoriesConfig.messengerUrl || ''; }
 }
 function loadUsers() {
   var list = document.getElementById('usersList');
@@ -316,6 +316,27 @@ function testAdminEmail() {
       status.style.color = '#c62828';
       showCartNotification('Test email connection error');
     });
+}
+
+function renderMessengerLink() {
+  var link = document.getElementById('messengerLink');
+  if (link && categoriesConfig && categoriesConfig.messengerUrl) {
+    link.href = categoriesConfig.messengerUrl;
+  }
+}
+
+function saveMessengerUrl() {
+  var input = document.getElementById('messengerUrlInput');
+  var status = document.getElementById('messengerUrlStatus');
+  if (!input || !status) return;
+  var val = input.value.trim();
+  if (!val) { status.textContent = 'Please enter a URL.'; return; }
+  categoriesConfig.messengerUrl = val;
+  saveCategoriesConfig();
+  renderMessengerLink();
+  status.textContent = 'Saved!';
+  setTimeout(function() { status.textContent = ''; }, 2000);
+  showCartNotification('Messenger URL updated.');
 }
 
 function getDepositAmount() {
@@ -761,6 +782,7 @@ function migrateCategoriesConfig(cfg) {
   if (!cfg.sizes) cfg.sizes = [];
   if (!cfg.subcategoryBrands) cfg.subcategoryBrands = {};
   if (!cfg.brandLogos) cfg.brandLogos = {};
+  if (!cfg.messengerUrl) cfg.messengerUrl = 'https://m.me/103933895457769';
   return cfg;
 }
 
@@ -1162,6 +1184,7 @@ function loadCategories() {
       // Re-render now that categories are loaded
       renderFilters();
       renderProducts();
+      renderMessengerLink();
 
       // Stage 3: Firebase sync (if available)
       if (fbDB) {
@@ -1185,15 +1208,17 @@ function loadCategories() {
               renderCategoryManagement();
               renderFilters();
               renderProducts();
+              renderMessengerLink();
             }
           })
-          .catch(function() { if (!catDone) { catDone = true; renderCategoryDropdowns(); renderCategoryManagement(); renderFilters(); renderProducts(); } });
-        setTimeout(function() { if (!catDone) { catDone = true; renderCategoryDropdowns(); renderCategoryManagement(); renderFilters(); renderProducts(); } }, 3000);
+          .catch(function() { if (!catDone) { catDone = true; renderCategoryDropdowns(); renderCategoryManagement(); renderFilters(); renderProducts(); renderMessengerLink(); } });
+        setTimeout(function() { if (!catDone) { catDone = true; renderCategoryDropdowns(); renderCategoryManagement(); renderFilters(); renderProducts(); renderMessengerLink(); } }, 3000);
       } else {
         renderCategoryDropdowns();
         renderCategoryManagement();
         renderFilters();
         renderProducts();
+        renderMessengerLink();
       }
 
       // Pick up proxy URL from categoriesConfig if not set locally
@@ -3786,6 +3811,7 @@ loadProducts(function() {
   loadDepositConfig();
   parseURLParams();
   if (currentUser && currentUser.admin) showAdminPanel();
+  renderMessengerLink();
   loadStockFromFirestore(function() {
     renderFilters();
     renderProducts();

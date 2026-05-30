@@ -115,7 +115,7 @@
 
   <footer class="footer">
     <div class="container">
-      <p>&copy; 2026 JapanGoodies. All rights reserved. &middot; <a href="https://m.me/103933895457769" target="_blank" style="color:#888;text-decoration:none;">Send us a message</a></p>
+      <p>&copy; 2026 JapanGoodies. All rights reserved. &middot; <a id="messengerLink" href="#" target="_blank" style="color:#888;text-decoration:none;">Send us a message</a></p>
     </div>
   </footer>
 
@@ -373,6 +373,17 @@
           </div>
           <div style="font-size:11px;color:#888;margin-top:6px">
             Purchase orders will be sent to this email address on checkout.
+          </div>
+        </div>
+        <div class="admin-messenger-config" style="padding:12px 20px;background:#f8f9fa;border-top:1px solid #dee2e6">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <strong style="font-size:14px">Messenger URL</strong>
+            <input type="url" id="messengerUrlInput" placeholder="https://m.me/..." style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;flex:1;min-width:250px;font-size:13px">
+            <button type="button" onclick="saveMessengerUrl()" style="padding:6px 14px;background:#2e7d32;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px">Save</button>
+            <span id="messengerUrlStatus" style="font-size:12px;color:#888"></span>
+          </div>
+          <div style="font-size:11px;color:#888;margin-top:6px">
+            Footer "Send us a message" link will point to this URL. Use an m.me link or Facebook page URL.
           </div>
         </div>
       </div>
