@@ -3169,6 +3169,7 @@ function showAdminPanel() {
   document.getElementById('maintenanceOverlay').classList.add('active', 'admin-mode');
   document.getElementById('maintenancePublic').style.display = 'none';
   document.getElementById('adminPanel').style.display = 'block';
+  lockBody();
   var emailInput = document.getElementById('adminEmailInput');
   if (emailInput) emailInput.value = adminEmail;
   switchAdminTab('orders');
@@ -3259,6 +3260,7 @@ if (sgp) sgp.addEventListener('change', function() {
 
 var backBtn = document.getElementById('backToPublicBtn');
 if (backBtn) backBtn.addEventListener('click', function() {
+  unlockBody();
   document.getElementById('maintenanceOverlay').classList.remove('active', 'admin-mode');
   document.getElementById('maintenancePublic').style.display = '';
   document.getElementById('adminPanel').style.display = 'none';
