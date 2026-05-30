@@ -1102,10 +1102,12 @@ function loadProducts(callback) {
       }
     })
     .finally(function() {
-      // Stage 2: Use localStorage only if there are explicit pending edits
+      // Stage 2: Use localStorage if pending edits OR recent sync (CDN cache delay)
       var saved = localStorage.getItem('yokoso_products');
       var pendingSync = localStorage.getItem('yokoso_pending_sync');
-      if (saved && pendingSync === 'true') {
+      var syncTime = parseInt(localStorage.getItem('yokoso_sync_time'), 10);
+      var recentSync = syncTime && (Date.now() - syncTime < 300000); // 5 min CDN grace
+      if (saved && (pendingSync === 'true' || recentSync)) {
         try {
           var local = JSON.parse(saved);
           if (local.length > 0) { products = local; migrateProducts(); }
@@ -3262,7 +3264,10 @@ function doGitHubSync(filePath, encoded, message, statusEl, attempt) {
       return doGitHubSync(filePath, encoded, message, statusEl, attempt + 1);
     }
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    if (filePath === GITHUB_PATH) localStorage.setItem('yokoso_pending_sync', 'false');
+    if (filePath === GITHUB_PATH) {
+      localStorage.setItem('yokoso_pending_sync', 'false');
+      localStorage.setItem('yokoso_sync_time', Date.now().toString());
+    }
     if (statusEl) { statusEl.textContent = 'Synced ✓ (CDN ~1-2 min)'; statusEl.style.color = '#28a745'; }
   });
 }
