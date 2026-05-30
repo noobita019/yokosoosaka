@@ -844,6 +844,7 @@ let categoriesConfig = migrateCategoriesConfig({
 let currentGroup = 'all';
 let currentBrand = 'all';
 var mainPage = 1;
+var _initialRender = true;
 var mainLimit = 24;
 var adminSearchVal = '';
 var adminFilterGroup = 'all';
@@ -1599,8 +1600,11 @@ function renderProducts() {
       '<button style="padding:6px 14px;background:' + (nextDisabled ? '#444' : '#555') + ';color:#fff;border:none;border-radius:6px;cursor:' + (nextDisabled ? 'default' : 'pointer') + ';font-size:13px;opacity:' + (nextDisabled ? '0.4' : '1') + '"' + (nextDisabled ? '' : ' onclick="mainPage++;renderProducts()"') + '>Next ›</button>';
     grid.appendChild(pag);
   }
-  var gridTop = document.getElementById('productGrid');
-  if (gridTop) gridTop.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (!_initialRender) {
+    var gridTop = document.getElementById('productGrid');
+    if (gridTop) gridTop.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  _initialRender = false;
 }
 
 // ---- PROXY-BASED REAL-TIME STOCK ----
