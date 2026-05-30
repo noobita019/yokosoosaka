@@ -1650,6 +1650,36 @@ body {
   .steps {
     gap: 1rem;
   }
+
+  #liveModal {
+    padding: 0 !important;
+    align-items: stretch !important;
+  }
+  #liveModal > div {
+    max-width: 100% !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+  }
+  #liveModal #modalMainImg {
+    height: 50vh !important;
+  }
+  #liveModal .modal-close-mobile {
+    position: fixed !important;
+    top: 12px !important;
+    right: 16px !important;
+    background: rgba(0,0,0,0.4) !important;
+    border: none !important;
+    font-size: 24px !important;
+    cursor: pointer !important;
+    color: #fff !important;
+    z-index: 20 !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
 }
 
 @media (min-width: 769px) {

@@ -1858,12 +1858,27 @@ function openModalFullscreen() {
 }
 
 function closeLiveModal() {
+  stopModalAutoPlay();
   var el = document.getElementById('liveModal');
   if (el) { el.remove(); unlockBody(); if (location.hash === '#modal') history.back(); }
 }
 
 var _modalImages = [];
 var _modalImageIdx = 0;
+var _modalAutoTimer = null;
+
+function startModalAutoPlay() {
+  stopModalAutoPlay();
+  if (_modalImages.length < 2) return;
+  _modalAutoTimer = setTimeout(function() {
+    modalNav(1);
+    startModalAutoPlay();
+  }, 4000);
+}
+
+function stopModalAutoPlay() {
+  if (_modalAutoTimer) { clearTimeout(_modalAutoTimer); _modalAutoTimer = null; }
+}
 
 function modalNav(delta) {
   if (_modalImages.length < 2) return;
@@ -1876,6 +1891,7 @@ function modalGoTo(index) {
   if (img) { img.src = _modalImages[_modalImageIdx]; }
   var dots = document.querySelectorAll('#liveModal .modal-dot');
   dots.forEach(function(d, i) { d.style.background = i === _modalImageIdx ? '#e94560' : '#ddd'; });
+  startModalAutoPlay();
 }
 
 function openModal(product) {
@@ -1944,7 +1960,28 @@ function openModal(product) {
     var mImg = overlay.querySelector('#modalMainImg');
     if (mImg) { mImg.addEventListener('click', function(e) { currentModalImages = _modalImages.slice(); currentImageIndex = _modalImageIdx; openFullscreen(); }); }
     overlay.addEventListener('click', function(e) { if (e.target === this) closeLiveModal(); });
+    if (window.innerWidth <= 768) {
+      overlay.style.padding = '0';
+      overlay.style.alignItems = 'stretch';
+      var card = overlay.querySelector('div');
+      if (card) { card.style.maxWidth = '100%'; card.style.borderRadius = '0'; card.style.maxHeight = '100vh'; }
+      var closeBtn = overlay.querySelector('button');
+      if (closeBtn) closeBtn.classList.add('modal-close-mobile');
+      if (mImg) {
+        (function(el) {
+          var mx = 0;
+          el.addEventListener('touchstart', function(e) { mx = e.touches[0].clientX; }, { passive: true });
+          el.addEventListener('touchend', function(e) {
+            var dx = e.changedTouches[0].clientX - mx;
+            if (Math.abs(dx) > 30) {
+              if (dx < 0) modalNav(1); else modalNav(-1);
+            }
+          }, { passive: true });
+        })(mImg);
+      }
+    }
     lockBody();
+    startModalAutoPlay();
     try { history.pushState({modal: true}, '', '#modal'); } catch (e) {}
   } catch (e) {
     console.error('openModal error:', e);
