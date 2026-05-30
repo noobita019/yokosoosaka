@@ -502,15 +502,13 @@ async function handleRequest(request, env) {
       // Deduct stock for each item in the order
       let items = [];
       try { items = typeof body.items === 'string' ? JSON.parse(body.items) : body.items; } catch(e) {}
-      const stockDeductions = [];
       for (const item of items) {
         const pid = item.productId || item.id;
         if (pid && item.qty) {
           const field = orderField(item.size || '');
-          stockDeductions.push(firestoreTransform(pid, -parseInt(item.qty, 10), field));
+          firestoreTransform(pid, -parseInt(item.qty, 10), field).catch(() => {});
         }
       }
-      await Promise.all(stockDeductions);
       // Invalidate stock caches
       stockMemoryCache = null; stockMemoryCacheTime = 0;
       if (env && env.ORDERS_KV) env.ORDERS_KV.delete('stock_cache').catch(() => {});
