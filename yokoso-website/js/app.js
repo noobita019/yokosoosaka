@@ -3224,7 +3224,14 @@ function syncToGitHub() {
     .then(function() { syncToGitHub._busy = false; if (syncToGitHub._queued) { syncToGitHub._queued = false; syncToGitHub(); } })
     .catch(function(err) {
       syncToGitHub._busy = false;
-      if (statusEl) { statusEl.textContent = 'Sync failed: ' + err.message; statusEl.style.color = '#dc3545'; }
+      if (statusEl) {
+        if (err.message === 'HTTP 401') {
+          statusEl.innerHTML = 'Token expired. <a href="#" onclick="window.open(\'https://github.com/settings/tokens\');return false" style="color:#007bff">Generate new token</a> → paste in Sync Settings.';
+        } else {
+          statusEl.textContent = 'Sync failed: ' + err.message;
+        }
+        statusEl.style.color = '#dc3545';
+      }
       if (syncToGitHub._queued) { syncToGitHub._queued = false; syncToGitHub(); }
     });
 }
@@ -3238,6 +3245,7 @@ function doGitHubSync(filePath, encoded, message, statusEl, attempt) {
   })
   .then(function(r) {
     if (r.status === 404) return null;
+    if (r.status === 401) throw new Error('HTTP 401 (token expired or invalid)');
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return r.json();
   })
@@ -3280,8 +3288,15 @@ function syncCategoriesToGitHub() {
     .catch(function(err) {
       syncToGitHub._busy = false;
       console.error('Categories sync failed:', err.message);
-      if (statusEl) { statusEl.textContent = 'Sync failed: ' + err.message; statusEl.style.color = '#dc3545'; }
-      if (groupStatusEl) { groupStatusEl.innerHTML = 'Saved locally. GitHub sync failed (' + err.message + '). Check token in <a href="#" onclick="document.getElementById(\'syncSettingsBtn\').click();return false" style="color:#007bff">sync settings</a>.'; groupStatusEl.style.color = '#e67e22'; }
+      if (statusEl) {
+        if (err.message === 'HTTP 401') {
+          statusEl.innerHTML = 'Token expired. <a href="#" onclick="window.open(\'https://github.com/settings/tokens\');return false" style="color:#007bff">Generate new token</a> → paste in Sync Settings.';
+        } else {
+          statusEl.textContent = 'Sync failed: ' + err.message;
+        }
+        statusEl.style.color = '#dc3545';
+      }
+      if (groupStatusEl) { groupStatusEl.innerHTML = 'Saved locally. GitHub token ' + (err.message === 'HTTP 401' ? 'expired — <a href="#" onclick="window.open(\'https://github.com/settings/tokens\');return false" style="color:#007bff">generate new one</a>' : 'sync failed (' + err.message + ')') + '. Check token in <a href="#" onclick="document.getElementById(\'syncSettingsBtn\').click();return false" style="color:#007bff">sync settings</a>.'; groupStatusEl.style.color = '#e67e22'; }
       if (syncToGitHub._queued) { syncToGitHub._queued = false; syncToGitHub(); }
     });
 }
