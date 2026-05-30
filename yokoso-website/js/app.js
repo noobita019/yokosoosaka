@@ -843,6 +843,8 @@ let categoriesConfig = migrateCategoriesConfig({
 
 let currentGroup = 'all';
 let currentBrand = 'all';
+var mainPage = 1;
+var mainLimit = 24;
 var adminSearchVal = '';
 var adminFilterGroup = 'all';
 var adminFilterType = 'all';
@@ -1466,7 +1468,7 @@ document.addEventListener('click', function(e) {
     openSubcats = {};
     renderSubcategoryFilter();
     document.getElementById('brandFilterContainer').innerHTML = '';
-    renderProducts();
+    mainPage = 1; renderProducts();
     return;
   }
   var subBtn = e.target.closest('#subcategoryFilterContainer .filter-btn');
@@ -1483,7 +1485,7 @@ document.addEventListener('click', function(e) {
     }
     renderSubcategoryFilter();
     renderBrandFilter();
-    renderProducts();
+    mainPage = 1; renderProducts();
     return;
   }
 });
@@ -1516,13 +1518,19 @@ function renderProducts() {
              (p.category2 && p.category2.toLowerCase().indexOf(q) !== -1);
     });
   }
+  var totalFiltered = filtered.length;
+  var totalPages = Math.max(1, Math.ceil(totalFiltered / mainLimit));
+  if (mainPage > totalPages) { mainPage = totalPages; renderProducts(); return; }
+  var start = (mainPage - 1) * mainLimit;
+  var pageItems = filtered.slice(start, start + mainLimit);
+
   if (filtered.length === 0) {
     grid.innerHTML = '';
     empty.style.display = 'block';
     return;
   }
   empty.style.display = 'none';
-  grid.innerHTML = filtered.map(function(p) {
+  grid.innerHTML = pageItems.map(function(p) {
     var brandHtml = p.category2 ? '<span class="product-brand">' + p.category2 + '</span>' : '';
     var variantColors = getVariantColors(p);
     var firstColor = variantColors.length ? variantColors[0] : 'Default';
@@ -1580,6 +1588,17 @@ function renderProducts() {
       if (!isNaN(id)) addToCart(id, color);
     });
   });
+  if (totalPages > 1) {
+    var pag = document.createElement('div');
+    pag.style.cssText = 'display:flex;justify-content:center;align-items:center;gap:12px;padding:20px 0;grid-column:1/-1';
+    var prevDisabled = mainPage <= 1;
+    var nextDisabled = mainPage >= totalPages;
+    pag.innerHTML =
+      '<button style="padding:6px 14px;background:' + (prevDisabled ? '#444' : '#555') + ';color:#fff;border:none;border-radius:6px;cursor:' + (prevDisabled ? 'default' : 'pointer') + ';font-size:13px;opacity:' + (prevDisabled ? '0.4' : '1') + '"' + (prevDisabled ? '' : ' onclick="mainPage--;renderProducts()"') + '>‹ Prev</button>' +
+      '<span style="font-size:13px;color:#aaa">' + mainPage + ' / ' + totalPages + '</span>' +
+      '<button style="padding:6px 14px;background:' + (nextDisabled ? '#444' : '#555') + ';color:#fff;border:none;border-radius:6px;cursor:' + (nextDisabled ? 'default' : 'pointer') + ';font-size:13px;opacity:' + (nextDisabled ? '0.4' : '1') + '"' + (nextDisabled ? '' : ' onclick="mainPage++;renderProducts()"') + '>Next ›</button>';
+    grid.appendChild(pag);
+  }
   var gridTop = document.getElementById('productGrid');
   if (gridTop) gridTop.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -2501,7 +2520,7 @@ document.addEventListener('keydown', e => {
 var si = document.getElementById('searchInput');
 if (si) si.addEventListener('input', e => {
   currentSearch = e.target.value;
-  renderProducts();
+  mainPage = 1; renderProducts();
 });
 
 function doSearch(e) {
@@ -3316,7 +3335,7 @@ if (backBtn) backBtn.addEventListener('click', function() {
   if (si) si.value = '';
   renderAdminList();
   renderFilters();
-  renderProducts();
+  mainPage = 1; renderProducts();
 });
 
 var selectedSubcategoryGroup = '';
@@ -3888,6 +3907,7 @@ function parseURLParams() {
     currentGroup = group;
     currentCategory = 'all';
     currentBrand = 'all';
+    mainPage = 1;
     document.body.classList.add('catalog-mode');
     var ch = document.getElementById('catalogHeader');
     if (ch) { ch.style.display = 'block'; }
@@ -3900,7 +3920,7 @@ function parseURLParams() {
         currentBrand = 'all';
         renderSubcategoryFilter();
         renderBrandFilter();
-        renderProducts();
+        mainPage = 1; renderProducts();
       };
     }
     var cc = document.getElementById('categoryCarousel');
