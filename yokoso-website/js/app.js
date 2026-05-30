@@ -1298,10 +1298,13 @@ function uploadImage(dataUrl) {
   var formData = new FormData();
   formData.append('file', dataUrl);
   formData.append('upload_preset', uploadPreset);
-  return fetch('https://api.cloudinary.com/v1_1/' + encodeURIComponent(cloudName) + '/image/upload', {
+  return fetch('https://api.cloudinary.com/v1_1/' + cloudName + '/image/upload', {
     method: 'POST',
     body: formData
-  }).then(function(r) { return r.json(); }).then(function(j) {
+  }).then(function(r) {
+    if (!r.ok) return r.text().then(function(t) { throw new Error('Cloudinary ' + r.status + ': ' + t); });
+    return r.json();
+  }).then(function(j) {
     if (j.secure_url) return j.secure_url;
     throw new Error(j.error && j.error.message || 'Cloudinary upload failed');
   });
