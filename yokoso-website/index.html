@@ -344,14 +344,16 @@
           <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
             <strong style="font-size:14px">GitHub Auto Sync</strong>
             <input type="password" id="githubTokenInput" placeholder="GitHub Personal Access Token" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;flex:1;min-width:200px;font-size:13px">
-            <label style="font-size:13px;display:flex;align-items:center;gap:4px;cursor:pointer">
+            <input type="url" id="netlifyHookInput" placeholder="Netlify build hook URL (optional)" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;flex:1;min-width:200px;font-size:13px">
+            <label style="font-size:13px;display:flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap">
               <input type="checkbox" id="autoSyncToggle"> Auto-sync on save
             </label>
             <span id="syncStatus" style="font-size:12px;color:#666"></span>
           </div>
           <div style="font-size:11px;color:#888;margin-top:6px">
-            Token needs <code>repo</code> scope. Create one at 
-            <a href="https://github.com/settings/tokens" target="_blank" style="color:#007bff">github.com/settings/tokens</a>
+            Token needs <code>repo</code> scope. Create at 
+            <a href="https://github.com/settings/tokens" target="_blank" style="color:#007bff">github.com/settings/tokens</a>.
+            Netlify build hook triggers instant deploy after sync.
           </div>
         </div>
         <div class="admin-stock-proxy" style="padding:12px 20px;background:#f8f9fa;border-bottom:1px solid #dee2e6">
