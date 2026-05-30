@@ -16,7 +16,7 @@ body {
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 24px 0 24px;
 }
 
 .search-filter > .container {
@@ -482,7 +482,7 @@ body {
 
 /* Products */
 .products {
-  padding: 3rem 0;
+  padding: 0.25rem 0;
 }
 
 .product-grid {
@@ -1565,10 +1565,10 @@ body {
   }
 
   .products {
-    padding: 0.5rem 0;
+    padding: 0.25rem 0;
   }
   .products .container {
-    padding: 0 0.5rem;
+    padding: 0 0.5rem 0 0.5rem;
   }
   #catalogHeader {
     padding: 0 0.75rem;
