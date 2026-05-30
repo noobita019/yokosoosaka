@@ -1605,8 +1605,19 @@ function renderProducts() {
 function goToPage(newPage) {
   mainPage = newPage;
   renderProducts();
-  var first = document.querySelector('#productGrid .product-card');
-  if (first) first.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(function() {
+    var first = document.querySelector('#productGrid .product-card');
+    if (!first) return;
+    if (window.innerWidth > 768) {
+      first.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      var header = document.querySelector('.header');
+      var filter = document.querySelector('.search-filter');
+      var offset = (header ? header.offsetHeight : 0) + (filter ? filter.offsetHeight : 0);
+      var top = first.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    }
+  }, 50);
 }
 
 // ---- PROXY-BASED REAL-TIME STOCK ----
