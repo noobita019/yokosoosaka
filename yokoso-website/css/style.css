@@ -1188,11 +1188,43 @@ body {
   display: inline-block;
 }
 
-.form-image-preview img {
+.form-image-preview img,
+.form-image-preview video {
   max-width: 120px;
   max-height: 120px;
   border-radius: 8px;
   border: 1px solid rgba(255,255,255,0.15);
+}
+
+.form-image-preview .image-wrapper {
+  position: relative;
+}
+
+.form-image-preview .video-play-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 28px;
+  color: #fff;
+  text-shadow: 0 0 8px rgba(0,0,0,0.6);
+  pointer-events: none;
+}
+
+.product-image-video {
+  width: 100%;
+  aspect-ratio: 1;
+  background: #1a1a2e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-image-video .video-play-icon {
+  font-size: 40px;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(0,0,0,0.5);
+  opacity: 0.8;
 }
 
 .form-image-preview .remove-image {

@@ -1295,10 +1295,12 @@ function uploadImage(dataUrl) {
   if (!cloudName || !uploadPreset) {
     return Promise.resolve(dataUrl);
   }
+  var isVideo = dataUrl.indexOf('data:video/') === 0;
+  var uploadEndpoint = isVideo ? '/video/upload' : '/image/upload';
   var formData = new FormData();
   formData.append('file', dataUrl);
   formData.append('upload_preset', uploadPreset);
-  return fetch('https://api.cloudinary.com/v1_1/' + cloudName + '/image/upload', {
+  return fetch('https://api.cloudinary.com/v1_1/' + cloudName + uploadEndpoint, {
     method: 'POST',
     body: formData
   }).then(function(r) {
@@ -1308,6 +1310,14 @@ function uploadImage(dataUrl) {
     if (j.secure_url) return j.secure_url;
     throw new Error(j.error && j.error.message || 'Cloudinary upload failed');
   });
+}
+
+function isVideoUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  if (url.indexOf('data:video/') === 0) return true;
+  if (url.indexOf('/video/upload/') !== -1) return true;
+  var ext = url.split('?')[0].toLowerCase();
+  return ext.indexOf('.mp4') !== -1 || ext.indexOf('.webm') !== -1 || ext.indexOf('.mov') !== -1;
 }
 
 function getGroups() {
@@ -1508,8 +1518,12 @@ function renderProducts() {
     var totalAvail = getTotalStock(p.id);
     var stockLabel = totalAvail > 3 ? 'In Stock' : totalAvail > 0 ? 'Only ' + totalAvail + ' left' : 'Out of Stock';
     var stockClass = totalAvail > 0 ? 'in-stock' : 'out-of-stock';
+    var firstMedia = p.images?.[0] || 'images/products/placeholder.svg';
+    var mediaHtml = isVideoUrl(firstMedia) ?
+      '<div class="product-image product-image-video"><span class="video-play-icon">▶</span></div>' :
+      '<img class="product-image" src="' + firstMedia + '" alt="' + p.name + '" loading="lazy" onerror="if(this.dataset.retry){this.src=\'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\';this.style.background=\'#eee\'}else{this.dataset.retry=\'1\';this.src=\'images/products/placeholder.svg\'}">';
     return '<div class="product-card" data-id="' + p.id + '">' +
-      '<img class="product-image" src="' + (p.images?.[0] || 'images/products/placeholder.svg') + '" alt="' + p.name + '" loading="lazy" onerror="if(this.dataset.retry){this.src=\'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\';this.style.background=\'#eee\'}else{this.dataset.retry=\'1\';this.src=\'images/products/placeholder.svg\'}">' +
+      mediaHtml +
       '<div class="product-info">' +
       (p.category0 ? '<div class="product-group">' + p.category0 + '</div>' : '') +
       '<div class="product-category">' + p.category1 + '</div>' +
@@ -2005,10 +2019,17 @@ function modalNav(delta) {
   modalGoTo((_modalImageIdx + delta + _modalImages.length) % _modalImages.length);
 }
 
+function renderModalMedia(src) {
+  if (isVideoUrl(src)) {
+    return '<video src="' + src + '" controls style="width:100%;height:500px;object-fit:contain;background:#000" playsinline></video>';
+  }
+  return '<img src="' + src + '" style="width:100%;height:500px;object-fit:contain;background:#fff;cursor:pointer" onerror="if(this.dataset.retry){this.src=\'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\';this.style.background=\'#eee\'}else{this.dataset.retry=\'1\';this.src=\'images/products/placeholder.svg\'}">';
+}
+
 function modalGoTo(index) {
   _modalImageIdx = index;
-  var img = document.getElementById('modalMainImg');
-  if (img) { img.src = _modalImages[_modalImageIdx]; }
+  var container = document.getElementById('modalMediaContainer');
+  if (container) { container.innerHTML = renderModalMedia(_modalImages[_modalImageIdx]); }
   var dots = document.querySelectorAll('#liveModal .modal-dot');
   dots.forEach(function(d, i) { d.style.background = i === _modalImageIdx ? '#e94560' : '#ddd'; });
   startModalAutoPlay();
@@ -2058,7 +2079,7 @@ function openModal(product) {
         '<div style="position:relative">' +
           (_modalImages.length > 1 ? '<button onclick="modalNav(-1)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);z-index:5;background:rgba(255,255,255,0.8);border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#333">‹</button>' : '') +
           (_modalImages.length > 1 ? '<button onclick="modalNav(1)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);z-index:5;background:rgba(255,255,255,0.8);border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#333">›</button>' : '') +
-          '<img id="modalMainImg" src="' + (_modalImages[0] || 'images/products/placeholder.svg') + '" style="width:100%;height:500px;object-fit:contain;background:#fff;cursor:pointer" onerror="if(this.dataset.retry){this.src=\'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\';this.style.background=\'#eee\'}else{this.dataset.retry=\'1\';this.src=\'images/products/placeholder.svg\'}">' +
+          '<div id="modalMediaContainer">' + renderModalMedia(_modalImages[0] || 'images/products/placeholder.svg') + '</div>' +
           dotsHtml +
         '</div>' +
         '<div style="padding:24px 32px 32px">' +
@@ -2887,12 +2908,13 @@ function renderImagePreview() {
     container.innerHTML = '';
     return;
   }
-  container.innerHTML = selectedImagesData.map((src, i) =>
-    `<div class="image-wrapper">
-      <img src="${src}">
+  container.innerHTML = selectedImagesData.map((src, i) => {
+    var isVideo = isVideoUrl(src);
+    return `<div class="image-wrapper">
+      ${isVideo ? '<video src="' + src + '" muted preload="metadata"></video><span class="video-play-icon">▶</span>' : '<img src="' + src + '">'}
       <button type="button" class="remove-image" data-index="${i}">×</button>
-    </div>`
-  ).join('');
+    </div>`;
+  }).join('');
   container.querySelectorAll('.remove-image').forEach(btn => {
     btn.addEventListener('click', () => {
       const idx = parseInt(btn.dataset.index);
@@ -2942,11 +2964,21 @@ function resizeImage(file, maxW, maxQ, cb) {
 
 var fi = document.getElementById('formImage');
 if (fi) fi.addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  resizeImage(file, 800, 0.8, function(dataUrl) {
-    selectedImagesData.push(dataUrl);
-    renderImagePreview();
+  var files = Array.from(e.target.files);
+  files.forEach(function(file) {
+    if (file.type.startsWith('video/')) {
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        selectedImagesData.push(ev.target.result);
+        renderImagePreview();
+      };
+      reader.readAsDataURL(file);
+    } else {
+      resizeImage(file, 800, 0.8, function(dataUrl) {
+        selectedImagesData.push(dataUrl);
+        renderImagePreview();
+      });
+    }
   });
   e.target.value = '';
 });
