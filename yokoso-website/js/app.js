@@ -2400,7 +2400,7 @@ function openFullscreen() {
   if (old) old.remove();
   var ov = document.createElement('div');
   ov.id = 'liveFullscreen';
-  ov.style.cssText = 'display:flex!important;position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;background:#000!important;z-index:99999!important;';
+  ov.style.cssText = 'display:flex!important;position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;background:#fff!important;z-index:99999!important;';
   document.body.appendChild(ov);
   var track = document.createElement('div');
   track.style.cssText = 'position:relative;width:100%;height:100%;display:flex;flex-direction:column;';
@@ -2418,14 +2418,14 @@ function openFullscreen() {
   ov.appendChild(track);
   var closeBtn = document.createElement('button');
   closeBtn.textContent = '\u00D7';
-  closeBtn.style.cssText = 'position:fixed!important;top:16px!important;right:20px!important;background:rgba(255,255,255,0.1)!important;border:none!important;color:#fff!important;font-size:2rem!important;width:44px!important;height:44px!important;border-radius:50%!important;cursor:pointer!important;z-index:999999!important;display:flex!important;align-items:center!important;justify-content:center!important;';
+  closeBtn.style.cssText = 'position:fixed!important;top:16px!important;right:20px!important;background:rgba(0,0,0,0.08)!important;border:none!important;color:#333!important;font-size:2rem!important;width:44px!important;height:44px!important;border-radius:50%!important;cursor:pointer!important;z-index:999999!important;display:flex!important;align-items:center!important;justify-content:center!important;';
   closeBtn.onclick = closeFullscreen;
   closeBtn.addEventListener('touchstart', function(e) { e.stopPropagation(); closeFullscreen(); });
   closeBtn.addEventListener('touchend', function(e) { e.preventDefault(); });
   ov.appendChild(closeBtn);
   var counter = document.createElement('div');
   counter.id = 'fsCounter';
-  counter.style.cssText = 'position:fixed!important;top:20px!important;left:50%!important;transform:translateX(-50%)!important;color:rgba(255,255,255,0.5)!important;font-size:0.85rem!important;z-index:10!important;pointer-events:none!important;';
+  counter.style.cssText = 'position:fixed!important;top:20px!important;left:50%!important;transform:translateX(-50%)!important;color:rgba(0,0,0,0.5)!important;font-size:0.85rem!important;z-index:10!important;pointer-events:none!important;';
   counter.textContent = (currentImageIndex + 1) + ' / ' + currentModalImages.length;
   ov.appendChild(counter);
   ov.addEventListener('click', function(e) { if (e.target === this) closeFullscreen(); });
