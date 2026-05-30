@@ -3948,6 +3948,9 @@ loadProducts(function() {
     subscribeStockUpdates();
     updateCartBadge();
   });
+  // Prevent browser from restoring previous scroll position (common on mobile)
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  window.scrollTo(0, 0);
 });
 
 // Register service worker for PWA
