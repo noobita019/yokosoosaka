@@ -342,6 +342,7 @@ function showCheckoutReview() {
 }
 
 function placeOrder() {
+  _orderSnapshot = { items: cart.slice(), total: getCartTotal(), deposit: getDepositAmount() };
   sendOrderEmail();
   saveOrder();
   cart = [];
@@ -366,19 +367,21 @@ function closeCheckoutModal() {
 }
 
 function getOrderText() {
+  var snap = _orderSnapshot || { items: [], total: 0, deposit: 0 };
+  var items = snap.items.length ? snap.items : cart;
   var lines = ['🛍 PURCHASE ORDER', '━━━━━━━━━━━━━━━━━━', 'PO Number: ' + _checkoutPO, 'Date: ' + new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'}), '', 'CUSTOMER:'];
   lines.push('Name: ' + ((currentUser && currentUser.name) || 'N/A'));
   lines.push('Contact: ' + ((currentUser && currentUser.contact) || 'N/A'));
   if (currentUser && currentUser.email) lines.push('Email: ' + currentUser.email);
   if (currentUser && currentUser.address) lines.push('Address: ' + currentUser.address);
   lines.push('', 'ITEMS:');
-  cart.forEach(function(item, i) {
+  items.forEach(function(item, i) {
     var price = parseFloat(item.price.replace(/[^0-9.]/g, ''));
     var sub = isNaN(price) ? item.price : '₱' + (price * item.qty).toFixed(2);
     lines.push((i + 1) + '. ' + item.name + (item.color ? ' (' + item.color + ')' : '') + (item.size ? ' Size ' + item.size : '') + ' x' + item.qty + ' = ' + sub);
   });
-  var total = getCartTotal();
-  var deposit = getDepositAmount();
+  var total = snap.total || getCartTotal();
+  var deposit = snap.deposit || getDepositAmount();
   lines.push('', 'Total: ₱' + total.toFixed(2), 'Deposit: ₱' + deposit.toFixed(2), '', 'Please pay the deposit amount to proceed with your order.');
   return lines.join('\n');
 }
@@ -1878,6 +1881,8 @@ function closeLiveModal() {
   var el = document.getElementById('liveModal');
   if (el) { el.remove(); unlockBody(); if (location.hash === '#modal') history.back(); }
 }
+
+var _orderSnapshot = null;
 
 var _modalImages = [];
 var _modalImageIdx = 0;
