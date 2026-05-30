@@ -1,5 +1,5 @@
-var CACHE = 'japangoodies-v2';
-var DATA_CACHE = 'japangoodies-data-v2';
+var CACHE = 'japangoodies-v3';
+var DATA_CACHE = 'japangoodies-data-v3';
 
 self.addEventListener('install', function(e) {
   e.waitUntil(
@@ -32,7 +32,7 @@ self.addEventListener('fetch', function(e) {
   var url = new URL(e.request.url);
 
   // API calls — network first, cache fallback
-  if (url.pathname.includes('/orders/') || url.pathname.endsWith('/orders') || url.pathname.includes('/stocks/') || url.pathname.endsWith('/stocks') || url.pathname.includes('/cart/') || url.pathname.endsWith('/cart')) {
+  if (e.request.method === 'GET' && (url.pathname.includes('/orders/') || url.pathname.endsWith('/orders') || url.pathname.includes('/stocks/') || url.pathname.endsWith('/stocks') || url.pathname.includes('/cart/') || url.pathname.endsWith('/cart'))) {
     e.respondWith(
       fetch(e.request).then(function(resp) {
         var clone = resp.clone();
@@ -46,7 +46,7 @@ self.addEventListener('fetch', function(e) {
   }
 
   // data files (products.json, categories.json) — network first
-  if (url.pathname.endsWith('.json') && url.pathname.includes('/data/')) {
+  if (e.request.method === 'GET' && url.pathname.endsWith('.json') && url.pathname.includes('/data/')) {
     e.respondWith(
       fetch(e.request).then(function(resp) {
         var clone = resp.clone();
