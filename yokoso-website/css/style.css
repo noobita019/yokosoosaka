@@ -489,7 +489,7 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
   gap: 0;
-  scroll-margin-top: 230px;
+  scroll-margin-top: 240px;
   min-height: 50vh;
 }
 
@@ -500,7 +500,7 @@ body {
   box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
   cursor: pointer;
   transition: all 0.3s ease;
-  scroll-margin-top: 230px;
+  scroll-margin-top: 240px;
 }
 
 .product-card:hover {
