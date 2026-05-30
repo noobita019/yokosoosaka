@@ -566,7 +566,7 @@ function loadOrders() {
   if (!el) return;
   el.innerHTML = 'Loading...';
   var base = STOCK_PROXY_URL.replace(/\/+$/, '');
-  var url = base + '/orders';
+  var url = base + '/orders?_=' + Date.now();
   fetch(url)
     .then(function(r) { return r.json(); })
     .then(function(j) {

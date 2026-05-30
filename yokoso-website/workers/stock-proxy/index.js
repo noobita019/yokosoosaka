@@ -629,43 +629,6 @@ async function handleRequest(request, env) {
       return new Response(JSON.stringify({ ok: true, poNumber: po, status: 'cancelled', storage: 'firestore' }), { headers: corsHeaders(origin) });
     }
 
-    // POST /orders/:poNumber/deposit-paid — mark deposit as paid
-    if (request.method === 'POST' && parts.length === 3 && parts[0] === 'orders' && parts[2] === 'deposit-paid') {
-      const docId = encodeURIComponent(parts[1]);
-      const resp = await fetch(`${FIRESTORE_BASE}/orders/${docId}?key=${API_KEY}&updateMask.fieldPaths=status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fields: { status: { stringValue: 'deposit_paid' } } })
-      });
-      if (!resp.ok) throw new Error(`Deposit paid order: HTTP ${resp.status}`);
-      return new Response(JSON.stringify({ ok: true, poNumber: parts[1], status: 'deposit_paid' }), { headers: corsHeaders(origin) });
-    }
-
-    // POST /orders/:poNumber/cancel — cancel order and restore stock
-    if (request.method === 'POST' && parts.length === 3 && parts[0] === 'orders' && parts[2] === 'cancel') {
-      const data = await firestoreGet(`orders/${encodeURIComponent(parts[1])}`).catch(() => null);
-      const order = parseOrderDoc(data);
-      if (!order) return new Response(JSON.stringify({ error: 'Order not found' }), { status: 404, headers: corsHeaders(origin) });
-      let items = [];
-      try { items = JSON.parse(order.items || '[]'); } catch(e) {}
-      for (const item of items) {
-        try {
-          await restoreItemStock(item.productId || item.id, item.size || '', parseInt(item.qty, 10) || 1);
-          if (env && env.ORDERS_KV) {
-            const field = orderField(item.size || '');
-            await updateStockInMemoryCache(String(item.productId || item.id), field, parseInt(item.qty, 10) || 1).catch(() => {});
-          }
-        } catch(e) {}
-      }
-      const docId = encodeURIComponent(parts[1]);
-      await fetch(`${FIRESTORE_BASE}/orders/${docId}?key=${API_KEY}&updateMask.fieldPaths=status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fields: { status: { stringValue: 'cancelled' } } })
-      });
-      return new Response(JSON.stringify({ ok: true, poNumber: parts[1], status: 'cancelled' }), { headers: corsHeaders(origin) });
-    }
-
     // GET /debug/list-orders — diagnostic, shows KV status or Firestore fallback
     if (request.method === 'GET' && parts.length === 2 && parts[0] === 'debug' && parts[1] === 'list-orders') {
       const results = { hasKV: !!(env && env.ORDERS_KV) };

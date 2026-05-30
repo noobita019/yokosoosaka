@@ -32,7 +32,7 @@ self.addEventListener('fetch', function(e) {
   var url = new URL(e.request.url);
 
   // API calls — network first, cache fallback
-  if (url.pathname.includes('/orders/') || url.pathname.includes('/stocks/') || url.pathname.includes('/cart/')) {
+  if (url.pathname.includes('/orders/') || url.pathname.endsWith('/orders') || url.pathname.includes('/stocks/') || url.pathname.endsWith('/stocks') || url.pathname.includes('/cart/') || url.pathname.endsWith('/cart')) {
     e.respondWith(
       fetch(e.request).then(function(resp) {
         var clone = resp.clone();
