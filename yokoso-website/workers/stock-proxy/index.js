@@ -5,7 +5,7 @@ const FIRESTORE_BASE = 'https://firestore.googleapis.com/v1/projects/japan-goodi
 const API_KEY = 'AIzaSyCR8jcz2JeDr3VYztZm2KYdns4uPUajtqQ';
 
 async function firestoreGet(path) {
-  const resp = await fetch(`${FIRESTORE_BASE}/${path}?key=${API_KEY}`);
+  const resp = await fetchWithRetry(`${FIRESTORE_BASE}/${path}?key=${API_KEY}`);
   if (!resp.ok) {
     const text = await resp.text().catch(() => '');
     throw new Error(`Firestore GET ${path}: HTTP ${resp.status} ${resp.statusText} ${text}`);
@@ -25,7 +25,7 @@ async function firestorePatch(path, fields) {
       mappedFields[k] = { integerValue: String(v) };
     }
   }
-  const resp = await fetch(url, {
+  const resp = await fetchWithRetry(url, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields: mappedFields })
@@ -38,7 +38,7 @@ async function firestorePatch(path, fields) {
 
 async function firestoreCreate(docId, fields) {
   const url = `${FIRESTORE_BASE}/stocks?key=${API_KEY}&documentId=${docId}`;
-  const resp = await fetch(url, {
+  const resp = await fetchWithRetry(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -52,12 +52,22 @@ async function firestoreCreate(docId, fields) {
   throw new Error(`Firestore CREATE ${docId}: HTTP ${resp.status} ${resp.statusText} ${text}`);
 }
 
+// Simple retry for Firestore quota errors
+async function fetchWithRetry(url, opts, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    const resp = await fetch(url, opts);
+    if (resp.ok || resp.status !== 429) return resp;
+    await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+  }
+  return fetch(url, opts);
+}
+
 // Atomic increment/decrement via Firestore transform — no read-modify-write race
 // fieldPath defaults to 'default' (for products without sizes)
 async function firestoreTransform(docId, amount, fieldPath) {
   fieldPath = fieldPath || 'q';
   const docName = `projects/japan-goodies/databases/(default)/documents/stocks/${docId}`;
-  const resp = await fetch(`${FIRESTORE_BASE}:commit?key=${API_KEY}`, {
+  const resp = await fetchWithRetry(`${FIRESTORE_BASE}:commit?key=${API_KEY}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -112,7 +122,7 @@ function orderField(size) {
 async function restoreItemStock(productId, size, qty) {
   const field = orderField(size);
   const docName = `projects/japan-goodies/databases/(default)/documents/stocks/${productId}`;
-  const resp = await fetch(`${FIRESTORE_BASE}:commit?key=${API_KEY}`, {
+  const resp = await fetchWithRetry(`${FIRESTORE_BASE}:commit?key=${API_KEY}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -548,7 +558,7 @@ async function handleRequest(request, env) {
       }
       const fieldKeys = Object.keys(fields);
       const maskParams = fieldKeys.map(k => `updateMask.fieldPaths=${encodeURIComponent(k)}`).join('&');
-      const resp = await fetch(`${FIRESTORE_BASE}/orders/${docId}?key=${API_KEY}&${maskParams}`, {
+      const resp = await fetchWithRetry(`${FIRESTORE_BASE}/orders/${docId}?key=${API_KEY}&${maskParams}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fields: mappedFields })
@@ -577,7 +587,7 @@ async function handleRequest(request, env) {
         return new Response(JSON.stringify({ ok: true, poNumber: po, status: 'confirmed', storage: 'kv' }), { headers: corsHeaders(origin) });
       }
       const docId = encodeURIComponent(po);
-      const resp = await fetch(`${FIRESTORE_BASE}/orders/${docId}?key=${API_KEY}&updateMask.fieldPaths=status`, {
+      const resp = await fetchWithRetry(`${FIRESTORE_BASE}/orders/${docId}?key=${API_KEY}&updateMask.fieldPaths=status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fields: { status: { stringValue: 'confirmed' } } })
@@ -597,7 +607,7 @@ async function handleRequest(request, env) {
         return new Response(JSON.stringify({ ok: true, poNumber: po, status: 'deposit_paid', storage: 'kv' }), { headers: corsHeaders(origin) });
       }
       const docId = encodeURIComponent(po);
-      const resp = await fetch(`${FIRESTORE_BASE}/orders/${docId}?key=${API_KEY}&updateMask.fieldPaths=status`, {
+      const resp = await fetchWithRetry(`${FIRESTORE_BASE}/orders/${docId}?key=${API_KEY}&updateMask.fieldPaths=status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fields: { status: { stringValue: 'deposit_paid' } } })
@@ -637,11 +647,11 @@ async function handleRequest(request, env) {
         return new Response(JSON.stringify({ ok: true, poNumber: po, status: 'cancelled', storage: 'kv' }), { headers: corsHeaders(origin) });
       }
       const docId = encodeURIComponent(po);
-      await fetch(`${FIRESTORE_BASE}/orders/${docId}?key=${API_KEY}&updateMask.fieldPaths=status`, {
+      await fetchWithRetry(`${FIRESTORE_BASE}/orders/${docId}?key=${API_KEY}&updateMask.fieldPaths=status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fields: { status: { stringValue: 'cancelled' } } })
-      });
+      }).catch(() => {});
       return new Response(JSON.stringify({ ok: true, poNumber: po, status: 'cancelled', storage: 'firestore' }), { headers: corsHeaders(origin) });
     }
 
@@ -908,7 +918,7 @@ async function releaseExpiredOrders(env) {
       await kvSaveOrder(env, order);
     } else {
       const docId = encodeURIComponent(order.id || order.poNumber);
-      await fetch(`${FIRESTORE_BASE}/orders/${docId}?key=${API_KEY}&updateMask.fieldPaths=status`, {
+      await fetchWithRetry(`${FIRESTORE_BASE}/orders/${docId}?key=${API_KEY}&updateMask.fieldPaths=status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fields: { status: { stringValue: 'cancelled' } } })

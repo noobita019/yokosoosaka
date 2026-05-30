@@ -1,0 +1,2 @@
+Failed to load resource: the server responded with a status of 404 ()
+database.ts:725 Uncaught FirebaseError: Function DocumentReference.set() called with invalid data. Unsupported field value: undefined (found in document yokoso/products)

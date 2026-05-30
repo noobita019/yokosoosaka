@@ -693,9 +693,9 @@ function depositPaidOrder(poNumber) {
             var size = item.size || 'q';
             deductVariantStock(p, color, size, parseInt(item.qty, 10) || 1);
             stockMap[p.id] = { q: getTotalStock(p.id) };
+            syncStockToFirestore(p.id);
           });
           saveProducts();
-          syncAllStockToFirestore();
           renderProducts();
           showCartNotification('Deposit marked paid: ' + poNumber);
           var contact = order.customerContact || '';
@@ -754,9 +754,9 @@ function cancelOrder(poNumber) {
               var size = item.size || 'q';
               restoreVariantStock(p, color, size, parseInt(item.qty, 10) || 1);
               stockMap[p.id] = { q: getTotalStock(p.id) };
+              syncStockToFirestore(p.id);
             });
             saveProducts();
-            syncAllStockToFirestore();
             renderProducts();
           }
           showCartNotification('Order cancelled: ' + poNumber);
@@ -1715,7 +1715,7 @@ function loadStockFromFirestore(callback) {
           }
         });
       }
-      // Initialize stockMap for products not in Firestore yet
+      // Initialize stockMap for products not in Firestore yet (silently, no writes)
       products.forEach(function(p) {
         if (!stockMap[p.id]) {
           if (p.variants) {
@@ -1729,7 +1729,6 @@ function loadStockFromFirestore(callback) {
             stockMap[p.id] = { q: p.stock !== undefined ? p.stock : 5 };
           }
           p.stock = getTotalStock(p.id);
-          syncStockToFirestore(p.id);
         }
       });
       stockInitialized = true;
@@ -1836,7 +1835,6 @@ function applyProxyUrl() {
   if (isProxyReady()) {
     setProxyStatus('Connecting...');
     stockInitialized = false;
-    syncAllStockToFirestore();
     loadStockFromFirestore(function() {
       renderProducts();
       subscribeStockUpdates();
