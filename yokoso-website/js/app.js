@@ -2256,22 +2256,22 @@ function selectModalColor(el, color) {
   // Update images to reflect selected color
   var p = products.find(function(x) { return getVariantColors(x).indexOf(color) !== -1; });
   if (p) {
-    var variant = p.variants && p.variants[color];
-    if (variant && variant.images && variant.images.length > 0) {
-      _modalImages = variant.images.slice();
-    } else {
-      _modalImages = (Array.isArray(p.images) && p.images.length > 0) ? p.images : [p.image || 'images/products/placeholder.svg'];
-    }
-    _modalImageIdx = 0;
+    // Keep full product images (color variant picks its index)
+    var allImgs = (Array.isArray(p.images) && p.images.length > 0) ? p.images : [p.image || 'images/products/placeholder.svg'];
+    _modalImages = allImgs.slice();
+    var colors = getVariantColors(p);
+    var colorIdx = colors.indexOf(color);
+    _modalImageIdx = Math.min(colorIdx, _modalImages.length - 1);
+    if (_modalImageIdx < 0) _modalImageIdx = 0;
     var mediaContainer = document.getElementById('modalMediaContainer');
-    if (mediaContainer) mediaContainer.innerHTML = renderModalMedia(_modalImages[0]);
+    if (mediaContainer) mediaContainer.innerHTML = renderModalMedia(_modalImages[_modalImageIdx]);
     // Update dots
     var dotsContainer = document.querySelector('#liveModal .modal-dots-container');
     if (dotsContainer) {
       if (_modalImages.length > 1) {
         dotsContainer.style.display = 'flex';
         dotsContainer.innerHTML = _modalImages.map(function(_, i) {
-          return '<span class="modal-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + (i === 0 ? '#e94560' : '#ddd') + ';cursor:pointer" onclick="modalGoTo(' + i + ')"></span>';
+          return '<span class="modal-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + (i === _modalImageIdx ? '#e94560' : '#ddd') + ';cursor:pointer" onclick="modalGoTo(' + i + ')"></span>';
         }).join('');
       } else {
         dotsContainer.style.display = 'none';
@@ -2282,7 +2282,8 @@ function selectModalColor(el, color) {
     var navNext = document.getElementById('modalNavNext');
     if (navPrev) navPrev.style.display = _modalImages.length > 1 ? '' : 'none';
     if (navNext) navNext.style.display = _modalImages.length > 1 ? '' : 'none';
-    stopModalAutoPlay();
+    // Start carousel from the selected color's image
+    startModalAutoPlay();
     // Update sizes for this color
     var vSizes = getVariantSizes(p, color);
     var sizeContainer = document.getElementById('modalSizesContainer');
