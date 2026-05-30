@@ -1546,7 +1546,7 @@ body {
   .product-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 0;
-    scroll-margin-top: 110px;
+    scroll-margin-top: 0;
   }
 
   .product-image {
