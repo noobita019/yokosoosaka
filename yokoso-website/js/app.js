@@ -845,7 +845,7 @@ let currentGroup = 'all';
 let currentBrand = 'all';
 var mainPage = 1;
 
-var mainLimit = 24;
+var mainLimit = 50;
 var adminSearchVal = '';
 var adminFilterGroup = 'all';
 var adminFilterType = 'all';
