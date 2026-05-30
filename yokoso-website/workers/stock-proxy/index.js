@@ -499,6 +499,21 @@ async function handleRequest(request, env) {
       if (!body.poNumber || !body.items) {
         return new Response(JSON.stringify({ error: 'poNumber and items required' }), { status: 400, headers: corsHeaders(origin) });
       }
+      // Deduct stock for each item in the order
+      let items = [];
+      try { items = typeof body.items === 'string' ? JSON.parse(body.items) : body.items; } catch(e) {}
+      const stockDeductions = [];
+      for (const item of items) {
+        const pid = item.productId || item.id;
+        if (pid && item.qty) {
+          const field = orderField(item.size || '');
+          stockDeductions.push(firestoreTransform(pid, -parseInt(item.qty, 10), field));
+        }
+      }
+      await Promise.all(stockDeductions);
+      // Invalidate stock caches
+      stockMemoryCache = null; stockMemoryCacheTime = 0;
+      if (env && env.ORDERS_KV) env.ORDERS_KV.delete('stock_cache').catch(() => {});
       const now = new Date().toISOString();
       const order = {
         id: body.poNumber,
@@ -615,6 +630,9 @@ async function handleRequest(request, env) {
           }
         } catch(e) {}
       }
+      // Invalidate stock caches after restoring stock
+      stockMemoryCache = null; stockMemoryCacheTime = 0;
+      if (env && env.ORDERS_KV) env.ORDERS_KV.delete('stock_cache').catch(() => {});
       if (env && env.ORDERS_KV) {
         orderData.status = 'cancelled';
         await kvSaveOrder(env, orderData);
@@ -878,6 +896,15 @@ async function releaseExpiredOrders(env) {
     if (order.status !== 'pending') continue;
     const created = new Date(order.createdAt).getTime();
     if (isNaN(created) || (now - created) < TWENTY_FOUR_HOURS) continue;
+    // Restore stock for each item
+    let items = [];
+    try { items = JSON.parse(order.items || '[]'); } catch(e) {}
+    for (const item of items) {
+      try { await restoreItemStock(item.productId || item.id, item.size || '', parseInt(item.qty, 10) || 1); } catch(e) {}
+    }
+    // Invalidate stock caches
+    stockMemoryCache = null; stockMemoryCacheTime = 0;
+    if (env && env.ORDERS_KV) env.ORDERS_KV.delete('stock_cache').catch(() => {});
     if (env && env.ORDERS_KV) {
       order.status = 'cancelled';
       await kvSaveOrder(env, order);
