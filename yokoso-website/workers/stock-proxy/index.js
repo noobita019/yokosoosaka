@@ -761,9 +761,11 @@ async function handleRequest(request, env) {
       if (r === null) {
         const created = await firestoreCreate(parts[1], fields);
         stockMemoryCache = null; stockMemoryCacheTime = 0;
+        if (env && env.ORDERS_KV) env.ORDERS_KV.delete('stock_cache').catch(() => {});
         return new Response(JSON.stringify({ ok: created }), { headers: corsHeaders(origin) });
       }
       stockMemoryCache = null; stockMemoryCacheTime = 0;
+      if (env && env.ORDERS_KV) env.ORDERS_KV.delete('stock_cache').catch(() => {});
       return new Response(JSON.stringify({ ok: r }), { headers: corsHeaders(origin) });
     }
 
@@ -775,6 +777,7 @@ async function handleRequest(request, env) {
       const r = await firestoreTransform(parts[1], amount, field);
       if (env && env.ORDERS_KV && r === true) {
         await updateStockInMemoryCache(parts[1], field, amount).catch(() => {});
+        env.ORDERS_KV.delete('stock_cache').catch(() => {});
       }
       if (r === true) {
         const data = await firestoreGet(`stocks/${parts[1]}`).catch(() => null);
@@ -785,6 +788,7 @@ async function handleRequest(request, env) {
         const fields = {};
         fields[field] = amount;
         const patched = await firestorePatch(`stocks/${parts[1]}`, fields);
+        if (env && env.ORDERS_KV) env.ORDERS_KV.delete('stock_cache').catch(() => {});
         if (patched === null) {
           await firestoreCreate(parts[1], fields);
         }
@@ -801,6 +805,7 @@ async function handleRequest(request, env) {
       const r = await firestoreTransform(parts[1], -amount, field);
       if (env && env.ORDERS_KV && r === true) {
         await updateStockInMemoryCache(parts[1], field, -amount).catch(() => {});
+        env.ORDERS_KV.delete('stock_cache').catch(() => {});
       }
       if (r === true) {
         const data = await firestoreGet(`stocks/${parts[1]}`).catch(() => null);
@@ -813,6 +818,7 @@ async function handleRequest(request, env) {
         const fields = {};
         fields[field] = Math.max(0, 5 - amount);
         const patched = await firestorePatch(`stocks/${parts[1]}`, fields);
+        if (env && env.ORDERS_KV) env.ORDERS_KV.delete('stock_cache').catch(() => {});
         if (patched === null) {
           await firestoreCreate(parts[1], fields);
         }
