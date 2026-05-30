@@ -408,7 +408,7 @@ async function handleRequest(request, env) {
         admin: { stringValue: 'false' }
       };
       if (body.email) fields.email = { stringValue: body.email };
-      const resp = await fetch(url, {
+      const resp = await fetchWithRetry(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fields })
@@ -491,7 +491,7 @@ async function handleRequest(request, env) {
       if (!existing || !existing.fields) {
         return new Response(JSON.stringify({ error: 'Account not found' }), { status: 404, headers: corsHeaders(origin) });
       }
-      const resp = await fetch(`${FIRESTORE_BASE}/accounts/${encodeURIComponent(parts[1])}?key=${API_KEY}`, {
+      const resp = await fetchWithRetry(`${FIRESTORE_BASE}/accounts/${encodeURIComponent(parts[1])}?key=${API_KEY}`, {
         method: 'DELETE'
       });
       if (!resp.ok) {
@@ -512,16 +512,17 @@ async function handleRequest(request, env) {
       // Deduct stock for each item in the order
       let items = [];
       try { items = typeof body.items === 'string' ? JSON.parse(body.items) : body.items; } catch(e) {}
-      for (const item of items) {
+      await Promise.allSettled(items.map(item => {
         const pid = item.productId || item.id;
         if (pid && item.qty) {
           const field = orderField(item.size || '');
-          firestoreTransform(pid, -parseInt(item.qty, 10), field).catch(() => {});
+          return firestoreTransform(pid, -parseInt(item.qty, 10), field);
         }
-      }
+        return Promise.resolve();
+      }));
       // Invalidate stock caches
       stockMemoryCache = null; stockMemoryCacheTime = 0;
-      if (env && env.ORDERS_KV) env.ORDERS_KV.delete('stock_cache').catch(() => {});
+      if (env && env.ORDERS_KV) await env.ORDERS_KV.delete('stock_cache').catch(() => {});
       const now = new Date().toISOString();
       const order = {
         id: body.poNumber,
@@ -640,7 +641,7 @@ async function handleRequest(request, env) {
       }
       // Invalidate stock caches after restoring stock
       stockMemoryCache = null; stockMemoryCacheTime = 0;
-      if (env && env.ORDERS_KV) env.ORDERS_KV.delete('stock_cache').catch(() => {});
+      if (env && env.ORDERS_KV) await env.ORDERS_KV.delete('stock_cache').catch(() => {});
       if (env && env.ORDERS_KV) {
         orderData.status = 'cancelled';
         await kvSaveOrder(env, orderData);
@@ -665,7 +666,7 @@ async function handleRequest(request, env) {
         results.KV_sample = orders[Object.keys(orders)[0]] || null;
       } else {
         results.note = 'KV not configured; falling back to Firestore';
-        const m1 = await fetch(`${FIRESTORE_BASE}/orders?key=${API_KEY}`).catch(() => null);
+        const m1 = await fetchWithRetry(`${FIRESTORE_BASE}/orders?key=${API_KEY}`).catch(() => null);
         results.GET_status = m1 ? m1.status : 'no_resp';
         if (m1) results.GET_body = (await m1.text().catch(() => 'no_body')).substring(0, 300);
       }
@@ -717,7 +718,7 @@ async function handleRequest(request, env) {
           for (const doc of data.documents) {
             const match = doc.name.match(/\/orders\/([^/]+)$/);
             if (match) {
-              await fetch(`${FIRESTORE_BASE}/orders/${encodeURIComponent(match[1])}?key=${API_KEY}`, { method: 'DELETE' }).catch(() => {});
+              await fetchWithRetry(`${FIRESTORE_BASE}/orders/${encodeURIComponent(match[1])}?key=${API_KEY}`, { method: 'DELETE' }).catch(() => {});
               deleted++;
             }
           }
@@ -787,11 +788,11 @@ async function handleRequest(request, env) {
       if (r === null) {
         const created = await firestoreCreate(parts[1], fields);
         stockMemoryCache = null; stockMemoryCacheTime = 0;
-        if (env && env.ORDERS_KV) env.ORDERS_KV.delete('stock_cache').catch(() => {});
+        if (env && env.ORDERS_KV) await env.ORDERS_KV.delete('stock_cache').catch(() => {});
         return new Response(JSON.stringify({ ok: created }), { headers: corsHeaders(origin) });
       }
       stockMemoryCache = null; stockMemoryCacheTime = 0;
-      if (env && env.ORDERS_KV) env.ORDERS_KV.delete('stock_cache').catch(() => {});
+      if (env && env.ORDERS_KV) await env.ORDERS_KV.delete('stock_cache').catch(() => {});
       return new Response(JSON.stringify({ ok: r }), { headers: corsHeaders(origin) });
     }
 
@@ -803,7 +804,7 @@ async function handleRequest(request, env) {
       const r = await firestoreTransform(parts[1], amount, field);
       if (env && env.ORDERS_KV && r === true) {
         await updateStockInMemoryCache(parts[1], field, amount).catch(() => {});
-        env.ORDERS_KV.delete('stock_cache').catch(() => {});
+        await env.ORDERS_KV.delete('stock_cache').catch(() => {});
       }
       if (r === true) {
         const data = await firestoreGet(`stocks/${parts[1]}`).catch(() => null);
@@ -814,7 +815,7 @@ async function handleRequest(request, env) {
         const fields = {};
         fields[field] = amount;
         const patched = await firestorePatch(`stocks/${parts[1]}`, fields);
-        if (env && env.ORDERS_KV) env.ORDERS_KV.delete('stock_cache').catch(() => {});
+        if (env && env.ORDERS_KV) await env.ORDERS_KV.delete('stock_cache').catch(() => {});
         if (patched === null) {
           await firestoreCreate(parts[1], fields);
         }
@@ -831,7 +832,7 @@ async function handleRequest(request, env) {
       const r = await firestoreTransform(parts[1], -amount, field);
       if (env && env.ORDERS_KV && r === true) {
         await updateStockInMemoryCache(parts[1], field, -amount).catch(() => {});
-        env.ORDERS_KV.delete('stock_cache').catch(() => {});
+        await env.ORDERS_KV.delete('stock_cache').catch(() => {});
       }
       if (r === true) {
         const data = await firestoreGet(`stocks/${parts[1]}`).catch(() => null);
@@ -844,7 +845,7 @@ async function handleRequest(request, env) {
         const fields = {};
         fields[field] = Math.max(0, 5 - amount);
         const patched = await firestorePatch(`stocks/${parts[1]}`, fields);
-        if (env && env.ORDERS_KV) env.ORDERS_KV.delete('stock_cache').catch(() => {});
+        if (env && env.ORDERS_KV) await env.ORDERS_KV.delete('stock_cache').catch(() => {});
         if (patched === null) {
           await firestoreCreate(parts[1], fields);
         }
@@ -893,7 +894,7 @@ async function releaseExpiredOrders(env) {
     const orders = await kvGetOrders(env);
     ordersList = Object.values(orders);
   } else {
-    const listResp = await fetch(`${FIRESTORE_BASE}/orders?key=${API_KEY}`).catch(() => null);
+    const listResp = await fetchWithRetry(`${FIRESTORE_BASE}/orders?key=${API_KEY}`).catch(() => null);
     const listData = listResp && listResp.ok ? await listResp.json().catch(() => null) : null;
     ordersList = (listData && listData.documents) ? listData.documents.map(parseOrderDoc).filter(Boolean) : [];
   }
@@ -912,7 +913,7 @@ async function releaseExpiredOrders(env) {
     }
     // Invalidate stock caches
     stockMemoryCache = null; stockMemoryCacheTime = 0;
-    if (env && env.ORDERS_KV) env.ORDERS_KV.delete('stock_cache').catch(() => {});
+    if (env && env.ORDERS_KV) await env.ORDERS_KV.delete('stock_cache').catch(() => {});
     if (env && env.ORDERS_KV) {
       order.status = 'cancelled';
       await kvSaveOrder(env, order);

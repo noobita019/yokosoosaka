@@ -2099,6 +2099,23 @@ function modalGoTo(index) {
   startModalAutoPlay();
 }
 
+var _colorHexMap = {
+  red:'#e53935',blue:'#1e88e5',green:'#43a047',black:'#212121',white:'#ffffff',
+  beige:'#f5f5dc',pink:'#f06292',silver:'#bdbdbd',grey:'#757575',gray:'#757575',
+  brown:'#6d4c41',lavender:'#b39ddb',navy:'#1a237e',olive:'#7cb342',
+  yellow:'#fdd835',orange:'#fb8c00',purple:'#8e24aa',gold:'#f9a825',
+  tan:'#d2b48c',cream:'#fff8e1',charcoal:'#37474f',indigo:'#3949ab',
+  coral:'#ff7043',teal:'#00897b',maroon:'#6d1a36',default:'#bbb'
+};
+function colorToHex(name) {
+  return _colorHexMap[(name || '').toLowerCase()] || _colorHexMap.default;
+}
+function isLightColor(hex) {
+  var c = hex.replace('#','');
+  var r = parseInt(c.substr(0,2),16), g = parseInt(c.substr(2,2),16), b = parseInt(c.substr(4,2),16);
+  return (r*299 + g*587 + b*114) / 1000 > 180;
+}
+
 function openModal(product) {
   try {
     var overlay = document.createElement('div');
@@ -2106,19 +2123,26 @@ function openModal(product) {
     overlay.id = 'liveModal';
     overlay.style.cssText = 'display:flex !important;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;padding:20px;';
     
-    _modalImages = (Array.isArray(product.images) && product.images.length > 0) ? product.images : [product.image || 'images/products/placeholder.svg'];
-    _modalImageIdx = 0;
     var variantColors = getVariantColors(product);
     var firstColor = variantColors.length ? variantColors[0] : null;
+    var firstVariant = firstColor && product.variants && product.variants[firstColor];
+    _modalImages = (firstVariant && firstVariant.images && firstVariant.images.length > 0) ? firstVariant.images.slice() : (Array.isArray(product.images) && product.images.length > 0 ? product.images : [product.image || 'images/products/placeholder.svg']);
+    _modalImageIdx = 0;
     _modalSelectedColor = firstColor;
     _modalSelectedSize = null;
     var productHasSizes = hasSizes(product);
     // Color picker
     var colorPickerHtml = '';
     if (variantColors.length > 1 || (variantColors.length === 1 && variantColors[0] !== 'Default')) {
-      colorPickerHtml = '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">' + variantColors.map(function(c) {
-        var active = c === firstColor ? ' style="border:2px solid #e94560;background:#ffe8eb"' : '';
-        return '<button class="modal-color-btn" data-color="' + c + '" onclick="selectModalColor(this,\'' + c.replace(/'/g, "\\'") + '\')"' + active + '>' + c + '</button>';
+      colorPickerHtml = '<div style="display:flex;flex-wrap:wrap;gap:12px 8px;margin-bottom:12px" id="modalColorContainer">' + variantColors.map(function(c) {
+        var hex = colorToHex(c);
+        var circleBorder = isLightColor(hex) ? '2px solid rgba(0,0,0,0.15)' : '2px solid transparent';
+        if (c === firstColor) circleBorder = '3px solid #e94560';
+        var activeClass = c === firstColor ? ' modal-color-active' : '';
+        return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer" onclick="selectModalColor(this,\'' + c.replace(/'/g, "\\'") + '\')">' +
+          '<button class="modal-color-btn' + activeClass + '" data-color="' + c + '" style="background:' + hex + ';border:' + circleBorder + '"></button>' +
+          '<span style="font-size:0.65rem;color:' + (c === firstColor ? '#e94560' : '#888') + ';font-weight:' + (c === firstColor ? '600' : '400') + '">' + c + '</span>' +
+          '</div>';
       }).join('') + '</div>';
     }
     // Sizes for selected color
@@ -2134,17 +2158,16 @@ function openModal(product) {
         }).join('') + '</div>';
       }
     }
-    var dotsHtml = _modalImages.length > 1 ? '<div style="display:flex;justify-content:center;gap:6px;padding:8px 0;position:absolute;bottom:0;left:0;right:0">' + _modalImages.map(function(_, i) { return '<span class="modal-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + (i === 0 ? '#e94560' : '#ddd') + ';cursor:pointer" onclick="modalGoTo(' + i + ')"></span>'; }).join('') + '</div>' : '';
     var totalAvail = getTotalStock(product.id);
     
     overlay.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.15)">' +
       '<button onclick="closeLiveModal()" style="position:absolute;top:12px;right:16px;background:rgba(0,0,0,0.06);border:none;font-size:24px;cursor:pointer;color:#666;z-index:10;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center">×</button>' +
       '<div style="display:flex;flex-direction:column">' +
         '<div style="position:relative">' +
-          (_modalImages.length > 1 ? '<button onclick="modalNav(-1)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);z-index:5;background:rgba(255,255,255,0.8);border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#333">‹</button>' : '') +
-          (_modalImages.length > 1 ? '<button onclick="modalNav(1)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);z-index:5;background:rgba(255,255,255,0.8);border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#333">›</button>' : '') +
+          (_modalImages.length > 1 ? '<button id="modalNavPrev" onclick="modalNav(-1)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);z-index:5;background:rgba(255,255,255,0.8);border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#333">‹</button>' : '') +
+          (_modalImages.length > 1 ? '<button id="modalNavNext" onclick="modalNav(1)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);z-index:5;background:rgba(255,255,255,0.8);border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#333">›</button>' : '') +
           '<div id="modalMediaContainer">' + renderModalMedia(_modalImages[0] || 'images/products/placeholder.svg') + '</div>' +
-          dotsHtml +
+          (_modalImages.length > 1 ? '<div class="modal-dots-container" style="display:flex;justify-content:center;gap:6px;padding:8px 0;position:absolute;bottom:0;left:0;right:0">' + _modalImages.map(function(_, i) { return '<span class="modal-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + (i === 0 ? '#e94560' : '#ddd') + ';cursor:pointer" onclick="modalGoTo(' + i + ')"></span>'; }).join('') + '</div>' : '') +
         '</div>' +
         '<div style="padding:24px 32px 32px">' +
           '<h2 style="font-size:20px;margin:0 0 4px;line-height:1.3">' + (product.name || '') + '</h2>' +
@@ -2205,32 +2228,78 @@ var _modalSelectedColor = null;
 var _modalSelectedSize = null;
 
 function selectModalColor(el, color) {
-  document.querySelectorAll('#liveModal .modal-color-btn').forEach(function(b) { b.style.border = '1px solid #ddd'; b.style.background = '#f5f5f7'; });
-  el.style.border = '2px solid #e94560';
-  el.style.background = '#ffe8eb';
+  var container = document.getElementById('modalColorContainer');
+  if (container) {
+    container.querySelectorAll('.modal-color-btn').forEach(function(b) {
+      var c = b.dataset.color;
+      var hex = colorToHex(c);
+      var isLight = isLightColor(hex);
+      b.style.border = c === color ? '3px solid #e94560' : (isLight ? '2px solid rgba(0,0,0,0.15)' : '2px solid transparent');
+      b.classList.toggle('modal-color-active', c === color);
+    });
+    container.querySelectorAll('span').forEach(function(s) {
+      var parent = s.parentElement;
+      if (parent) {
+        var btn = parent.querySelector('.modal-color-btn');
+        if (btn) {
+          var active = btn.dataset.color === color;
+          s.style.color = active ? '#e94560' : '#888';
+          s.style.fontWeight = active ? '600' : '400';
+        }
+      }
+    });
+  }
   _modalSelectedColor = color;
   _modalSelectedSize = null;
-  // Find product from the modal's context
   var btn = document.getElementById('modalAddToCartBtn');
   if (btn) btn.textContent = 'Select a size';
-  // Update sizes
+  // Update images to reflect selected color
   var p = products.find(function(x) { return getVariantColors(x).indexOf(color) !== -1; });
-  if (!p) return;
-  var vSizes = getVariantSizes(p, color);
-  var container = document.getElementById('modalSizesContainer');
-  if (container) {
-    if (vSizes.length > 0) {
-      container.innerHTML = vSizes.map(function(s) {
-        var sStock = getVariantStock(p, color, s);
-        var sClass = sStock > 0 ? 'modal-size-btn' : 'modal-size-btn size-oos';
-        var sLabel = sStock > 0 ? s : s + ' (OOS)';
-        return '<button class="' + sClass + '" data-size="' + s + '" onclick="selectModalSize(this,\'' + s + '\')">' + sLabel + '</button>';
-      }).join('');
-      container.style.display = 'flex';
+  if (p) {
+    var variant = p.variants && p.variants[color];
+    if (variant && variant.images && variant.images.length > 0) {
+      _modalImages = variant.images.slice();
     } else {
-      container.style.display = 'none';
-      var btn2 = document.getElementById('modalAddToCartBtn');
-      if (btn2) btn2.textContent = 'Add to Cart';
+      _modalImages = (Array.isArray(p.images) && p.images.length > 0) ? p.images : [p.image || 'images/products/placeholder.svg'];
+    }
+    _modalImageIdx = 0;
+    var mediaContainer = document.getElementById('modalMediaContainer');
+    if (mediaContainer) mediaContainer.innerHTML = renderModalMedia(_modalImages[0]);
+    // Update dots
+    var dotsContainer = document.querySelector('#liveModal .modal-dots-container');
+    if (dotsContainer) {
+      if (_modalImages.length > 1) {
+        dotsContainer.style.display = 'flex';
+        dotsContainer.innerHTML = _modalImages.map(function(_, i) {
+          return '<span class="modal-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + (i === 0 ? '#e94560' : '#ddd') + ';cursor:pointer" onclick="modalGoTo(' + i + ')"></span>';
+        }).join('');
+      } else {
+        dotsContainer.style.display = 'none';
+      }
+    }
+    // Update nav arrows
+    var navPrev = document.getElementById('modalNavPrev');
+    var navNext = document.getElementById('modalNavNext');
+    if (navPrev) navPrev.style.display = _modalImages.length > 1 ? '' : 'none';
+    if (navNext) navNext.style.display = _modalImages.length > 1 ? '' : 'none';
+    stopModalAutoPlay();
+    // Update sizes for this color
+    var vSizes = getVariantSizes(p, color);
+    var sizeContainer = document.getElementById('modalSizesContainer');
+    if (sizeContainer) {
+      if (vSizes.length > 0) {
+        sizeContainer.innerHTML = vSizes.map(function(s) {
+          var sStock = getVariantStock(p, color, s);
+          var sClass = sStock > 0 ? 'modal-size-btn' : 'modal-size-btn size-oos';
+          var sLabel = sStock > 0 ? s : s + ' (OOS)';
+          return '<button class="' + sClass + '" data-size="' + s + '" onclick="selectModalSize(this,\'' + s + '\')">' + sLabel + '</button>';
+        }).join('');
+        sizeContainer.style.display = 'flex';
+      } else {
+        sizeContainer.style.display = 'none';
+        var btn2 = document.getElementById('modalAddToCartBtn');
+        if (btn2) btn2.textContent = 'Add to Cart';
+      }
     }
   }
 }
