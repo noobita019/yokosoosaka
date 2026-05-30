@@ -500,7 +500,7 @@ body {
   box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
   cursor: pointer;
   transition: all 0.3s ease;
-  scroll-margin-top: 245px;
+  scroll-margin-top: 250px;
 }
 
 .product-card:hover {
@@ -1547,7 +1547,7 @@ body {
   .product-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 0;
-    scroll-margin-top: 280px;
+    scroll-margin-top: 380px;
   }
 
   .product-image {
@@ -1557,7 +1557,7 @@ body {
   .product-card {
     border-radius: 0;
     box-shadow: none;
-    scroll-margin-top: 280px;
+    scroll-margin-top: 380px;
   }
 
   .product-info {
