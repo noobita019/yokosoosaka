@@ -1595,7 +1595,10 @@ document.addEventListener('click', function(e) {
 
 function openProduct(id) {
   const product = products.find(p => p.id === id);
-  if (product) openModal(product);
+  if (!product) return;
+  fetchProductStock(id, function() {
+    openModal(product);
+  });
 }
 
 function renderProducts() {
@@ -1716,8 +1719,7 @@ function goToPage(newPage) {
   }, 50);
 }
 
-// ---- PROXY-BASED REAL-TIME STOCK ----
-var stockPollTimer = null;
+// ---- PROXY-BASED STOCK ----
 var stockInitialized = false;
 
 function proxyUrl(path) {
@@ -1859,52 +1861,40 @@ function loadStockFromFirestore(callback) {
     });
 }
 
-function subscribeStockUpdates() {
-  if (!isProxyReady()) return;
-  if (stockPollTimer) clearInterval(stockPollTimer);
-  stockPollTimer = setInterval(function() {
-    fetch(proxyUrl('stocks'))
-      .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function(docs) {
-        if (!Array.isArray(docs)) return;
-        var changed = false;
-        docs.forEach(function(doc) {
-          if (doc && doc.id) {
-            var id = parseInt(doc.id);
-            var p = products.find(function(x) { return x.id === id; });
-              if (p && doc.fields) {
-              var fields = doc.fields;
-              // Restore per-color per-size stock from proxy fields
-              if (p.variants) {
-                for (var c in p.variants) {
-                  var v = p.variants[c];
-                  if (v.stock) {
-                    for (var s in v.stock) {
-                      var key = c + '|' + s;
-                      if (doc.fields[key] !== undefined) {
-                        v.stock[s] = doc.fields[key];
-                      }
-                    }
+function fetchProductStock(productId, callback) {
+  if (!isProxyReady()) { if (callback) callback(); return; }
+  fetch(proxyUrl('stocks/' + productId))
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(doc) {
+      if (doc && doc.fields) {
+        var id = parseInt(doc.id);
+        var p = products.find(function(x) { return x.id === id; });
+        if (p) {
+          if (p.variants) {
+            for (var c in p.variants) {
+              var v = p.variants[c];
+              if (v.stock) {
+                for (var s in v.stock) {
+                  var key = c + '|' + s;
+                  if (doc.fields[key] !== undefined) {
+                    v.stock[s] = doc.fields[key];
                   }
                 }
-                fields = { q: doc.fields.q !== undefined ? doc.fields.q : getTotalStock(id) };
-              }
-              var newTotal = 0;
-              for (var k in fields) newTotal += fields[k];
-              if (stockInitialized && p.stock !== newTotal) {
-                // Don't overwrite local stock that was recently modified (pending async sync)
-                if (p._stockLock && p._stockLock > Date.now()) return;
-                stockMap[id] = fields;
-                p.stock = newTotal;
-                changed = true;
               }
             }
+            stockMap[id] = { q: doc.fields.q !== undefined ? doc.fields.q : getTotalStock(id) };
+          } else {
+            stockMap[id] = doc.fields;
           }
-        });
-        if (changed) renderProducts();
-      })
-      .catch(function() {});
-  }, 30000);
+          p.stock = getTotalStock(id);
+        }
+      }
+      if (callback) callback();
+    })
+    .catch(function() { if (callback) callback(); });
 }
 
 function testProxyConnection() {
@@ -1958,7 +1948,6 @@ function applyProxyUrl() {
     stockInitialized = false;
     loadStockFromFirestore(function() {
       renderProducts();
-      subscribeStockUpdates();
     });
   } else {
     setProxyStatus('Enter a valid proxy URL', true);
@@ -4193,12 +4182,9 @@ loadProducts(function() {
   parseURLParams();
   if (currentUser && currentUser.admin) showAdminPanel();
   renderMessengerLink();
-  loadStockFromFirestore(function() {
-    renderFilters();
-    renderProducts();
-    subscribeStockUpdates();
-    updateCartBadge();
-  });
+  renderFilters();
+  renderProducts();
+  updateCartBadge();
 });
 
 // Register service worker for PWA
