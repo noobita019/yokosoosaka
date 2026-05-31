@@ -1447,7 +1447,9 @@ if (cc) {
     var groupName = btn.dataset.group;
     var sp = document.getElementById('loadingSpinner');
     if (sp) sp.classList.add('active');
-    window.location.href = '?group=' + encodeURIComponent(groupName);
+    setTimeout(function() {
+      window.location.href = '?group=' + encodeURIComponent(groupName);
+    }, 100);
   });
 }
 
