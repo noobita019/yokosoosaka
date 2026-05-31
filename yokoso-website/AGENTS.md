@@ -110,6 +110,11 @@ Now also syncs `data/categories.json` automatically
 
 ## Session History (May 31, 2026)
 
+### Fix: Real-time stock sync across devices
+- **Problem**: Per-color per-size stock changes (admin edits, cart additions) were only saved locally as `{ q: total }` to the proxy. On page refresh, other devices saw stale stock because the product's variant data came from the CDN-cached `data/products.json`.
+- **Fix**: `syncStockToFirestore` now sends full per-variant stock as `color|size` keys. `loadStockFromFirestore` and `subscribeStockUpdates` restore variant stock from proxy fields. `addToCart`, `removeFromCart`, and `updateCartQty` also sync to the proxy.
+- **Files**: `js/app.js`
+
 ### Migrated: GitHub Pages → Cloudflare Pages
 - Created Cloudflare Pages project `yokoso-website`
 - Deployed static site to `https://yokoso-website.pages.dev`

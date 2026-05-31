@@ -1628,8 +1628,17 @@ function syncStockToFirestore(productId) {
   if (!p) return;
   var body = {};
   if (p.variants) {
-    var total = getTotalStock(productId);
-    body = { q: total };
+    var total = 0;
+    for (var c in p.variants) {
+      var v = p.variants[c];
+      if (v.stock) {
+        for (var s in v.stock) {
+          body[c + '|' + s] = v.stock[s];
+          total += v.stock[s];
+        }
+      }
+    }
+    body.q = total;
   } else if (hasSizes(p)) {
     var m = stockMap[productId];
     if (m) {
@@ -1679,8 +1688,19 @@ function loadStockFromFirestore(callback) {
             var id = parseInt(doc.id);
             var p = products.find(function(x) { return x.id === id; });
             if (p && doc.fields) {
-              // If product has variants, use total q directly
+              // Restore per-color per-size stock from proxy fields
               if (p.variants) {
+                for (var c in p.variants) {
+                  var v = p.variants[c];
+                  if (v.stock) {
+                    for (var s in v.stock) {
+                      var key = c + '|' + s;
+                      if (doc.fields[key] !== undefined) {
+                        v.stock[s] = doc.fields[key];
+                      }
+                    }
+                  }
+                }
                 stockMap[id] = { q: doc.fields.q !== undefined ? doc.fields.q : getTotalStock(id) };
               } else if (hasSizes(p) && Object.keys(doc.fields).length === 1 && (doc.fields.q !== undefined || doc.fields.default !== undefined)) {
                 var total = doc.fields.q !== undefined ? doc.fields.q : doc.fields.default;
@@ -1738,17 +1758,22 @@ function subscribeStockUpdates() {
           if (doc && doc.id) {
             var id = parseInt(doc.id);
             var p = products.find(function(x) { return x.id === id; });
-            if (p && doc.fields) {
+              if (p && doc.fields) {
               var fields = doc.fields;
-              // If product has variants, use total q directly
+              // Restore per-color per-size stock from proxy fields
               if (p.variants) {
+                for (var c in p.variants) {
+                  var v = p.variants[c];
+                  if (v.stock) {
+                    for (var s in v.stock) {
+                      var key = c + '|' + s;
+                      if (doc.fields[key] !== undefined) {
+                        v.stock[s] = doc.fields[key];
+                      }
+                    }
+                  }
+                }
                 fields = { q: doc.fields.q !== undefined ? doc.fields.q : getTotalStock(id) };
-              } else if (hasSizes(p) && Object.keys(fields).length === 1 && (fields.q !== undefined || fields.default !== undefined)) {
-                var total = fields.q !== undefined ? fields.q : fields.default;
-                fields = {};
-                var perSize = Math.max(1, Math.floor(total / p.sizes.length));
-                p.sizes.forEach(function(s) { fields[stockField(s)] = perSize; });
-                fields.q = 0;
               }
               var newTotal = 0;
               for (var k in fields) newTotal += fields[k];
@@ -1875,6 +1900,7 @@ function addToCart(productId, color, size) {
       });
     }
     deductVariantStock(p, color, 'q', 1);
+    syncStockToFirestore(p.id);
     saveCart();
     renderProducts();
     showCartNotification(p.name);
@@ -1898,6 +1924,7 @@ function addToCart(productId, color, size) {
     });
   }
   deductVariantStock(p, color, size, 1);
+  syncStockToFirestore(p.id);
   p._stockLock = Date.now() + 10000;
   saveCart();
   console.log('[Cart] Added ' + p.name + ' (' + color + (size ? '/' + size : '') + ')');
@@ -1931,6 +1958,7 @@ function removeFromCart(productId, color, size) {
   var p = products.find(function(x) { return x.id === productId; });
   if (p) {
     restoreVariantStock(p, item.color, item.size || 'q', item.qty);
+    syncStockToFirestore(p.id);
     p._stockLock = Date.now() + 10000;
   }
   cart.splice(idx, 1);
@@ -1951,6 +1979,7 @@ function updateCartQty(productId, delta, color, size) {
   if (delta > 0 && delta > avail) { alert('Not enough stock for ' + (item.color || '') + (item.size ? '/' + item.size : '') + '.'); return; }
   if (p) {
     deductVariantStock(p, item.color, item.size || 'q', delta);
+    syncStockToFirestore(p.id);
     p._stockLock = Date.now() + 10000;
   }
   item.qty = newQty;
