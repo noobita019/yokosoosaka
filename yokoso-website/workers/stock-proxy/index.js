@@ -150,19 +150,6 @@ function parseOrderDoc(doc) {
   return { id, ...fields };
 }
 
-async function verifyTurnstileToken(token, env) {
-  if (!token) return false;
-  const secret = env.TURNSTILE_SECRET_KEY;
-  if (!secret) return true;
-  const resp = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ secret, response: token })
-  });
-  const data = await resp.json().catch(() => ({}));
-  return data.success === true;
-}
-
 async function hashPassword(password) {
   const encoder = new TextEncoder();
   const data = encoder.encode(password + 'y0k0s0_salt');
@@ -378,10 +365,6 @@ async function handleRequest(request, env) {
       const existing = await firestoreGet(`accounts/${encodeURIComponent(body.contact)}`).catch(() => null);
       if (existing && existing.fields && existing.fields.contact) {
         return new Response(JSON.stringify({ error: 'Account with this contact number already exists' }), { status: 409, headers: corsHeaders(origin) });
-      }
-      const validCaptcha = await verifyTurnstileToken(body.turnstileToken, env);
-      if (!validCaptcha) {
-        return new Response(JSON.stringify({ error: 'CAPTCHA verification failed. Please try again.' }), { status: 400, headers: corsHeaders(origin) });
       }
       const passwordHash = await hashPassword(body.password);
       const url = `${FIRESTORE_BASE}/accounts?key=${API_KEY}&documentId=${encodeURIComponent(body.contact)}`;

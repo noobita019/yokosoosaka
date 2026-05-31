@@ -100,7 +100,6 @@ function switchAccountTab(tab) {
     regFields.forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
     if (lf) lf.style.display = 'none'; if (rf) rf.style.display = 'block';
     if (lt) lt.classList.remove('active'); if (rt) rt.classList.add('active');
-    if (typeof turnstile !== 'undefined') turnstile.reset();
     requestAnimationFrame(function() { var el = document.getElementById('registerName'); if (el && el.focus) el.focus(); });
   }
 }
@@ -112,17 +111,14 @@ function handleCreateAccount() {
   if (!name || !address || !contact || !password) return;
   var n = name.value.trim(), a = address.value.trim(), c = contact.value.trim(), p = password.value, e = email ? email.value.trim() : '';
   if (!n || !a || !c || !p) { if (err) err.textContent = 'All fields are required.'; return; }
-  var turnstileToken = null;
-  if (typeof turnstile !== 'undefined') turnstileToken = turnstile.getResponse();
   if (err) err.textContent = 'Creating account...';
-  fetch(proxyAccountUrl('create'), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name:n,address:a,contact:c,password:p,email:e,turnstileToken:turnstileToken}) })
+  fetch(proxyAccountUrl('create'), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name:n,address:a,contact:c,password:p,email:e}) })
     .then(function(r){ return r.json(); })
     .then(function(j){
       if (j.ok) {
         saveSession({name:j.name, address:j.address, contact:j.contact, email: j.email || '', admin: false});
         localStorage.setItem('yokoso_account_credentials', JSON.stringify({name:j.name, address:j.address, contact:j.contact, email: j.email || '', password: p, admin: false}));
         closeAccountModal();
-        if (typeof turnstile !== 'undefined') turnstile.reset();
         showCartNotification('Account created! Welcome, ' + j.name + '!');
       } else {
         if (err) err.textContent = j.error || 'Failed to create account.';
