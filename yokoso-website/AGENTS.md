@@ -147,6 +147,13 @@ Now also syncs `data/categories.json` automatically
 - **Purpose**: One-time route to wipe test orders from KV and Firestore
 - **Files**: `workers/stock-proxy/index.js`
 
+### Added: Telegram bot notifications (admin-only, Option A)
+- Notifications sent for new orders (saveOrder), deposit paid (depositPaidOrder), and confirmed orders (confirmOrder)
+- Config via admin → Config: Bot Token (from @BotFather) and Admin Chat ID (from @userinfobot)
+- Worker endpoint: `POST /notifications/telegram` — proxies to api.telegram.org
+- Bot token and chat ID stored in localStorage (`telegram_bot_token`, `telegram_chat_id`)
+- Replaced WhatsApp notification (fully removed)
+
 ### Added: PWA (Progressive Web App) support
 - **Files created**: `manifest.json`, `sw.js`, `images/app-icon-192.png`, `images/app-icon-512.png`
 - **HTML updated**: manifest link, apple-touch-icon, theme-color meta

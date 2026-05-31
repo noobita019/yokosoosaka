@@ -873,7 +873,18 @@ function confirmOrder(poNumber) {
   fetch(base + '/orders/' + encodeURIComponent(poNumber) + '/confirm', { method: 'POST' })
     .then(function(r) { return r.json(); })
     .then(function(j) {
-      if (j.ok) { showCartNotification('Order confirmed: ' + poNumber); loadOrders(); }
+      if (j.ok) {
+        showCartNotification('Order confirmed: ' + poNumber);
+        fetch(base + '/orders/' + encodeURIComponent(poNumber))
+          .then(function(r) { return r.json(); })
+          .then(function(order) {
+            if (order && !order.error) {
+              var msg = '<b>Order Confirmed!</b>\n\nPO: ' + poNumber + '\nCustomer: ' + (order.customerName || 'N/A') + '\nContact: ' + (order.customerContact || 'N/A') + '\nTotal: ' + (order.total || '') + '\nDeposit: ' + (order.deposit || '');
+              sendTelegramNotification(msg);
+            }
+          }).catch(function() {});
+        loadOrders();
+      }
       else showCartNotification('Confirm failed: ' + (j.error || ''));
     })
     .catch(function(e) { showCartNotification('Confirm error: ' + (e.message || '')); });
