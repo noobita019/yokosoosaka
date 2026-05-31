@@ -2201,19 +2201,21 @@ function renderCart() {
   list.innerHTML = cart.map(function(item) {
     var price = parseFloat(item.price.replace(/[^0-9.]/g, ''));
     var subtotal = isNaN(price) ? item.price : '₱' + (price * item.qty).toFixed(2);
-    var sizeEl = item.size ? '<div class="cart-item-size">Size ' + item.size + '</div>' : '';
+    var sizeEl = item.size ? '<div class="cart-item-size">' + item.size + '</div>' : '';
     var colorEl = item.color ? '<div class="cart-item-color">' + item.color + '</div>' : '';
     return '<div class="cart-item">' +
       '<img src="' + item.image + '" class="cart-item-img" onerror="this.src=\'images/products/placeholder.svg\'">' +
       '<div class="cart-item-info">' +
-      '<div class="cart-item-name">' + item.name + '</div>' + colorEl + sizeEl +
+      '<button class="cart-item-remove" onclick="removeFromCart(' + item.id + ',\'' + (item.color || '') + '\',\'' + (item.size || '') + '\')">×</button>' +
+      '<div class="cart-item-name">' + item.name + '</div>' +
+      (colorEl || sizeEl ? '<div class="cart-item-variant">' + colorEl + sizeEl + '</div>' : '') +
       '<div class="cart-item-price">' + item.price + '</div>' +
+      '<div class="cart-item-subtotal">Subtotal: ' + subtotal + '</div>' +
       '<div class="cart-item-qty">' +
       '<button class="cart-qty-btn" onclick="updateCartQty(' + item.id + ',-1,\'' + (item.color || '') + '\',\'' + (item.size || '') + '\')">−</button>' +
       '<span>' + item.qty + '</span>' +
       '<button class="cart-qty-btn" onclick="updateCartQty(' + item.id + ',1,\'' + (item.color || '') + '\',\'' + (item.size || '') + '\')">+</button>' +
       '</div></div>' +
-      '<button class="cart-item-remove" onclick="removeFromCart(' + item.id + ',\'' + (item.color || '') + '\',\'' + (item.size || '') + '\')">×</button>' +
       '</div>';
   }).join('');
   if (totalEl) {
