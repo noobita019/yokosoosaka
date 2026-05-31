@@ -704,6 +704,29 @@ async function handleRequest(request, env) {
       return new Response(JSON.stringify({ results }), { headers: corsHeaders(origin) });
     }
 
+    // POST /notifications/telegram
+    if (request.method === 'POST' && parts.length === 2 && parts[0] === 'notifications' && parts[1] === 'telegram') {
+      const body = await request.json().catch(() => ({}));
+      if (!body.token || !body.chatId || !body.message) {
+        return new Response(JSON.stringify({ error: 'token, chatId, and message required' }), { status: 400, headers: corsHeaders(origin) });
+      }
+      try {
+        const url = 'https://api.telegram.org/bot' + body.token + '/sendMessage';
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: body.chatId, text: body.message, parse_mode: 'HTML' })
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          return new Response(JSON.stringify({ error: data.description || 'Telegram API error' }), { status: 502, headers: corsHeaders(origin) });
+        }
+        return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders(origin) });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: corsHeaders(origin) });
+      }
+    }
+
     // PUT /stocks/:id
     if (request.method === 'PUT' && parts.length === 2 && parts[0] === 'stocks') {
       const body = await request.json();

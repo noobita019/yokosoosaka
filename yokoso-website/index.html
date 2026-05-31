@@ -389,6 +389,18 @@
             Footer "Send us a message" link will point to this URL. Use an m.me link or Facebook page URL.
           </div>
         </div>
+        <div class="admin-telegram-config" style="padding:12px 20px;background:#f8f9fa;border-top:1px solid #dee2e6">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <strong style="font-size:14px">Telegram Bot</strong>
+            <input type="password" id="telegramBotToken" placeholder="Bot token" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;flex:1;min-width:200px;font-size:13px">
+            <input type="text" id="telegramChatId" placeholder="Admin chat ID" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;flex:0 1 140px;min-width:100px;font-size:13px">
+            <button type="button" onclick="saveTelegramConfig()" style="padding:6px 14px;background:#2e7d32;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px">Save</button>
+            <span id="telegramStatus" style="font-size:12px;color:#888"></span>
+          </div>
+          <div style="font-size:11px;color:#888;margin-top:6px">
+            Get a bot token from <a href="https://t.me/BotFather" target="_blank" style="color:#007bff">@BotFather</a> and find your chat ID by messaging <a href="https://t.me/userinfobot" target="_blank" style="color:#007bff">@userinfobot</a>. Notifications for new orders and deposit payments will be sent here.
+          </div>
+        </div>
         <div class="admin-cloudinary-config" style="padding:12px 20px;background:#f8f9fa;border-top:1px solid #dee2e6">
           <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
             <strong style="font-size:14px">Cloudinary Images</strong>

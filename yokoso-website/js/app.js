@@ -184,7 +184,7 @@ function switchAdminTab(tab) {
   if (tab === 'categories') renderCategoryManagement();
   if (tab === 'orders') loadOrders();
   if (tab === 'users') loadUsers();
-  if (tab === 'config') { applyProxyUrl(); var gti = document.getElementById('githubTokenInput'); if (gti) gti.value = localStorage.getItem('github_token') || ''; var ast = document.getElementById('autoSyncToggle'); if (ast) ast.checked = localStorage.getItem('autoSyncEnabled') === 'true'; var mui = document.getElementById('messengerUrlInput'); if (mui) mui.value = categoriesConfig.messengerUrl || ''; var ccn = document.getElementById('cloudinaryCloudName'); if (ccn) ccn.value = categoriesConfig.cloudinaryCloudName || ''; var cup = document.getElementById('cloudinaryUploadPreset'); if (cup) cup.value = categoriesConfig.cloudinaryUploadPreset || ''; }
+  if (tab === 'config') { applyProxyUrl(); var gti = document.getElementById('githubTokenInput'); if (gti) gti.value = localStorage.getItem('github_token') || ''; var ast = document.getElementById('autoSyncToggle'); if (ast) ast.checked = localStorage.getItem('autoSyncEnabled') === 'true'; var mui = document.getElementById('messengerUrlInput'); if (mui) mui.value = categoriesConfig.messengerUrl || ''; var ccn = document.getElementById('cloudinaryCloudName'); if (ccn) ccn.value = categoriesConfig.cloudinaryCloudName || ''; var cup = document.getElementById('cloudinaryUploadPreset'); if (cup) cup.value = categoriesConfig.cloudinaryUploadPreset || ''; var tbt = document.getElementById('telegramBotToken'); if (tbt) tbt.value = localStorage.getItem('telegram_bot_token') || ''; var tci = document.getElementById('telegramChatId'); if (tci) tci.value = localStorage.getItem('telegram_chat_id') || ''; }
 }
 function loadUsers() {
   var list = document.getElementById('usersList');
@@ -333,6 +333,37 @@ function saveCloudinarySettings() {
   status.textContent = 'Saved!';
   setTimeout(function() { status.textContent = ''; }, 2000);
   showCartNotification('Cloudinary settings saved.');
+}
+
+function saveTelegramConfig() {
+  var tokenInput = document.getElementById('telegramBotToken');
+  var chatIdInput = document.getElementById('telegramChatId');
+  var status = document.getElementById('telegramStatus');
+  if (!tokenInput || !chatIdInput || !status) return;
+  var token = tokenInput.value.trim();
+  var chatId = chatIdInput.value.trim();
+  if (token) localStorage.setItem('telegram_bot_token', token);
+  else localStorage.removeItem('telegram_bot_token');
+  if (chatId) localStorage.setItem('telegram_chat_id', chatId);
+  else localStorage.removeItem('telegram_chat_id');
+  status.textContent = 'Saved!';
+  setTimeout(function() { status.textContent = ''; }, 2000);
+  showCartNotification('Telegram settings saved.');
+}
+
+function sendTelegramNotification(message) {
+  var token = localStorage.getItem('telegram_bot_token');
+  var chatId = localStorage.getItem('telegram_chat_id');
+  if (!token || !chatId) return Promise.resolve();
+  var base = STOCK_PROXY_URL.replace(/\/+$/, '');
+  return fetch(base + '/notifications/telegram', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: token, chatId: chatId, message: message })
+  }).then(function(r) { return r.json(); }).then(function(j) {
+    if (!j.ok) console.error('Telegram error:', j.error);
+    else console.log('Telegram sent');
+  }).catch(function(e) { console.error('Telegram fetch failed:', e); });
 }
 
 function saveMessengerUrl() {
@@ -547,6 +578,8 @@ function saveOrder() {
         showCartNotification('Order save failed (HTTP ' + r.status + ')');
       } else {
         showCartNotification('Order saved!');
+        var orderMsg = '<b>New Order!</b>\n\nPO: ' + _checkoutPO + '\nCustomer: ' + ((currentUser && currentUser.name) || 'N/A') + '\nEmail: ' + ((currentUser && currentUser.email) || 'N/A') + '\nContact: ' + ((currentUser && currentUser.contact) || 'N/A') + '\nItems:\n' + items.map(function(i) { return '  \u2022 ' + i.name + ' (' + (i.color || '') + (i.size && i.size !== 'q' ? ', ' + i.size : '') + ') x' + i.qty + ' = \u20b1' + (i.price * i.qty).toFixed(2); }).join('\n') + '\n\nTotal: ' + getCartTotal().toFixed(2) + '\nDeposit: ' + getDepositAmount().toFixed(2);
+        sendTelegramNotification(orderMsg);
       }
     });
   }).catch(function(e) {
@@ -824,18 +857,8 @@ function depositPaidOrder(poNumber) {
               saveProducts();
               renderProducts();
               showCartNotification('Deposit marked paid: ' + poNumber);
-              var contact = order.customerContact || '';
-              if (contact) {
-                var msg = '✅ Deposit Confirmed!\n\nHi ' + (order.customerName || 'there') + ', your deposit of ' + (order.deposit || '') + ' for order ' + poNumber + ' has been received. Your items are now being processed!\n\nThank you for shopping with JapanGoodies!';
-                fetch(base + '/notifications/whatsapp', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ to: contact, message: msg })
-                }).then(function(r) { return r.json(); }).then(function(j) {
-                  if (!j.ok) console.error('WhatsApp error:', j.error);
-                  else console.log('WhatsApp sent to', contact);
-                }).catch(function(e) { console.error('WhatsApp fetch failed:', e); });
-              }
+              var depositMsg = '<b>Deposit Paid!</b>\n\nOrder: ' + poNumber + '\nCustomer: ' + (order.customerName || 'N/A') + '\nContact: ' + (order.customerContact || 'N/A') + '\nDeposit: ' + (order.deposit || '') + '\nTotal: ' + (order.total || '');
+              sendTelegramNotification(depositMsg);
               loadOrders();
             })
             .catch(function(e) { showCartNotification('Error: ' + (e.message || '')); });
