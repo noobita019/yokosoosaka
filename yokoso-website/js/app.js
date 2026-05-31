@@ -2169,6 +2169,7 @@ var _orderSnapshot = null;
 var _modalImages = [];
 var _modalImageIdx = 0;
 var _modalAutoTimer = null;
+var _modalAutoColorTimer = null;
 
 function startModalAutoPlay() {
   stopModalAutoPlay();
@@ -2181,6 +2182,7 @@ function startModalAutoPlay() {
 
 function stopModalAutoPlay() {
   if (_modalAutoTimer) { clearTimeout(_modalAutoTimer); _modalAutoTimer = null; }
+  if (_modalAutoColorTimer) { clearTimeout(_modalAutoColorTimer); _modalAutoColorTimer = null; }
 }
 
 function modalNav(delta) {
@@ -2388,7 +2390,9 @@ function selectModalColor(el, color) {
     if (navPrev) navPrev.style.display = _modalImages.length > 1 ? '' : 'none';
     if (navNext) navNext.style.display = _modalImages.length > 1 ? '' : 'none';
     // Start carousel from the selected color's image
-    startModalAutoPlay();
+    stopModalAutoPlay();
+    if (_modalAutoColorTimer) clearTimeout(_modalAutoColorTimer);
+    _modalAutoColorTimer = setTimeout(function() { _modalAutoColorTimer = null; startModalAutoPlay(); }, 15000);
     // Update sizes for this color
     var vSizes = getVariantSizes(p, color);
     var sizeContainer = document.getElementById('modalSizesContainer');
@@ -2515,7 +2519,37 @@ function openFullscreen() {
     slide.style.cssText = 'height:' + h + 'px;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
     var img = document.createElement('img');
     img.src = currentModalImages[i];
-    img.style.cssText = 'max-width:100vw;max-height:100vh;object-fit:contain;user-select:none;';
+    img.style.cssText = 'max-width:100vw;max-height:100vh;object-fit:contain;user-select:none;transition:transform 0.1s';
+    img.addEventListener('touchstart', function(e) {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        var dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        this._pinchDist = dist;
+        this._pinchScale = this._scale || 1;
+      }
+    }, { passive: false });
+    img.addEventListener('touchmove', function(e) {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        var dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        var newScale = Math.max(1, Math.min(5, this._pinchScale * (dist / this._pinchDist)));
+        this._scale = newScale;
+        this.style.transform = 'scale(' + newScale + ')';
+      }
+    }, { passive: false });
+    img.addEventListener('touchend', function(e) {
+      if (e.changedTouches.length === 1 && !this._pinchDist) {
+        var now = Date.now();
+        var last = parseInt(this.dataset.lastTap || '0', 10);
+        if (now - last < 300) {
+          if (this._scale && this._scale > 1) { this._scale = 1; this.style.transform = ''; this.dataset.lastTap = '0'; }
+          else { this._scale = 2.5; this.style.transform = 'scale(2.5)'; this.dataset.lastTap = '0'; }
+          return;
+        }
+        this.dataset.lastTap = String(now);
+      }
+      this._pinchDist = null;
+    }, { passive: true });
     slide.appendChild(img);
     track.appendChild(slide);
   }
