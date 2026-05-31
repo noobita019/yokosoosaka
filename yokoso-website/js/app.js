@@ -860,22 +860,17 @@ function exportOrdersCSV() {
     .then(function(j) {
       var orders = Array.isArray(j) ? j : (j.docs || []);
       if (!orders || orders.length === 0) { showCartNotification('No orders to export.'); return; }
-      var rows = [['PO#','Date','Customer','Contact','Email','Items','Total','Deposit','Status']];
+      var rows = [['PO#','Date','Customer','Contact','Email','Product','Color','Size','Qty','Price','Total','Deposit','Status']];
       orders.forEach(function(o) {
         var items = [];
         try { items = JSON.parse(o.items || '[]'); } catch(e) {}
-        var itemStr = items.map(function(i) { return (i.name || '') + ' x' + (i.qty || 1); }).join('; ');
-        rows.push([
-          o.id || o.poNumber || '',
-          o.createdAt ? new Date(o.createdAt).toLocaleDateString() : '',
-          o.customerName || '',
-          o.customerContact || '',
-          o.customerEmail || '',
-          itemStr,
-          o.total || '',
-          o.deposit || '',
-          o.status || ''
-        ]);
+        if (items.length === 0) {
+          rows.push([o.id || o.poNumber || '', o.createdAt ? new Date(o.createdAt).toLocaleDateString() : '', o.customerName || '', o.customerContact || '', o.customerEmail || '', '', '', '', '', '', o.total || '', o.deposit || '', o.status || '']);
+          return;
+        }
+        items.forEach(function(i) {
+          rows.push([o.id || o.poNumber || '', o.createdAt ? new Date(o.createdAt).toLocaleDateString() : '', o.customerName || '', o.customerContact || '', o.customerEmail || '', i.name || '', i.color || '', i.size || '', i.qty || 1, i.price || '', o.total || '', o.deposit || '', o.status || '']);
+        });
       });
       var csv = rows.map(function(r) {
         return r.map(function(c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(',');
