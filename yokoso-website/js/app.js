@@ -66,6 +66,7 @@ function openAccountModal() {
   if (cartEl && cartEl.classList.contains('active')) {
     cartEl.classList.remove('active');
     if (cartOv) cartOv.classList.remove('active');
+    if (location.hash === '#cart') { try { history.back(); } catch (e) {} }
   }
   var m = document.getElementById('accountModal');
   if (m) {
@@ -1118,6 +1119,14 @@ document.addEventListener('touchmove', function(e) {
 
 // Back button closes overlay via hashchange
 window.addEventListener('hashchange', function() {
+  var cartEl = document.getElementById('cartSlideout');
+  if (cartEl && cartEl.classList.contains('active') && location.hash !== '#cart') {
+    cartEl.classList.remove('active');
+    var cartOv = document.getElementById('cartOverlay');
+    if (cartOv) cartOv.classList.remove('active');
+    unlockBody();
+    return;
+  }
   var live = document.getElementById('liveModal');
   if (live && location.hash !== '#modal') { closeLiveModal(); return; }
   var liveFS = document.getElementById('liveFullscreen');
@@ -2173,8 +2182,10 @@ function toggleCart() {
   if (opening) {
     renderCart();
     lockBody();
+    try { history.pushState({cart: true}, '', '#cart'); } catch (e) {}
   } else {
     unlockBody();
+    if (location.hash === '#cart') { try { history.back(); } catch (e) {} }
   }
 }
 
