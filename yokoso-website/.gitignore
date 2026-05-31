@@ -2,3 +2,4 @@
 workers/stock-proxy/node_modules/
 workers/stock-proxy/package-lock.json
 workers/stock-proxy/package.json
+.wrangler/
