@@ -766,26 +766,43 @@ function depositPaidOrder(poNumber) {
     .then(function(r) { return r.json(); })
     .then(function(order) {
       if (!order || order.error) { showCartNotification('Order not found'); return; }
-      return fetch(base + '/orders/' + encodeURIComponent(poNumber) + '/deposit-paid', { method: 'POST' })
-        .then(function(r) { return r.json(); })
-        .then(function(j) {
-          if (!j.ok) { showCartNotification('Failed: ' + (j.error || '')); return; }
-          var items = [];
-          try { items = JSON.parse(order.items || '[]'); } catch(e) {}
-          // Fetch actual stock from proxy for each product in the order
-          var productIds = [];
-          items.forEach(function(item) {
-            var id = parseInt(item.id || item.productId || 0);
-            if (id && productIds.indexOf(id) === -1) productIds.push(id);
-          });
-          var fetchPromises = productIds.map(function(id) {
-            return new Promise(function(resolve) {
-              fetchProductStock(id, resolve);
-            });
-          });
-          Promise.all(fetchPromises).then(function() {
-            var oosItems = [];
-            var deducted = false;
+      var items = [];
+      try { items = JSON.parse(order.items || '[]'); } catch(e) {}
+      if (!items.length) { showCartNotification('No items in order'); return; }
+      // Fetch actual stock from proxy for each product
+      var productIds = [];
+      items.forEach(function(item) {
+        var id = parseInt(item.id || item.productId || 0);
+        if (id && productIds.indexOf(id) === -1) productIds.push(id);
+      });
+      var fetchPromises = productIds.map(function(id) {
+        return new Promise(function(resolve) { fetchProductStock(id, resolve); });
+      });
+      Promise.all(fetchPromises).then(function() {
+        // Check stock for every item
+        var shortItems = [];
+        items.forEach(function(item) {
+          var p = products.find(function(x) { return x.id === parseInt(item.id || item.productId || 0); });
+          if (!p) return;
+          var color = item.color || '';
+          if (!color) { var colors = getVariantColors(p); color = colors.length ? colors[0] : 'Default'; }
+          var size = item.size || 'q';
+          var qty = parseInt(item.qty, 10) || 1;
+          var v = getVariant(p, color);
+          var actual = (v && v.stock) ? (v.stock[size] !== undefined ? v.stock[size] : 0) : 0;
+          if (actual < qty) {
+            shortItems.push((item.productName || item.name || p.name) + ' (' + color + (size !== 'q' ? '/' + size : '') + ') — ordered ' + qty + ', in stock ' + actual);
+          }
+        });
+        if (shortItems.length) {
+          showCartNotification('⚠️ Cannot mark deposit paid: ' + shortItems.join('; ') + ' — advise customer');
+          return;
+        }
+        // All items have sufficient stock — proceed
+        fetch(base + '/orders/' + encodeURIComponent(poNumber) + '/deposit-paid', { method: 'POST' })
+          .then(function(r) { return r.json(); })
+          .then(function(j) {
+            if (!j.ok) { showCartNotification('Failed: ' + (j.error || '')); return; }
             items.forEach(function(item) {
               var p = products.find(function(x) { return x.id === parseInt(item.id || item.productId || 0); });
               if (!p) return;
@@ -793,21 +810,10 @@ function depositPaidOrder(poNumber) {
               if (!color) { var colors = getVariantColors(p); color = colors.length ? colors[0] : 'Default'; }
               var size = item.size || 'q';
               var qty = parseInt(item.qty, 10) || 1;
-              var v = getVariant(p, color);
-              var actual = (v && v.stock) ? (v.stock[size] !== undefined ? v.stock[size] : 0) : 0;
-              if (actual <= 0) {
-                oosItems.push(item.productName || item.name || p.name + ' (' + color + (size !== 'q' ? '/' + size : '') + ')');
-                return;
-              }
-              deductVariantStock(p, color, size, Math.min(qty, actual));
+              deductVariantStock(p, color, size, qty);
               stockMap[p.id] = { q: getTotalStock(p.id) };
               syncStockToFirestore(p.id);
-              deducted = true;
             });
-            if (oosItems.length) {
-              showCartNotification('⚠️ OUT OF STOCK: ' + oosItems.join(', ') + ' — advise customer');
-            }
-            if (!deducted && !oosItems.length) { showCartNotification('No items found in order'); return; }
             saveProducts();
             renderProducts();
             showCartNotification('Deposit marked paid: ' + poNumber);
@@ -818,18 +824,15 @@ function depositPaidOrder(poNumber) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ to: contact, message: msg })
-              }).then(function(r) {
-                return r.json();
-              }).then(function(j) {
+              }).then(function(r) { return r.json(); }).then(function(j) {
                 if (!j.ok) console.error('WhatsApp error:', j.error);
                 else console.log('WhatsApp sent to', contact);
-              }).catch(function(e) {
-                console.error('WhatsApp fetch failed:', e);
-              });
+              }).catch(function(e) { console.error('WhatsApp fetch failed:', e); });
             }
             loadOrders();
-          });
-        });
+          })
+          .catch(function(e) { showCartNotification('Error: ' + (e.message || '')); });
+      });
     })
     .catch(function(e) { showCartNotification('Error: ' + (e.message || '')); });
 }
