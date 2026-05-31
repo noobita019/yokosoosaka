@@ -2238,6 +2238,7 @@ function openModalFullscreen() {
 
 function closeLiveModal() {
   stopModalAutoPlay();
+  _modalProduct = null;
   var el = document.getElementById('liveModal');
   if (el) { el.remove(); unlockBody(); if (location.hash === '#modal') history.back(); }
 }
@@ -2248,6 +2249,7 @@ var _modalImages = [];
 var _modalImageIdx = 0;
 var _modalAutoTimer = null;
 var _modalAutoColorTimer = null;
+var _modalProduct = null;
 
 function startModalAutoPlay() {
   stopModalAutoPlay();
@@ -2303,6 +2305,7 @@ function isLightColor(hex) {
 
 function openModal(product) {
   try {
+    _modalProduct = product;
     var overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.id = 'liveModal';
@@ -2439,7 +2442,7 @@ function selectModalColor(el, color) {
   var btn = document.getElementById('modalAddToCartBtn');
   if (btn) btn.textContent = 'Select a size';
   // Update images to reflect selected color
-  var p = products.find(function(x) { return getVariantColors(x).indexOf(color) !== -1; });
+  var p = _modalProduct;
   if (p) {
     // Keep full product images (color variant picks its index)
     var allImgs = (Array.isArray(p.images) && p.images.length > 0) ? p.images : [p.image || 'images/products/placeholder.svg'];
