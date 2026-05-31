@@ -2952,10 +2952,11 @@ function renderVariantsEditor() {
     var sel = r.querySelector('.form-variant-color');
     if (!sel) return;
     var currentVal = sel.value;
-    sel.innerHTML = '<option value="">Select color...</option>' + allColors.map(function(c) {
-      var disabled = variantColors.indexOf(c) !== -1 && c !== currentVal ? ' disabled' : '';
+    sel.innerHTML = '<option value="">Select color...</option>' + allColors.filter(function(c) {
+      return variantColors.indexOf(c) === -1 || c === currentVal;
+    }).map(function(c) {
       var selected = c === currentVal ? ' selected' : '';
-      return '<option value="' + c + '"' + selected + disabled + '>' + c + '</option>';
+      return '<option value="' + c + '"' + selected + '>' + c + '</option>';
     }).join('');
     // Sizes: show checkboxes with stock inputs using size presets
     var sizesDiv = r.querySelector('.variant-sizes');
