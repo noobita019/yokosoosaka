@@ -1914,7 +1914,31 @@ function applyStockDoc(doc) {
   p.stock = getTotalStock(id);
 }
 
+function getCachedStockDoc(productId) {
+  try {
+    var raw = localStorage.getItem('yokoso_stock_cache');
+    if (!raw) return null;
+    var cache = JSON.parse(raw);
+    return cache[productId] || null;
+  } catch(e) { return null; }
+}
+
+function setCachedStockDoc(productId, doc) {
+  try {
+    var raw = localStorage.getItem('yokoso_stock_cache');
+    var cache = raw ? JSON.parse(raw) : {};
+    cache[productId] = doc;
+    localStorage.setItem('yokoso_stock_cache', JSON.stringify(cache));
+  } catch(e) {}
+}
+
 function fetchProductStock(productId, callback) {
+  var cached = getCachedStockDoc(productId);
+  if (cached) {
+    applyStockDoc(cached);
+    if (callback) callback();
+    return;
+  }
   if (!isProxyReady()) { if (callback) callback(); return; }
   fetch(proxyUrl('stocks/' + productId))
     .then(function(r) {
@@ -1922,6 +1946,7 @@ function fetchProductStock(productId, callback) {
       return r.json();
     })
     .then(function(doc) {
+      if (doc && doc.fields) setCachedStockDoc(productId, doc);
       applyStockDoc(doc);
       if (callback) callback();
     })
