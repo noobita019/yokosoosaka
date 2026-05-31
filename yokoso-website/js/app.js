@@ -1790,7 +1790,7 @@ function subscribeStockUpdates() {
         if (changed) renderProducts();
       })
       .catch(function() {});
-  }, 60000);
+  }, 30000);
 }
 
 function testProxyConnection() {
