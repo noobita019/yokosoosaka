@@ -637,17 +637,96 @@ function renderOrders(orders) {
     html += '<td style="padding:8px 10px;white-space:nowrap">';
     var poSafe = o.id.replace(/'/g, "\\'");
     if (o.status === 'pending') {
-      html += '<button onclick="depositPaidOrder(\'' + poSafe + '\')" style="padding:3px 8px;background:#1976d2;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px;margin-right:4px">Deposit Paid</button>';
-      html += '<button onclick="cancelOrder(\'' + poSafe + '\')" style="padding:3px 8px;background:#c62828;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px">Cancel</button>';
+      html += '<button onclick="event.stopPropagation();depositPaidOrder(\'' + poSafe + '\')" style="padding:3px 8px;background:#1976d2;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px;margin-right:4px">Deposit Paid</button>';
+      html += '<button onclick="event.stopPropagation();cancelOrder(\'' + poSafe + '\')" style="padding:3px 8px;background:#c62828;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px">Cancel</button>';
     } else if (o.status === 'deposit_paid') {
-      html += '<button onclick="confirmOrder(\'' + poSafe + '\')" style="padding:3px 8px;background:#2e7d32;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px;margin-right:4px">Confirm</button>';
-      html += '<button onclick="cancelOrder(\'' + poSafe + '\')" style="padding:3px 8px;background:#c62828;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px">Cancel</button>';
+      html += '<button onclick="event.stopPropagation();confirmOrder(\'' + poSafe + '\')" style="padding:3px 8px;background:#2e7d32;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px;margin-right:4px">Confirm</button>';
+      html += '<button onclick="event.stopPropagation();cancelOrder(\'' + poSafe + '\')" style="padding:3px 8px;background:#c62828;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px">Cancel</button>';
     }
     html += '</td></tr>';
   });
   html += '</tbody></table>';
   html += paginationHtml();
   el.innerHTML = html;
+  el.querySelectorAll('tbody tr').forEach(function(row) {
+    var po = row.querySelector('td:first-child')?.textContent;
+    if (po) row.style.cursor = 'pointer';
+    row.addEventListener('click', function(e) {
+      if (e.target.closest('button')) return;
+      var poNum = this.querySelector('td:first-child')?.textContent;
+      if (poNum) showOrderDetail(poNum);
+    });
+  });
+}
+
+function showOrderDetail(poNumber) {
+  var base = STOCK_PROXY_URL.replace(/\/+$/, '');
+  fetch(base + '/orders/' + encodeURIComponent(poNumber) + '?_=' + Date.now())
+    .then(function(r) { return r.json(); })
+    .then(function(order) {
+      if (!order || order.error) { alert('Order not found.'); return; }
+      var items = [];
+      try { items = JSON.parse(order.items || '[]'); } catch(e) {}
+      var statusColor = '';
+      var statusLabel = order.status || '—';
+      if (order.status === 'pending') statusColor = '#f57f17';
+      else if (order.status === 'deposit_paid') statusColor = '#1976d2';
+      else if (order.status === 'confirmed') statusColor = '#2e7d32';
+      else if (order.status === 'cancelled') statusColor = '#c62828';
+      else statusColor = '#888';
+      var overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+      overlay.addEventListener('click', function(e) { if (e.target === this) this.remove(); });
+      var poEnc = order.id.replace(/'/g, "\\'");
+      overlay.innerHTML = '<div style="background:#1a1a2e;color:#eee;border-radius:12px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;padding:24px 28px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.3)">' +
+        '<button onclick="this.closest(\\'div[style]\\').remove()" style="position:absolute;top:12px;right:16px;background:rgba(255,255,255,0.1);border:none;font-size:22px;cursor:pointer;color:#aaa;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center">×</button>' +
+        '<h2 style="font-size:18px;margin:0 0 4px;color:#ff6b81">' + (order.id || poNumber) + '</h2>' +
+        '<span style="display:inline-block;padding:2px 10px;border-radius:10px;background:' + statusColor + '20;color:' + statusColor + ';font-weight:600;font-size:12px;margin-bottom:16px">' + statusLabel + '</span>' +
+        '<div style="margin-bottom:16px">' +
+          '<p style="margin:2px 0;font-size:13px;color:#aaa">' + (order.createdAt ? new Date(order.createdAt).toLocaleString() : '—') + '</p>' +
+          '<p style="margin:4px 0;font-size:14px"><strong>' + (order.customerName || '—') + '</strong></p>' +
+          (order.customerContact ? '<p style="margin:2px 0;font-size:13px;color:#ccc">📞 ' + order.customerContact + '</p>' : '') +
+          (order.customerEmail ? '<p style="margin:2px 0;font-size:13px;color:#ccc">✉️ ' + order.customerEmail + '</p>' : '') +
+          (order.customerAddress ? '<p style="margin:2px 0;font-size:13px;color:#ccc">📍 ' + order.customerAddress + '</p>' : '') +
+        '</div>' +
+        '<div style="border-top:1px solid rgba(255,255,255,0.1);padding:12px 0">' +
+          '<div style="font-size:13px;font-weight:600;color:#ff6b81;margin-bottom:8px">Items</div>' +
+          items.map(function(i, idx) {
+            return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)">' +
+              '<div style="flex:1;font-size:13px">' +
+                '<div>' + (i.name || '—') + '</div>' +
+                '<div style="font-size:11px;color:#888">' +
+                  (i.color ? i.color : '') +
+                  (i.size ? ' · ' + i.size : '') +
+                '</div>' +
+              '</div>' +
+              '<div style="text-align:right;font-size:13px">' +
+                '<div>x' + (i.qty || 1) + '</div>' +
+                '<div style="color:#ff6b81">' + (i.price || '') + '</div>' +
+              '</div>' +
+            '</div>';
+          }).join('') +
+        '</div>' +
+        '<div style="border-top:1px solid rgba(255,255,255,0.1);padding:12px 0;display:flex;justify-content:space-between;font-size:14px">' +
+          '<div><strong>Total</strong></div><div>' + (order.total || '—') + '</div>' +
+        '</div>' +
+        '<div style="display:flex;justify-content:space-between;font-size:14px;padding-bottom:12px">' +
+          '<div><strong>Deposit</strong></div><div style="color:#4fc3f7">' + (order.deposit || '—') + '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,0.1);padding-top:14px">' +
+          (order.status === 'pending'
+            ? '<button onclick="this.closest(\\'div[style]\\').remove();depositPaidOrder(\\'' + poEnc + '\\')" style="padding:8px 20px;background:#1976d2;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">Mark Deposit Paid</button>' +
+              '<button onclick="this.closest(\\'div[style]\\').remove();cancelOrder(\\'' + poEnc + '\\')" style="padding:8px 20px;background:#c62828;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">Cancel Order</button>'
+            : order.status === 'deposit_paid'
+            ? '<button onclick="this.closest(\\'div[style]\\').remove();confirmOrder(\\'' + poEnc + '\\')" style="padding:8px 20px;background:#2e7d32;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">Confirm Order</button>' +
+              '<button onclick="this.closest(\\'div[style]\\').remove();cancelOrder(\\'' + poEnc + '\\')" style="padding:8px 20px;background:#c62828;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">Cancel Order</button>'
+            : ''
+          ) +
+        '</div>' +
+      '</div>';
+      document.body.appendChild(overlay);
+    })
+    .catch(function(e) { alert('Error loading order: ' + (e.message || '')); });
 }
 
 function productPaginationHtml(totalPages) {
