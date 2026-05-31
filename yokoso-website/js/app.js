@@ -981,7 +981,11 @@ function getVariantStock(product, color, size) {
   var v = getVariant(product, color);
   if (!v) return 0;
   var s = v.stock || {};
-  return s[size] !== undefined ? s[size] : 0;
+  var actual = s[size] !== undefined ? s[size] : 0;
+  var inCart = cart.filter(function(item) {
+    return item.id === product.id && item.color === color && (item.size || 'q') === (size || 'q');
+  }).reduce(function(sum, item) { return sum + item.qty; }, 0);
+  return Math.max(0, actual - inCart);
 }
 
 function getTotalVariantStock(product, color) {
@@ -990,7 +994,10 @@ function getTotalVariantStock(product, color) {
   var s = v.stock || {};
   var t = 0;
   for (var k in s) t += s[k];
-  return t;
+  var inCart = cart.filter(function(item) {
+    return item.id === product.id && item.color === color;
+  }).reduce(function(sum, item) { return sum + item.qty; }, 0);
+  return Math.max(0, t - inCart);
 }
 
 function getSizeStock(productId, size, color) {
