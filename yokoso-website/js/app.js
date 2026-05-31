@@ -983,6 +983,9 @@ function getVariant(product, color) {
 }
 
 function getVariantColors(product) {
+  if (product._colorOrder && product._colorOrder.length) {
+    return product._colorOrder.filter(function(c) { return product.variants && product.variants[c]; });
+  }
   return Object.keys(product.variants || {});
 }
 
@@ -1178,6 +1181,10 @@ function migrateProducts() {
       } else {
         p.variants[colorKey] = { stock: { q: p.stock !== undefined ? p.stock : 5 } };
       }
+      migrated = true;
+    }
+    if (!p._colorOrder || p._colorOrder.length === 0) {
+      p._colorOrder = Object.keys(p.variants || {});
       migrated = true;
     }
     if (p.images) {
@@ -3085,6 +3092,11 @@ if (pf) pf.addEventListener('submit', function(e) {
     });
   }
   if (Object.keys(variants).length === 0) { alert('Please add at least one color variant.'); return; }
+  var colorOrder = [];
+  container.querySelectorAll('.variant-row').forEach(function(r) {
+    var sel = r.querySelector('.form-variant-color');
+    if (sel && sel.value && variants[sel.value]) colorOrder.push(sel.value);
+  });
 
   var submitBtn = document.getElementById('formSubmitBtn');
   var origText = submitBtn.textContent;
@@ -3100,7 +3112,7 @@ if (pf) pf.addEventListener('submit', function(e) {
     if (editingId) {
       var idx = products.findIndex(function(p) { return p.id === editingId; });
       if (idx !== -1) {
-        var upd = { name: name, category0: category0, category1: category1, category2: category2, variants: variants, price: price, description: description, images: images, available: document.getElementById('formAvailable').checked };
+        var upd = { name: name, category0: category0, category1: category1, category2: category2, variants: variants, _colorOrder: colorOrder, price: price, description: description, images: images, available: document.getElementById('formAvailable').checked };
         if (deposit) upd.deposit = deposit;
         products[idx] = Object.assign({}, products[idx], upd);
       }
@@ -3108,7 +3120,7 @@ if (pf) pf.addEventListener('submit', function(e) {
     } else {
       var maxId = products.length > 0 ? Math.max.apply(null, products.map(function(p) { return p.id; })) : 0;
       var newId = maxId + 1;
-      var newProd = { id: newId, name: name, category0: category0, category1: category1, category2: category2, variants: variants, price: price, description: description, images: images, available: document.getElementById('formAvailable').checked };
+      var newProd = { id: newId, name: name, category0: category0, category1: category1, category2: category2, variants: variants, _colorOrder: colorOrder, price: price, description: description, images: images, available: document.getElementById('formAvailable').checked };
       if (deposit) newProd.deposit = deposit;
       products.push(newProd);
       savedId = newId;
