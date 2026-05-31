@@ -1445,6 +1445,8 @@ if (cc) {
     var btn = e.target.closest('.carousel-group-btn');
     if (!btn) return;
     var groupName = btn.dataset.group;
+    var sp = document.getElementById('loadingSpinner');
+    if (sp) sp.classList.add('active');
     window.location.href = '?group=' + encodeURIComponent(groupName);
   });
 }
@@ -1490,6 +1492,8 @@ function openProduct(id) {
 
 function renderProducts() {
   var grid = document.getElementById('productGrid');
+  var spinner = document.getElementById('loadingSpinner');
+  if (spinner) spinner.classList.add('active');
   var empty = document.getElementById('emptyState');
   var filtered = products.filter(function(p) { return p.available !== false; });
   if (currentGroup !== 'all') {
@@ -1582,6 +1586,7 @@ function renderProducts() {
       '<button style="padding:6px 14px;background:' + (nextDisabled ? '#444' : '#555') + ';color:#fff;border:none;border-radius:6px;cursor:' + (nextDisabled ? 'default' : 'pointer') + ';font-size:13px;opacity:' + (nextDisabled ? '0.4' : '1') + '"' + (nextDisabled ? '' : ' onclick="goToPage(mainPage+1)"') + '>Next ›</button>';
     grid.appendChild(pag);
   }
+  if (spinner) spinner.classList.remove('active');
 }
 
 function goToPage(newPage) {
