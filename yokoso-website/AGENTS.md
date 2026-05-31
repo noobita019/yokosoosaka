@@ -4,6 +4,12 @@
 `japangoodies/yokosoosaka` → GitHub Pages: `japangoodies.github.io/yokosoosaka/yokoso-website/`
 Pushed by user `noobita019`
 
+## Hosting
+Migrated from GitHub Pages → **Cloudflare Pages** (May 31, 2026)
+- Production: `https://japangoodies.pages.dev`
+- Worker: `yokoso-stock-proxy` (unchanged)
+- Auto-deploy: GitHub → Cloudflare Pages (on push to `main`, root dir `yokoso-website`)
+
 ## Firebase
 Project: `japan-goodies` (Firestore), collection `yokoso`, doc `products`
 Ad blocker blocks `firestore.googleapis.com` — Firebase writes silently fail
@@ -101,6 +107,14 @@ Now also syncs `data/categories.json` automatically
 
 ## Test Files (can be cleaned up)
 - `yokoso-website/test-*.html` — Various test files created during debugging
+
+## Session History (May 31, 2026)
+
+### Migrated: GitHub Pages → Cloudflare Pages
+- Created Cloudflare Pages project `yokoso-website`
+- Deployed static site to `https://yokoso-website.pages.dev`
+- Production branch: `main`
+- Worker at `yokoso-stock-proxy` remains unchanged and independent
 
 ## Session History (May 30, 2026)
 

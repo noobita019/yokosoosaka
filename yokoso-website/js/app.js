@@ -1537,15 +1537,6 @@ function renderProducts() {
     var brandHtml = p.category2 ? '<span class="product-brand">' + p.category2 + '</span>' : '';
     var variantColors = getVariantColors(p);
     var firstColor = variantColors.length ? variantColors[0] : 'Default';
-    var sizesHtml = '';
-    var firstSizes = getVariantSizes(p, firstColor);
-    if (firstSizes.length > 0) {
-      sizesHtml = '<div class="product-sizes">' + firstSizes.map(function(s) {
-        var sStock = getVariantStock(p, firstColor, s);
-        var sClass = sStock > 0 ? '' : ' size-oos';
-        return '<span class="product-size-tag' + sClass + '" onclick="event.stopPropagation();addToCart(' + p.id + ',\'' + firstColor.replace(/'/g, "\\'") + '\',\'' + s + '\')">' + s + (sStock > 0 && sStock <= 3 ? ' (' + sStock + ')' : '') + '</span>';
-      }).join('') + '</div>';
-    }
     var colorChips = '';
     if (variantColors.length > 1) {
       colorChips = '<div class="product-color-chips">' + variantColors.map(function(c) {
@@ -1569,7 +1560,6 @@ function renderProducts() {
       brandHtml +
       colorChips +
       '<div class="product-name" onclick="openProduct(' + p.id + ')">' + p.name + '</div>' +
-      sizesHtml +
       '<div class="product-price">' + p.price + '</div>' +
       '<div class="product-stock ' + stockClass + '">' + stockLabel + '</div>' +
       (!hasSizes(p) && totalAvail > 0 ? '<button class="btn-add-cart" data-id="' + p.id + '" data-color="' + firstColor.replace(/'/g, "\\'") + '">Add to Cart</button>' : '') +
