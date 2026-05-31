@@ -769,70 +769,77 @@ function depositPaidOrder(poNumber) {
       var items = [];
       try { items = JSON.parse(order.items || '[]'); } catch(e) {}
       if (!items.length) { showCartNotification('No items in order'); return; }
-      // Fetch actual stock from proxy for each product
+      // Fetch stock for all products in one bulk call
       var productIds = [];
       items.forEach(function(item) {
         var id = parseInt(item.id || item.productId || 0);
         if (id && productIds.indexOf(id) === -1) productIds.push(id);
       });
-      var fetchPromises = productIds.map(function(id) {
-        return new Promise(function(resolve) { fetchProductStock(id, resolve); });
-      });
-      Promise.all(fetchPromises).then(function() {
-        // Check stock for every item
-        var shortItems = [];
-        items.forEach(function(item) {
-          var p = products.find(function(x) { return x.id === parseInt(item.id || item.productId || 0); });
-          if (!p) return;
-          var color = item.color || '';
-          if (!color) { var colors = getVariantColors(p); color = colors.length ? colors[0] : 'Default'; }
-          var size = item.size || 'q';
-          var qty = parseInt(item.qty, 10) || 1;
-          var v = getVariant(p, color);
-          var actual = (v && v.stock) ? (v.stock[size] !== undefined ? v.stock[size] : 0) : 0;
-          if (actual < qty) {
-            shortItems.push((item.productName || item.name || p.name) + ' (' + color + (size !== 'q' ? '/' + size : '') + ') — ordered ' + qty + ', in stock ' + actual);
-          }
-        });
-        if (shortItems.length) {
-          showCartNotification('⚠️ Cannot mark deposit paid: ' + shortItems.join('; ') + ' — advise customer');
-          return;
-        }
-        // All items have sufficient stock — proceed
-        fetch(base + '/orders/' + encodeURIComponent(poNumber) + '/deposit-paid', { method: 'POST' })
-          .then(function(r) { return r.json(); })
-          .then(function(j) {
-            if (!j.ok) { showCartNotification('Failed: ' + (j.error || '')); return; }
-            items.forEach(function(item) {
-              var p = products.find(function(x) { return x.id === parseInt(item.id || item.productId || 0); });
-              if (!p) return;
-              var color = item.color || '';
-              if (!color) { var colors = getVariantColors(p); color = colors.length ? colors[0] : 'Default'; }
-              var size = item.size || 'q';
-              var qty = parseInt(item.qty, 10) || 1;
-              deductVariantStock(p, color, size, qty);
-              stockMap[p.id] = { q: getTotalStock(p.id) };
-              syncStockToFirestore(p.id);
+      fetch(proxyUrl('stocks'))
+        .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function(docs) {
+          if (Array.isArray(docs)) {
+            docs.forEach(function(doc) {
+              if (doc && doc.id && productIds.indexOf(parseInt(doc.id)) !== -1) {
+                applyStockDoc(doc);
+              }
             });
-            saveProducts();
-            renderProducts();
-            showCartNotification('Deposit marked paid: ' + poNumber);
-            var contact = order.customerContact || '';
-            if (contact) {
-              var msg = '✅ Deposit Confirmed!\n\nHi ' + (order.customerName || 'there') + ', your deposit of ' + (order.deposit || '') + ' for order ' + poNumber + ' has been received. Your items are now being processed!\n\nThank you for shopping with JapanGoodies!';
-              fetch(base + '/notifications/whatsapp', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ to: contact, message: msg })
-              }).then(function(r) { return r.json(); }).then(function(j) {
-                if (!j.ok) console.error('WhatsApp error:', j.error);
-                else console.log('WhatsApp sent to', contact);
-              }).catch(function(e) { console.error('WhatsApp fetch failed:', e); });
+          }
+          // Check stock for every item
+          var shortItems = [];
+          items.forEach(function(item) {
+            var p = products.find(function(x) { return x.id === parseInt(item.id || item.productId || 0); });
+            if (!p) return;
+            var color = item.color || '';
+            if (!color) { var colors = getVariantColors(p); color = colors.length ? colors[0] : 'Default'; }
+            var size = item.size || 'q';
+            var qty = parseInt(item.qty, 10) || 1;
+            var v = getVariant(p, color);
+            var actual = (v && v.stock) ? (v.stock[size] !== undefined ? v.stock[size] : 0) : 0;
+            if (actual < qty) {
+              shortItems.push((item.productName || item.name || p.name) + ' (' + color + (size !== 'q' ? '/' + size : '') + ') — ordered ' + qty + ', in stock ' + actual);
             }
-            loadOrders();
-          })
-          .catch(function(e) { showCartNotification('Error: ' + (e.message || '')); });
-      });
+          });
+          if (shortItems.length) {
+            showCartNotification('⚠️ Cannot mark deposit paid: ' + shortItems.join('; ') + ' — advise customer');
+            return;
+          }
+          // All items have sufficient stock — proceed
+          fetch(base + '/orders/' + encodeURIComponent(poNumber) + '/deposit-paid', { method: 'POST' })
+            .then(function(r) { return r.json(); })
+            .then(function(j) {
+              if (!j.ok) { showCartNotification('Failed: ' + (j.error || '')); return; }
+              items.forEach(function(item) {
+                var p = products.find(function(x) { return x.id === parseInt(item.id || item.productId || 0); });
+                if (!p) return;
+                var color = item.color || '';
+                if (!color) { var colors = getVariantColors(p); color = colors.length ? colors[0] : 'Default'; }
+                var size = item.size || 'q';
+                var qty = parseInt(item.qty, 10) || 1;
+                deductVariantStock(p, color, size, qty);
+                stockMap[p.id] = { q: getTotalStock(p.id) };
+                syncStockToFirestore(p.id);
+              });
+              saveProducts();
+              renderProducts();
+              showCartNotification('Deposit marked paid: ' + poNumber);
+              var contact = order.customerContact || '';
+              if (contact) {
+                var msg = '✅ Deposit Confirmed!\n\nHi ' + (order.customerName || 'there') + ', your deposit of ' + (order.deposit || '') + ' for order ' + poNumber + ' has been received. Your items are now being processed!\n\nThank you for shopping with JapanGoodies!';
+                fetch(base + '/notifications/whatsapp', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ to: contact, message: msg })
+                }).then(function(r) { return r.json(); }).then(function(j) {
+                  if (!j.ok) console.error('WhatsApp error:', j.error);
+                  else console.log('WhatsApp sent to', contact);
+                }).catch(function(e) { console.error('WhatsApp fetch failed:', e); });
+              }
+              loadOrders();
+            })
+            .catch(function(e) { showCartNotification('Error: ' + (e.message || '')); });
+        })
+        .catch(function(e) { showCartNotification('Failed to fetch stock: ' + (e.message || '')); });
     })
     .catch(function(e) { showCartNotification('Error: ' + (e.message || '')); });
 }
@@ -1885,6 +1892,28 @@ function loadStockFromFirestore(callback) {
     });
 }
 
+function applyStockDoc(doc) {
+  if (!doc || !doc.fields) return;
+  var id = parseInt(doc.id);
+  var p = products.find(function(x) { return x.id === id; });
+  if (!p) return;
+  if (p.variants) {
+    for (var c in p.variants) {
+      var v = p.variants[c];
+      if (v.stock) {
+        for (var s in v.stock) {
+          var key = c + '|' + s;
+          if (doc.fields[key] !== undefined) v.stock[s] = doc.fields[key];
+        }
+      }
+    }
+    stockMap[id] = { q: doc.fields.q !== undefined ? doc.fields.q : getTotalStock(id) };
+  } else {
+    stockMap[id] = doc.fields;
+  }
+  p.stock = getTotalStock(id);
+}
+
 function fetchProductStock(productId, callback) {
   if (!isProxyReady()) { if (callback) callback(); return; }
   fetch(proxyUrl('stocks/' + productId))
@@ -1893,29 +1922,7 @@ function fetchProductStock(productId, callback) {
       return r.json();
     })
     .then(function(doc) {
-      if (doc && doc.fields) {
-        var id = parseInt(doc.id);
-        var p = products.find(function(x) { return x.id === id; });
-        if (p) {
-          if (p.variants) {
-            for (var c in p.variants) {
-              var v = p.variants[c];
-              if (v.stock) {
-                for (var s in v.stock) {
-                  var key = c + '|' + s;
-                  if (doc.fields[key] !== undefined) {
-                    v.stock[s] = doc.fields[key];
-                  }
-                }
-              }
-            }
-            stockMap[id] = { q: doc.fields.q !== undefined ? doc.fields.q : getTotalStock(id) };
-          } else {
-            stockMap[id] = doc.fields;
-          }
-          p.stock = getTotalStock(id);
-        }
-      }
+      applyStockDoc(doc);
       if (callback) callback();
     })
     .catch(function() { if (callback) callback(); });
