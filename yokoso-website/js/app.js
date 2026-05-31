@@ -1098,21 +1098,15 @@ function loadProducts(callback) {
       }
     })
     .finally(function() {
-      // Stage 2: Use localStorage if pending edits OR recent sync (CDN cache delay)
+      // Stage 2: Always prefer localStorage if available (saves survive CDN cache delays)
       var saved = localStorage.getItem('yokoso_products');
-      var pendingSync = localStorage.getItem('yokoso_pending_sync');
-      var syncTime = parseInt(localStorage.getItem('yokoso_sync_time'), 10);
-      var recentSync = syncTime && (Date.now() - syncTime < 300000); // 5 min CDN grace
-      if (saved && (pendingSync === 'true' || recentSync)) {
+      if (saved) {
         try {
           var local = JSON.parse(saved);
           if (local.length > 0) { products = local; migrateProducts(); }
         } catch(e) {}
       }
       localStorage.setItem('yokoso_products', JSON.stringify(products));
-      if (!saved || pendingSync !== 'true') {
-        localStorage.setItem('yokoso_pending_sync', 'false');
-      }
 
       // Stage 3: Firebase sync (if available)
       if (fbDB) {
