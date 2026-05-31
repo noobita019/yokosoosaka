@@ -187,7 +187,7 @@ function switchAdminTab(tab) {
   if (tab === 'categories') renderCategoryManagement();
   if (tab === 'orders') loadOrders();
   if (tab === 'users') loadUsers();
-  if (tab === 'config') { applyProxyUrl(); var gti = document.getElementById('githubTokenInput'); if (gti) gti.value = localStorage.getItem('github_token') || ''; var nhi = document.getElementById('netlifyHookInput'); if (nhi) nhi.value = localStorage.getItem('netlify_build_hook') || ''; var ast = document.getElementById('autoSyncToggle'); if (ast) ast.checked = localStorage.getItem('autoSyncEnabled') === 'true'; var mui = document.getElementById('messengerUrlInput'); if (mui) mui.value = categoriesConfig.messengerUrl || ''; var ccn = document.getElementById('cloudinaryCloudName'); if (ccn) ccn.value = categoriesConfig.cloudinaryCloudName || ''; var cup = document.getElementById('cloudinaryUploadPreset'); if (cup) cup.value = categoriesConfig.cloudinaryUploadPreset || ''; }
+  if (tab === 'config') { applyProxyUrl(); var gti = document.getElementById('githubTokenInput'); if (gti) gti.value = localStorage.getItem('github_token') || ''; var ast = document.getElementById('autoSyncToggle'); if (ast) ast.checked = localStorage.getItem('autoSyncEnabled') === 'true'; var mui = document.getElementById('messengerUrlInput'); if (mui) mui.value = categoriesConfig.messengerUrl || ''; var ccn = document.getElementById('cloudinaryCloudName'); if (ccn) ccn.value = categoriesConfig.cloudinaryCloudName || ''; var cup = document.getElementById('cloudinaryUploadPreset'); if (cup) cup.value = categoriesConfig.cloudinaryUploadPreset || ''; }
 }
 function loadUsers() {
   var list = document.getElementById('usersList');
@@ -3212,17 +3212,6 @@ if (ast) ast.addEventListener('change', function() {
   localStorage.setItem('autoSyncEnabled', this.checked ? 'true' : 'false');
 });
 
-var nhi = document.getElementById('netlifyHookInput');
-if (nhi) nhi.addEventListener('input', function() {
-  localStorage.setItem('netlify_build_hook', this.value);
-});
-
-function triggerNetlifyDeploy() {
-  var hook = localStorage.getItem('netlify_build_hook');
-  if (!hook) return;
-  fetch(hook, { method: 'POST' }).catch(function() {});
-}
-
 function syncToGitHub() {
   var token = localStorage.getItem('github_token');
   if (!token) return;
@@ -3278,9 +3267,8 @@ function doGitHubSync(filePath, encoded, message, statusEl, attempt) {
     if (filePath === GITHUB_PATH) {
       localStorage.setItem('yokoso_pending_sync', 'false');
       localStorage.setItem('yokoso_sync_time', Date.now().toString());
-      triggerNetlifyDeploy();
     }
-    if (statusEl) { statusEl.textContent = 'Synced ✓ (CDN ~1-2 min)'; statusEl.style.color = '#28a745'; }
+    if (statusEl) { statusEl.textContent = 'Synced ✓'; statusEl.style.color = '#28a745'; }
   });
 }
 
