@@ -1524,6 +1524,7 @@ function renderProducts() {
   if (filtered.length === 0) {
     grid.innerHTML = '';
     empty.style.display = 'block';
+    if (spinner) spinner.classList.remove('active');
     return;
   }
   empty.style.display = 'none';
