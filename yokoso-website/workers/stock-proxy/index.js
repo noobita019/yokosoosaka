@@ -1,8 +1,85 @@
-// Cloudflare Worker — Firestore stock proxy
+// Cloudflare Worker — Supabase stock proxy
 // Paste this entire file into Cloudflare Dashboard > Workers & Pages > Create Worker > Save and Deploy
 
 const FIRESTORE_BASE = 'https://firestore.googleapis.com/v1/projects/japan-goodies/databases/(default)/documents';
 const API_KEY = 'AIzaSyCR8jcz2JeDr3VYztZm2KYdns4uPUajtqQ';
+
+const SUPABASE_URL = 'https://vjycphyjdbrlaapkwaln.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqeWNwaHlqZGJybGFhcGt3YWxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNzA2MTUsImV4cCI6MjA5NTc0NjYxNX0.TXOFCDUZxHbwFgEx5SH3m3meuRqRysRegJNErvLVeHg';
+
+function supabaseHeaders() {
+  return {
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_KEY,
+    'Content-Type': 'application/json'
+  };
+}
+
+async function supabaseGetStocks() {
+  const resp = await fetchWithRetry(`${SUPABASE_URL}/rest/v1/stocks?select=id,fields&order=id.asc`, {
+    headers: supabaseHeaders()
+  });
+  if (!resp.ok) throw new Error(`Supabase GET stocks: HTTP ${resp.status}`);
+  const data = await resp.json();
+  return data.map(row => ({
+    id: String(row.id),
+    fields: row.fields || {},
+    total: Object.values(row.fields || {}).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0)
+  }));
+}
+
+async function supabaseGetStock(id) {
+  const resp = await fetchWithRetry(`${SUPABASE_URL}/rest/v1/stocks?id=eq.${id}&select=id,fields`, {
+    headers: supabaseHeaders()
+  });
+  if (!resp.ok) throw new Error(`Supabase GET stock ${id}: HTTP ${resp.status}`);
+  const data = await resp.json();
+  if (!data || data.length === 0) return null;
+  return {
+    id: String(data[0].id),
+    fields: data[0].fields || {},
+    total: Object.values(data[0].fields || {}).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0)
+  };
+}
+
+async function supabaseUpsertStock(id, fields) {
+  const resp = await fetchWithRetry(`${SUPABASE_URL}/rest/v1/stocks`, {
+    method: 'POST',
+    headers: { ...supabaseHeaders(), 'Prefer': 'resolution=merge-duplicates' },
+    body: JSON.stringify({ id: parseInt(id), fields })
+  });
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    throw new Error(`Supabase upsert stock ${id}: HTTP ${resp.status} ${text}`);
+  }
+  return true;
+}
+
+async function supabaseAdjustField(id, field, amount) {
+  const resp = await fetchWithRetry(`${SUPABASE_URL}/rest/v1/rpc/adjust_stock_field`, {
+    method: 'POST',
+    headers: supabaseHeaders(),
+    body: JSON.stringify({ p_id: parseInt(id), p_field: field, p_amount: amount })
+  });
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    return { error: `HTTP ${resp.status}: ${text}` };
+  }
+  return true;
+}
+
+async function supabaseUpsertFields(id, fields) {
+  const resp = await fetchWithRetry(`${SUPABASE_URL}/rest/v1/rpc/upsert_stock_fields`, {
+    method: 'POST',
+    headers: supabaseHeaders(),
+    body: JSON.stringify({ p_id: parseInt(id), p_fields: fields })
+  });
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    return { error: `HTTP ${resp.status}: ${text}` };
+  }
+  return true;
+}
 
 async function firestoreGet(path) {
   const resp = await fetchWithRetry(`${FIRESTORE_BASE}/${path}?key=${API_KEY}`);
@@ -36,23 +113,7 @@ async function firestorePatch(path, fields) {
   throw new Error(`Firestore PATCH ${path}: HTTP ${resp.status} ${resp.statusText} ${text}`);
 }
 
-async function firestoreCreate(docId, fields) {
-  const url = `${FIRESTORE_BASE}/stocks?key=${API_KEY}&documentId=${docId}`;
-  const resp = await fetchWithRetry(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      fields: Object.fromEntries(
-        Object.entries(fields).map(([k, v]) => [k, { integerValue: String(v) }])
-      )
-    })
-  });
-  if (resp.ok) return true;
-  const text = await resp.text().catch(() => '');
-  throw new Error(`Firestore CREATE ${docId}: HTTP ${resp.status} ${resp.statusText} ${text}`);
-}
-
-// Simple retry for Firestore quota errors
+// Simple retry for quota errors
 async function fetchWithRetry(url, opts, retries = 3) {
   for (let i = 0; i < retries; i++) {
     const resp = await fetch(url, opts);
@@ -62,85 +123,20 @@ async function fetchWithRetry(url, opts, retries = 3) {
   return fetch(url, opts);
 }
 
-// Atomic increment/decrement via Firestore transform — no read-modify-write race
-// fieldPath defaults to 'default' (for products without sizes)
-async function firestoreTransform(docId, amount, fieldPath) {
-  fieldPath = fieldPath || 'q';
-  const docName = `projects/japan-goodies/databases/(default)/documents/stocks/${docId}`;
-  const resp = await fetchWithRetry(`${FIRESTORE_BASE}:commit?key=${API_KEY}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      writes: [{
-        transform: {
-          document: docName,
-          fieldTransforms: [{
-            fieldPath: fieldPath,
-            increment: { integerValue: String(amount) }
-          }]
-        }
-      }]
-    })
-  });
-  if (resp.ok) return true;
-  const text = await resp.text().catch(() => '');
-  return { error: `HTTP ${resp.status}: ${text}` };
-}
-
-function parseStockDoc(doc) {
+function parseAccountDoc(doc) {
   if (!doc || !doc.fields) return null;
-  const match = doc.name.match(/\/stocks\/([^/]+)$/);
-  const id = match ? match[1] : null;
+  const match = doc.name.match(/\/([^/]+)$/);
+  const contact = match ? match[1] : null;
   const fields = {};
-  let total = 0;
-  // Process new-style fields first, then old 'quantity' only if 'q' not present
-  let quantityVal = null;
   for (const [key, val] of Object.entries(doc.fields)) {
-    const qty = parseInt(val.integerValue || val.stringValue, 10);
-    if (!isNaN(qty)) {
-      if (key === 'quantity') {
-        quantityVal = qty;
-      } else {
-        fields[key] = qty;
-        total += qty;
-      }
-    }
+    fields[key] = val.stringValue || val.integerValue || '';
   }
-  // Use old 'quantity' as 'q' only if 'q' was not already set
-  if (quantityVal !== null && fields.q === undefined) {
-    fields.q = quantityVal;
-    total += quantityVal;
-  }
-  return { id, fields, total };
+  return fields.contact ? { name: fields.name || '', address: fields.address || '', contact: fields.contact, email: fields.email || '', admin: fields.admin === 'true' } : null;
 }
 
 function orderField(size) {
   if (!size || size === 'default' || size === 'quantity') return 'q';
   return 's' + size.replace(/[^a-zA-Z0-9]/g, '');
-}
-
-async function restoreItemStock(productId, size, qty) {
-  const field = orderField(size);
-  const docName = `projects/japan-goodies/databases/(default)/documents/stocks/${productId}`;
-  const resp = await fetchWithRetry(`${FIRESTORE_BASE}:commit?key=${API_KEY}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      writes: [{
-        transform: {
-          document: docName,
-          fieldTransforms: [{
-            fieldPath: field,
-            increment: { integerValue: String(qty) }
-          }]
-        }
-      }]
-    })
-  });
-  if (!resp.ok) {
-    const text = await resp.text().catch(() => '');
-    throw new Error(`Restore stock ${productId}/${field}: HTTP ${resp.status} ${text}`);
-  }
 }
 
 function parseOrderDoc(doc) {
@@ -157,7 +153,7 @@ function parseOrderDoc(doc) {
 async function verifyTurnstileToken(token, env) {
   if (!token) return false;
   const secret = env.TURNSTILE_SECRET_KEY;
-  if (!secret) return true; // skip verification if no secret configured
+  if (!secret) return true;
   const resp = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -173,17 +169,6 @@ async function hashPassword(password) {
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-function parseAccountDoc(doc) {
-  if (!doc || !doc.fields) return null;
-  const match = doc.name.match(/\/([^/]+)$/);
-  const contact = match ? match[1] : null;
-  const fields = {};
-  for (const [key, val] of Object.entries(doc.fields)) {
-    fields[key] = val.stringValue || val.integerValue || '';
-  }
-  return fields.contact ? { name: fields.name || '', address: fields.address || '', contact: fields.contact, email: fields.email || '', admin: fields.admin === 'true' } : null;
 }
 
 async function sendEmail(env, to, subject, text, fromAddr) {
@@ -218,7 +203,6 @@ async function sendEmail(env, to, subject, text, fromAddr) {
   throw new Error('No email method configured. Set RESEND_API_KEY, EMAIL binding, or MAILGUN_API_KEY+MAILGUN_DOMAIN.');
 }
 
-// WhatsApp Cloud API
 async function sendWhatsApp(env, to, message) {
   if (!env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_NUMBER_ID) {
     throw new Error('WhatsApp not configured. Set WHATSAPP_TOKEN and WHATSAPP_PHONE_NUMBER_ID env vars.');
@@ -256,7 +240,6 @@ function corsHeaders(origin) {
   };
 }
 
-// KV helpers for orders — each order stored under its own key (avoids 10 MB single-key limit)
 async function kvGetOrders(env) {
   if (!env || !env.ORDERS_KV) return {};
   const orders = {};
@@ -307,17 +290,14 @@ function serializeStockDoc(doc) {
   return { id, fields, total };
 }
 
-// In-memory stock cache (avoids Firestore reads, consistent within a worker instance)
 let stockMemoryCache = null;
 let stockMemoryCacheTime = 0;
-const STOCK_CACHE_TTL = 60000; // 1 minute
+const STOCK_CACHE_TTL = 60000;
 
 async function getStocks(env) {
-  // Try memory cache first
   if (stockMemoryCache && (Date.now() - stockMemoryCacheTime) < STOCK_CACHE_TTL) {
     return stockMemoryCache;
   }
-  // Try KV cache next
   if (env && env.ORDERS_KV) {
     const kvCache = await env.ORDERS_KV.get('stock_cache', { type: 'json' }).catch(() => null);
     if (kvCache && kvCache.length > 0) {
@@ -326,10 +306,8 @@ async function getStocks(env) {
       return kvCache;
     }
   }
-  // Try Firestore
   try {
-    const data = await firestoreGet('stocks');
-    const docs = (data && data.documents) ? data.documents.map(serializeStockDoc).filter(Boolean) : [];
+    const docs = await supabaseGetStocks();
     if (docs.length > 0) {
       stockMemoryCache = docs;
       stockMemoryCacheTime = Date.now();
@@ -339,9 +317,7 @@ async function getStocks(env) {
       return docs;
     }
   } catch(e) {}
-  // If all fail and we have stale memory cache, return it
   if (stockMemoryCache) return stockMemoryCache;
-  // Last resort: empty array (client will use defaults)
   return [];
 }
 
@@ -366,6 +342,20 @@ async function handleRequest(request, env) {
   }
 
   try {
+    // POST /migrate-stocks — one-time migration from Firestore to Supabase
+    if (request.method === 'POST' && parts.length === 1 && parts[0] === 'migrate-stocks') {
+      const firestoreData = await firestoreGet('stocks');
+      const docs = (firestoreData && firestoreData.documents) ? firestoreData.documents.map(serializeStockDoc).filter(Boolean) : [];
+      let migrated = 0;
+      for (const doc of docs) {
+        try {
+          await supabaseUpsertStock(doc.id, doc.fields);
+          migrated++;
+        } catch(e) {}
+      }
+      return new Response(JSON.stringify({ ok: true, migrated, total: docs.length }), { headers: corsHeaders(origin) });
+    }
+
     // GET /stocks
     if (request.method === 'GET' && parts.length === 1 && parts[0] === 'stocks') {
       const docs = await getStocks(env);
@@ -374,13 +364,10 @@ async function handleRequest(request, env) {
 
     // GET /stocks/:id
     if (request.method === 'GET' && parts.length === 2 && parts[0] === 'stocks') {
-      const data = await firestoreGet(`stocks/${parts[1]}`);
-      const parsed = parseStockDoc(data);
+      const parsed = await supabaseGetStock(parts[1]).catch(() => null);
       if (!parsed) return new Response(JSON.stringify({ id: parts[1], fields: {}, total: 0 }), { headers: corsHeaders(origin) });
       return new Response(JSON.stringify(parsed), { headers: corsHeaders(origin) });
     }
-
-    // ---- ACCOUNTS ----
 
     // POST /accounts/create
     if (request.method === 'POST' && parts.length === 2 && parts[0] === 'accounts' && parts[1] === 'create') {
@@ -388,12 +375,10 @@ async function handleRequest(request, env) {
       if (!body.contact || !body.password || !body.name || !body.address) {
         return new Response(JSON.stringify({ error: 'name, address, contact, and password required' }), { status: 400, headers: corsHeaders(origin) });
       }
-      // Check if account already exists
       const existing = await firestoreGet(`accounts/${encodeURIComponent(body.contact)}`).catch(() => null);
       if (existing && existing.fields && existing.fields.contact) {
         return new Response(JSON.stringify({ error: 'Account with this contact number already exists' }), { status: 409, headers: corsHeaders(origin) });
       }
-      // Verify Turnstile CAPTCHA
       const validCaptcha = await verifyTurnstileToken(body.turnstileToken, env);
       if (!validCaptcha) {
         return new Response(JSON.stringify({ error: 'CAPTCHA verification failed. Please try again.' }), { status: 400, headers: corsHeaders(origin) });
@@ -485,7 +470,7 @@ async function handleRequest(request, env) {
       return new Response(JSON.stringify({ ok: true, admin: newAdmin === 'true' }), { headers: corsHeaders(origin) });
     }
 
-    // DELETE /accounts/:contact — delete account
+    // DELETE /accounts/:contact
     if (request.method === 'DELETE' && parts.length === 2 && parts[0] === 'accounts') {
       const existing = await firestoreGet(`accounts/${encodeURIComponent(parts[1])}`).catch(() => null);
       if (!existing || !existing.fields) {
@@ -501,26 +486,22 @@ async function handleRequest(request, env) {
       return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders(origin) });
     }
 
-    // ---- ORDERS ----
-
-    // POST /orders/create — save a pending order with timestamp
+    // POST /orders/create
     if (request.method === 'POST' && parts.length === 2 && parts[0] === 'orders' && parts[1] === 'create') {
       const body = await request.json();
       if (!body.poNumber || !body.items) {
         return new Response(JSON.stringify({ error: 'poNumber and items required' }), { status: 400, headers: corsHeaders(origin) });
       }
-      // Deduct stock for each item in the order
       let items = [];
       try { items = typeof body.items === 'string' ? JSON.parse(body.items) : body.items; } catch(e) {}
       await Promise.allSettled(items.map(item => {
         const pid = item.productId || item.id;
         if (pid && item.qty) {
           const field = orderField(item.size || '');
-          return firestoreTransform(pid, -parseInt(item.qty, 10), field);
+          return supabaseAdjustField(pid, field, -parseInt(item.qty, 10));
         }
         return Promise.resolve();
       }));
-      // Invalidate stock caches
       stockMemoryCache = null; stockMemoryCacheTime = 0;
       if (env && env.ORDERS_KV) await env.ORDERS_KV.delete('stock_cache').catch(() => {});
       const now = new Date().toISOString();
@@ -540,7 +521,6 @@ async function handleRequest(request, env) {
         await kvSaveOrder(env, order);
         return new Response(JSON.stringify({ ok: true, poNumber: body.poNumber, storage: 'kv' }), { headers: corsHeaders(origin) });
       }
-      // Fallback to Firestore
       const docId = encodeURIComponent(body.poNumber);
       const fields = {
         poNumber: body.poNumber,
@@ -571,13 +551,13 @@ async function handleRequest(request, env) {
       return new Response(JSON.stringify({ ok: true, poNumber: body.poNumber, storage: 'firestore', firestoreResponse: respBody }), { headers: corsHeaders(origin) });
     }
 
-    // POST /orders/release-expired — find orders older than 24h, restore stock, mark cancelled
+    // POST /orders/release-expired
     if (request.method === 'POST' && parts.length === 2 && parts[0] === 'orders' && parts[1] === 'release-expired') {
       const released = await releaseExpiredOrders(env);
       return new Response(JSON.stringify({ ok: true, released }), { headers: corsHeaders(origin) });
     }
 
-    // POST /orders/:poNumber/confirm — mark order as confirmed (keep stock)
+    // POST /orders/:poNumber/confirm
     if (request.method === 'POST' && parts.length === 3 && parts[0] === 'orders' && parts[2] === 'confirm') {
       const po = parts[1];
       if (env && env.ORDERS_KV) {
@@ -597,7 +577,7 @@ async function handleRequest(request, env) {
       return new Response(JSON.stringify({ ok: true, poNumber: po, status: 'confirmed', storage: 'firestore' }), { headers: corsHeaders(origin) });
     }
 
-    // POST /orders/:poNumber/deposit-paid — mark deposit as paid
+    // POST /orders/:poNumber/deposit-paid
     if (request.method === 'POST' && parts.length === 3 && parts[0] === 'orders' && parts[2] === 'deposit-paid') {
       const po = parts[1];
       if (env && env.ORDERS_KV) {
@@ -617,7 +597,7 @@ async function handleRequest(request, env) {
       return new Response(JSON.stringify({ ok: true, poNumber: po, status: 'deposit_paid', storage: 'firestore' }), { headers: corsHeaders(origin) });
     }
 
-    // POST /orders/:poNumber/cancel — cancel order and restore stock
+    // POST /orders/:poNumber/cancel
     if (request.method === 'POST' && parts.length === 3 && parts[0] === 'orders' && parts[2] === 'cancel') {
       const po = parts[1];
       let orderData = null;
@@ -632,14 +612,13 @@ async function handleRequest(request, env) {
       try { items = JSON.parse(orderData.items || '[]'); } catch(e) {}
       for (const item of items) {
         try {
-          await restoreItemStock(item.productId || item.id, item.size || '', parseInt(item.qty, 10) || 1);
+          const field = orderField(item.size || '');
+          await supabaseAdjustField(String(item.productId || item.id), field, parseInt(item.qty, 10) || 1);
           if (env && env.ORDERS_KV) {
-            const field = orderField(item.size || '');
             await updateStockInMemoryCache(String(item.productId || item.id), field, parseInt(item.qty, 10) || 1).catch(() => {});
           }
         } catch(e) {}
       }
-      // Invalidate stock caches after restoring stock
       stockMemoryCache = null; stockMemoryCacheTime = 0;
       if (env && env.ORDERS_KV) await env.ORDERS_KV.delete('stock_cache').catch(() => {});
       if (env && env.ORDERS_KV) {
@@ -656,7 +635,7 @@ async function handleRequest(request, env) {
       return new Response(JSON.stringify({ ok: true, poNumber: po, status: 'cancelled', storage: 'firestore' }), { headers: corsHeaders(origin) });
     }
 
-    // GET /debug/list-orders — diagnostic, shows KV status or Firestore fallback
+    // GET /debug/list-orders
     if (request.method === 'GET' && parts.length === 2 && parts[0] === 'debug' && parts[1] === 'list-orders') {
       const results = { hasKV: !!(env && env.ORDERS_KV) };
       if (env && env.ORDERS_KV) {
@@ -673,14 +652,13 @@ async function handleRequest(request, env) {
       return new Response(JSON.stringify(results), { headers: corsHeaders(origin) });
     }
 
-    // GET /orders — list all orders (KV first, then Firestore fallback)
+    // GET /orders
     if (request.method === 'GET' && parts.length === 1 && parts[0] === 'orders') {
       let docs = [];
       if (env && env.ORDERS_KV) {
         const orders = await kvGetOrders(env);
         docs = Object.values(orders);
       } else {
-        // Fallback: try Firestore GET
         const data = await firestoreGet('orders').catch(() => null);
         docs = (data && data.documents) ? data.documents.map(parseOrderDoc).filter(Boolean) : [];
       }
@@ -697,7 +675,7 @@ async function handleRequest(request, env) {
       return new Response(JSON.stringify({ count: total, page, limit, docs: sliced }), { headers: corsHeaders(origin) });
     }
 
-    // GET /orders/clear-all — delete all orders from KV (call once to wipe test data)
+    // GET /orders/clear-all
     if (request.method === 'GET' && parts.length === 2 && parts[0] === 'orders' && parts[1] === 'clear-all') {
       let deleted = 0;
       if (env && env.ORDERS_KV) {
@@ -711,7 +689,6 @@ async function handleRequest(request, env) {
           cursor = list.cursor;
         } while (cursor);
       }
-      // Also clear from Firestore
       try {
         const data = await firestoreGet('orders').catch(() => null);
         if (data && data.documents) {
@@ -727,14 +704,13 @@ async function handleRequest(request, env) {
       return new Response(JSON.stringify({ ok: true, deleted }), { headers: corsHeaders(origin) });
     }
 
-    // GET /orders/:poNumber — get single order by PO number
+    // GET /orders/:poNumber
     if (request.method === 'GET' && parts.length === 2 && parts[0] === 'orders') {
       const po = parts[1];
       let found = null;
       if (env && env.ORDERS_KV) {
         found = await kvGetOrder(env, po);
       } else {
-        // Fallback: Firestore
         const data = await firestoreGet(`orders/${encodeURIComponent(po)}`).catch(() => null);
         found = (data && data.fields) ? parseOrderDoc(data) : null;
       }
@@ -742,7 +718,7 @@ async function handleRequest(request, env) {
       return new Response(JSON.stringify({ error: 'not_found', po }), { status: 404, headers: corsHeaders(origin) });
     }
 
-    // GET /cart/test-email — send a test email to verify email config
+    // GET /cart/test-email
     if (request.method === 'GET' && parts.length === 2 && parts[0] === 'cart' && parts[1] === 'test-email') {
       const to = url.searchParams.get('to');
       if (!to) {
@@ -764,7 +740,6 @@ async function handleRequest(request, env) {
       }
       const results = [];
       const sendPromises = [];
-      // Send to admin
       sendPromises.push(
         sendEmail(env, body.adminEmail, body.subject, body.text, body.adminEmail)
           .then(function(m) { results.push({ to: 'admin', method: m }); })
@@ -774,7 +749,7 @@ async function handleRequest(request, env) {
       return new Response(JSON.stringify({ results }), { headers: corsHeaders(origin) });
     }
 
-    // PUT /stocks/:id  — set fields (idempotent)
+    // PUT /stocks/:id
     if (request.method === 'PUT' && parts.length === 2 && parts[0] === 'stocks') {
       const body = await request.json();
       const fields = {};
@@ -784,59 +759,48 @@ async function handleRequest(request, env) {
         if (!isNaN(qty)) { fields[k] = qty; hasValid = true; }
       }
       if (!hasValid) return new Response(JSON.stringify({ error: 'no valid fields' }), { status: 400, headers: corsHeaders(origin) });
-      const r = await firestorePatch(`stocks/${parts[1]}`, fields);
-      if (r === null) {
-        const created = await firestoreCreate(parts[1], fields);
-        stockMemoryCache = null; stockMemoryCacheTime = 0;
-        if (env && env.ORDERS_KV) await env.ORDERS_KV.delete('stock_cache').catch(() => {});
-        return new Response(JSON.stringify({ ok: created }), { headers: corsHeaders(origin) });
-      }
+      const r = await supabaseUpsertFields(parts[1], fields);
       stockMemoryCache = null; stockMemoryCacheTime = 0;
       if (env && env.ORDERS_KV) await env.ORDERS_KV.delete('stock_cache').catch(() => {});
-      return new Response(JSON.stringify({ ok: r }), { headers: corsHeaders(origin) });
+      return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders(origin) });
     }
 
-    // POST /stocks/:id/increment  — atomic increment by amount on a field
+    // POST /stocks/:id/increment
     if (request.method === 'POST' && parts.length === 3 && parts[0] === 'stocks' && parts[2] === 'increment') {
       const body = await request.json().catch(() => ({}));
       const amount = parseInt(body.amount, 10) || 1;
       const field = body.field || 'default';
-      const r = await firestoreTransform(parts[1], amount, field);
+      const r = await supabaseAdjustField(parts[1], field, amount);
       if (env && env.ORDERS_KV && r === true) {
         await updateStockInMemoryCache(parts[1], field, amount).catch(() => {});
         await env.ORDERS_KV.delete('stock_cache').catch(() => {});
       }
       if (r === true) {
-        const data = await firestoreGet(`stocks/${parts[1]}`).catch(() => null);
-        const parsed = parseStockDoc(data);
+        const parsed = await supabaseGetStock(parts[1]).catch(() => null);
         return new Response(JSON.stringify(parsed || { id: parts[1], fields: { [field]: amount }, total: amount }), { headers: corsHeaders(origin) });
       }
       if (typeof r === 'object' && r.error) {
         const fields = {};
         fields[field] = amount;
-        const patched = await firestorePatch(`stocks/${parts[1]}`, fields);
+        await supabaseUpsertFields(parts[1], fields);
         if (env && env.ORDERS_KV) await env.ORDERS_KV.delete('stock_cache').catch(() => {});
-        if (patched === null) {
-          await firestoreCreate(parts[1], fields);
-        }
         return new Response(JSON.stringify({ id: parts[1], fields, total: amount }), { headers: corsHeaders(origin) });
       }
       throw new Error(`Increment failed: ${JSON.stringify(r)}`);
     }
 
-    // POST /stocks/:id/decrement  — atomic decrement by amount on a field
+    // POST /stocks/:id/decrement
     if (request.method === 'POST' && parts.length === 3 && parts[0] === 'stocks' && parts[2] === 'decrement') {
       const body = await request.json().catch(() => ({}));
       const amount = parseInt(body.amount, 10) || 1;
       const field = body.field || 'default';
-      const r = await firestoreTransform(parts[1], -amount, field);
+      const r = await supabaseAdjustField(parts[1], field, -amount);
       if (env && env.ORDERS_KV && r === true) {
         await updateStockInMemoryCache(parts[1], field, -amount).catch(() => {});
         await env.ORDERS_KV.delete('stock_cache').catch(() => {});
       }
       if (r === true) {
-        const data = await firestoreGet(`stocks/${parts[1]}`).catch(() => null);
-        const parsed = parseStockDoc(data);
+        const parsed = await supabaseGetStock(parts[1]).catch(() => null);
         const fallbackFields = {};
         fallbackFields[field] = 5 - amount;
         return new Response(JSON.stringify(parsed || { id: parts[1], fields: fallbackFields, total: 5 - amount }), { headers: corsHeaders(origin) });
@@ -844,17 +808,14 @@ async function handleRequest(request, env) {
       if (typeof r === 'object' && r.error) {
         const fields = {};
         fields[field] = Math.max(0, 5 - amount);
-        const patched = await firestorePatch(`stocks/${parts[1]}`, fields);
+        await supabaseUpsertFields(parts[1], fields);
         if (env && env.ORDERS_KV) await env.ORDERS_KV.delete('stock_cache').catch(() => {});
-        if (patched === null) {
-          await firestoreCreate(parts[1], fields);
-        }
         return new Response(JSON.stringify({ id: parts[1], fields, total: fields[field] }), { headers: corsHeaders(origin) });
       }
       throw new Error(`Decrement failed: ${JSON.stringify(r)}`);
     }
 
-    // POST /notifications/whatsapp — send WhatsApp message via Meta Cloud API
+    // POST /notifications/whatsapp
     if (request.method === 'POST' && parts.length === 2 && parts[0] === 'notifications' && parts[1] === 'whatsapp') {
       const body = await request.json();
       if (!body.to || !body.message) {
@@ -868,7 +829,7 @@ async function handleRequest(request, env) {
       }
     }
 
-    // GET /notifications/whatsapp/test — send a test WhatsApp message
+    // GET /notifications/whatsapp/test
     if (request.method === 'GET' && parts.length === 3 && parts[0] === 'notifications' && parts[1] === 'whatsapp' && parts[2] === 'test') {
       const to = url.searchParams.get('to');
       if (!to) {
@@ -905,13 +866,14 @@ async function releaseExpiredOrders(env) {
     if (order.status !== 'pending') continue;
     const created = new Date(order.createdAt).getTime();
     if (isNaN(created) || (now - created) < TWENTY_FOUR_HOURS) continue;
-    // Restore stock for each item
     let items = [];
     try { items = JSON.parse(order.items || '[]'); } catch(e) {}
     for (const item of items) {
-      try { await restoreItemStock(item.productId || item.id, item.size || '', parseInt(item.qty, 10) || 1); } catch(e) {}
+      try {
+        const field = orderField(item.size || '');
+        await supabaseAdjustField(String(item.productId || item.id), field, parseInt(item.qty, 10) || 1);
+      } catch(e) {}
     }
-    // Invalidate stock caches
     stockMemoryCache = null; stockMemoryCacheTime = 0;
     if (env && env.ORDERS_KV) await env.ORDERS_KV.delete('stock_cache').catch(() => {});
     if (env && env.ORDERS_KV) {
