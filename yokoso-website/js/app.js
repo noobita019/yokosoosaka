@@ -679,7 +679,7 @@ function showOrderDetail(poNumber) {
       overlay.addEventListener('click', function(e) { if (e.target === this) this.remove(); });
       var poEnc = order.id;
       overlay.innerHTML = '<div style="background:#1a1a2e;color:#eee;border-radius:12px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;padding:24px 28px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.3)">' +
-        '<button onclick="this.closest(\'[style*=\\"z-index:99999\\"]\').remove()" style="position:absolute;top:12px;right:16px;background:rgba(255,255,255,0.1);border:none;font-size:22px;cursor:pointer;color:#aaa;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center">×</button>' +
+        '<button class="order-modal-close" style="position:absolute;top:12px;right:16px;background:rgba(255,255,255,0.1);border:none;font-size:22px;cursor:pointer;color:#aaa;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center">×</button>' +
         '<h2 style="font-size:18px;margin:0 0 4px;color:#ff6b81">' + (order.id || poNumber) + '</h2>' +
         '<span style="display:inline-block;padding:2px 10px;border-radius:10px;background:' + statusColor + '20;color:' + statusColor + ';font-weight:600;font-size:12px;margin-bottom:16px">' + statusLabel + '</span>' +
         '<div style="margin-bottom:16px">' +
@@ -713,20 +713,32 @@ function showOrderDetail(poNumber) {
         '<div style="display:flex;justify-content:space-between;font-size:14px;padding-bottom:12px">' +
           '<div><strong>Deposit</strong></div><div style="color:#4fc3f7">' + (order.deposit || '—') + '</div>' +
         '</div>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,0.1);padding-top:14px">' +
-          (order.status === 'pending'
-            ? '<button onclick="this.closest(\'[style*=\\"z-index:99999\\"]\').remove();depositPaidOrder(\'' + poEnc + '\')" style="padding:8px 20px;background:#1976d2;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">Mark Deposit Paid</button>' +
-              '<button onclick="this.closest(\'[style*=\\"z-index:99999\\"]\').remove();cancelOrder(\'' + poEnc + '\')" style="padding:8px 20px;background:#c62828;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">Cancel Order</button>'
-            : order.status === 'deposit_paid'
-            ? '<button onclick="this.closest(\'[style*=\\"z-index:99999\\"]\').remove();confirmOrder(\'' + poEnc + '\')" style="padding:8px 20px;background:#2e7d32;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">Confirm Order</button>' +
-              '<button onclick="this.closest(\'[style*=\\"z-index:99999\\"]\').remove();cancelOrder(\'' + poEnc + '\')" style="padding:8px 20px;background:#c62828;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">Cancel Order</button>'
-            : ''
-          ) +
+        '<div class="order-modal-actions" style="display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,0.1);padding-top:14px">' +
         '</div>' +
       '</div>';
       document.body.appendChild(overlay);
+      var actionsDiv = overlay.querySelector('.order-modal-actions');
+      if (actionsDiv) {
+        if (order.status === 'pending') {
+          addOrderActionBtn(actionsDiv, 'Mark Deposit Paid', '#1976d2', function() { overlay.remove(); depositPaidOrder(poEnc); });
+          addOrderActionBtn(actionsDiv, 'Cancel Order', '#c62828', function() { overlay.remove(); cancelOrder(poEnc); });
+        } else if (order.status === 'deposit_paid') {
+          addOrderActionBtn(actionsDiv, 'Confirm Order', '#2e7d32', function() { overlay.remove(); confirmOrder(poEnc); });
+          addOrderActionBtn(actionsDiv, 'Cancel Order', '#c62828', function() { overlay.remove(); cancelOrder(poEnc); });
+        }
+      }
+      var closeBtn = overlay.querySelector('.order-modal-close');
+      if (closeBtn) closeBtn.addEventListener('click', function() { overlay.remove(); });
     })
     .catch(function(e) { alert('Error loading order: ' + (e.message || '')); });
+}
+
+function addOrderActionBtn(container, label, color, onClick) {
+  var btn = document.createElement('button');
+  btn.textContent = label;
+  btn.style.cssText = 'padding:8px 20px;background:' + color + ';color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600';
+  btn.addEventListener('click', onClick);
+  container.appendChild(btn);
 }
 
 function productPaginationHtml(totalPages) {
