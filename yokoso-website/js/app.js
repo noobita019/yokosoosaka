@@ -2378,7 +2378,7 @@ function openModal(product) {
           '<p style="color:#666;margin:0 0 16px;line-height:1.6;font-size:14px">' + (product.description || '') + '</p>' +
           '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
           '<span style="font-size:0.8rem;font-weight:600;padding:4px 10px;border-radius:4px;' + (totalAvail > 0 ? 'background:#e8f5e9;color:#2e7d32' : 'background:#ffebee;color:#c62828') + '">' + (totalAvail > 3 ? 'In Stock' : totalAvail > 0 ? 'Only ' + totalAvail + ' left' : 'Out of Stock') + '</span>' +
-           (totalAvail > 0 ? '<button id="modalAddToCartBtn" onclick="addToCartFromModal(' + product.id + ')" style="padding:12px 32px;border-radius:8px;border:none;font-weight:600;font-size:14px;background:#e94560;color:#fff;cursor:pointer">' + (productHasSizes ? 'Select a size' : 'Add to Cart') + '</button>' : '') +
+           (totalAvail > 0 ? '<button id="modalAddToCartBtn" onclick="addToCartFromModal(' + product.id + ')" style="padding:12px 32px;border-radius:8px;border:none;font-weight:600;font-size:14px;background:#e94560;color:#fff;cursor:pointer">' + (productHasSizes ? 'Select a size' : 'Add to Cart') + '</button>' : '<button id="modalAddToCartBtn" disabled style="padding:12px 32px;border-radius:8px;border:none;font-weight:600;font-size:14px;background:#ccc;color:#888;cursor:not-allowed">Out of Stock</button>') +
            '</div>' +
         '</div>' +
       '</div>' +
@@ -2451,8 +2451,6 @@ function selectModalColor(el, color) {
   }
   _modalSelectedColor = color;
   _modalSelectedSize = null;
-  var btn = document.getElementById('modalAddToCartBtn');
-  if (btn) btn.textContent = 'Select a size';
   // Update images to reflect selected color
   var p = _modalProduct;
   if (p) {
@@ -2498,10 +2496,10 @@ function selectModalColor(el, color) {
           return '<button class="' + sClass + '" data-size="' + s + '" onclick="selectModalSize(this,\'' + s + '\')">' + sLabel + '</button>';
         }).join('');
         sizeContainer.style.display = 'flex';
+        updateModalAddBtn(p, color, null);
       } else {
         sizeContainer.style.display = 'none';
-        var btn2 = document.getElementById('modalAddToCartBtn');
-        if (btn2) btn2.textContent = 'Add to Cart';
+        updateModalAddBtn(p, color, null);
       }
     }
   }
@@ -2512,8 +2510,62 @@ function selectModalSize(el, size) {
   el.style.borderColor = '#e94560';
   el.style.background = '#ffe8eb';
   _modalSelectedSize = size;
+  updateModalAddBtn(_modalProduct, _modalSelectedColor, size);
+}
+
+function updateModalAddBtn(p, color, size) {
   var btn = document.getElementById('modalAddToCartBtn');
-  if (btn) btn.textContent = 'Add to Cart' + ' (' + size + ')';
+  if (!btn) return;
+  if (size) {
+    var sStock = p && color ? getVariantStock(p, color, size) : 0;
+    if (sStock <= 0) {
+      btn.disabled = true;
+      btn.textContent = 'Out of Stock';
+      btn.style.background = '#ccc';
+      btn.style.color = '#888';
+      btn.style.cursor = 'not-allowed';
+      btn.onclick = null;
+    } else {
+      btn.disabled = false;
+      btn.textContent = 'Add to Cart (' + size + ')';
+      btn.style.background = '#e94560';
+      btn.style.color = '#fff';
+      btn.style.cursor = 'pointer';
+      btn.onclick = function() { addToCartFromModal(_modalProduct ? _modalProduct.id : null); };
+    }
+    return;
+  }
+  // No size selected — check if color has any available variant
+  var hasStock = false;
+  if (p && color) {
+    var sizes = getVariantSizes(p, color);
+    if (sizes.length > 0) {
+      sizes.forEach(function(s) { if (getVariantStock(p, color, s) > 0) hasStock = true; });
+      btn.disabled = true;
+      btn.textContent = hasStock ? 'Select a size' : 'Out of Stock';
+      btn.style.background = hasStock ? '#e94560' : '#ccc';
+      btn.style.color = '#fff';
+      btn.style.cursor = hasStock ? 'pointer' : 'not-allowed';
+      btn.onclick = hasStock ? null : null;
+    } else {
+      var qStock = getVariantStock(p, color, 'q');
+      if (qStock <= 0) {
+        btn.disabled = true;
+        btn.textContent = 'Out of Stock';
+        btn.style.background = '#ccc';
+        btn.style.color = '#888';
+        btn.style.cursor = 'not-allowed';
+        btn.onclick = null;
+      } else {
+        btn.disabled = false;
+        btn.textContent = 'Add to Cart';
+        btn.style.background = '#e94560';
+        btn.style.color = '#fff';
+        btn.style.cursor = 'pointer';
+        btn.onclick = function() { addToCartFromModal(_modalProduct ? _modalProduct.id : null); };
+      }
+    }
+  }
 }
 
 function addToCartFromModal(productId) {
