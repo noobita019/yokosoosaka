@@ -2086,6 +2086,21 @@ function addToCart(productId, color, size) {
   showCartNotification(p.name + (size ? ' (' + color + '/' + size + ')' : ' (' + color + ')'));
 }
 
+function syncStockCache(product) {
+  if (!product || !product.variants) return;
+  var fields = { q: 0 };
+  for (var c in product.variants) {
+    var v = product.variants[c];
+    if (v.stock) {
+      for (var s in v.stock) {
+        fields[c + '|' + s] = v.stock[s];
+        if (s === 'q') fields.q = (fields.q || 0) + v.stock[s];
+      }
+    }
+  }
+  setCachedStockDoc(product.id, { id: String(product.id), fields: fields });
+}
+
 function deductVariantStock(p, color, size, qty) {
   if (!p.variants) return;
   var v = p.variants[color];
@@ -2093,6 +2108,7 @@ function deductVariantStock(p, color, size, qty) {
   if (!v.stock) v.stock = {};
   if (v.stock[size] === undefined) v.stock[size] = 0;
   v.stock[size] = Math.max(0, v.stock[size] - qty);
+  syncStockCache(p);
 }
 
 function restoreVariantStock(p, color, size, qty) {
@@ -2102,6 +2118,7 @@ function restoreVariantStock(p, color, size, qty) {
   if (!v.stock) v.stock = {};
   if (v.stock[size] === undefined) v.stock[size] = 0;
   v.stock[size] = (v.stock[size] || 0) + qty;
+  syncStockCache(p);
 }
 
 function removeFromCart(productId, color, size) {
