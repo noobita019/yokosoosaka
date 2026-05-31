@@ -3,3 +3,8 @@ workers/stock-proxy/node_modules/
 workers/stock-proxy/package-lock.json
 workers/stock-proxy/package.json
 .wrangler/
+
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
